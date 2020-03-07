@@ -50,9 +50,13 @@ Within the tour file, you need to specify the following required properties:
 
 For an example, refer to the `.vscode/tour.json` file of this repository.
 
+## Tree View
+
+If the currently opened workspace has any code tours, you'll see a new tree view called `Code Tours`, that's added to the `Explorer` tab. This view simply lists the set of available code tours, along with their title. If you select a tour it will start it, and therefore, this is simply a more convenient equivalent to running the `Code Tour: Start Tour` command.
+
 ## Status Bar
 
-After installing the Code Tour extension, it will detect whether the currently opened workspace has any code tours, and if so, it will add a new status bar item called `Start Code Tour` to your status bar. When you click it, it will allow you to select a tour and then begin navigating it.
+In addition to the `Code Tours` tree view, this extension also contributes a new status bar item called `Start Code Tour` to your status bar. It's only visible when the current workspace has one or more tours, and when clicked, it allows you to select a tour and then begin navigating it.
 
 While you're within a tour, the status bar will update to show the title and step of the current tour. When clicked, it will open the file/line of the current tour step, which allows you to open other files while taking a tour, and then resumse the tour when ready. Once you end the current tour, the status bar will transition back to displaying the `Start Code Tour` button.
 

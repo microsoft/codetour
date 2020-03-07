@@ -1,0 +1,26 @@
+{
+  "title": "Status Bar",
+  "description": "Describes how we augment the status bar",
+  "steps": [
+    {
+      "file": "src/extension.ts",
+      "line": 36,
+      "description": "The status bar provider is registered upon extension activiation"
+    },
+    {
+      "file": "src/status.ts",
+      "line": 35,
+      "description": "If the currently opened workspace has any code tours, then we register the `Start Code Tour` status bar item."
+    },
+    {
+      "file": "src/status.ts",
+      "line": 40,
+      "description": "Using MobX, we wait for the user to start and/or navigate a code tour."
+    },
+    {
+      "file": "src/status.ts",
+      "line": 47,
+      "description": "When a tour is activate and/or navigated, we update the status bar item to indicate the current step and title."
+    }
+  ]
+}

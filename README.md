@@ -2,13 +2,18 @@
 
 Code Tour is a Visual Studio Code extension, which allows you to take guided walkthroughs of a codebase, in order to make it easier to onboard and/or learn new parts of it. A "code tour" is simply a series of inline comments, each of which are associated with a specific file/line, and include a description of the respective code. The end user can start/stop tours at any time, and navigate the current tour at their own pace.
 
+<img width="700px" src="https://user-images.githubusercontent.com/116461/76151694-7b531b80-606c-11ea-96a6-0655eb6ab4e6.gif" />
+
 ## Starting a tour
 
 In order to start a tour, simply open up a codebase that has one or more tours. If this is the first time you've ever opened this codebase, then you'll be presented with a toast notification, asking if you'd like to take a tour of it. Otherwise, you can manually start a tour via any of the following methods:
 
-1. Clicking the `Start Code Tour` button in the status bar
-1. Selecting on a tour in the `Code Tours` view in the `Explorer` tab
-1. Running the `Code Tour: Start Tour` command, and selecting the tour you'd like to take
+1. Clicking the `Start Code Tour` button in the [status bar](#status-bar)
+1. Selecting on a tour in the [`Code Tours` view](#tree-view) in the `Explorer` tab
+
+    <img width="191" src="https://user-images.githubusercontent.com/116461/76151744-22d04e00-606d-11ea-8927-046e73f11098.png" />
+
+2. Running the `Code Tour: Start Tour` [command](#contributed-commands), and selecting the tour you'd like to take
 
 If the current workspace only has a single code tour, then any of the above actions will automatically start the tour. Otherwise, you'll be presented with a list of tours to select from.
 
@@ -21,6 +26,8 @@ Once you've started a tour, the comment UI includes navigation actions that allo
 - `End Tour` - End the current tour and remove the comment UI
 
 When you're actively in a code tour, the status bar will also display the title and current step of the tour. If you navigate away from the active tour step, you can click on the status bar item and resume the tour at any time.
+
+<img width="500px" src="https://user-images.githubusercontent.com/116461/76151723-ca00b580-606c-11ea-9bd5-81c1d9352cef.png" />
 
 ## Authoring tours
 
@@ -55,6 +62,8 @@ For an example, refer to the `.vscode/tour.json` file of this repository.
 
 If the currently opened workspace has any code tours, you'll see a new tree view called `Code Tours`, that's added to the `Explorer` tab. This view simply lists the set of available code tours, along with their title. If you select a tour it will start it, and therefore, this is simply a more convenient equivalent to running the `Code Tour: Start Tour` command.
 
+<img width="191px" src="https://user-images.githubusercontent.com/116461/76151744-22d04e00-606d-11ea-8927-046e73f11098.png" />
+
 ## Status Bar
 
 In addition to the `Code Tours` tree view, this extension also contributes a new status bar item called `Start Code Tour` to your status bar. It's only visible when the current workspace has one or more tours, and when clicked, it allows you to select a tour and then begin navigating it.
@@ -69,4 +78,6 @@ In addition to the `Code Tours` tree view and the status bar item, the Code Tour
 
 - `Code Tour: Start Tour` - Starts a tour for the currently opened workspace. This command is only visible if the current workspace actually has one or more code tours.
 
+- `Code Tour: Refresh Tours` - Refreshes the `Code Tours` view, which can be handy if you'd created/modified/deleted tour files on disk.
+  
 - `Code Tour: Resume Current Tour` - Resumse the current tour by navigating to the file/line number that's associated with the current step.

@@ -17,7 +17,7 @@ import { CodeTour, store } from ".";
 const CONTROLLER_ID = "codetour";
 const CONTROLLER_LABEL = "Code Tour";
 const CONTROLLER_ICON = Uri.parse(
-  "https://avatars1.githubusercontent.com/u/47062491?s=60&v=4"
+  "https://cdn.jsdelivr.net/gh/vsls-contrib/code-tour/images/icon.png"
 );
 
 let id = 0;

@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { store } from "./store";
+import { store, CodeTour } from "./store";
 import { EXTENSION_NAME } from "./constants";
 import { reaction } from "mobx";
 
@@ -23,7 +23,7 @@ function createStartTourItem() {
     vscode.StatusBarAlignment.Left
   );
 
-  startTourItem.text = "$(play) Start Tour";
+  startTourItem.text = "$(play) Start Code Tour";
   startTourItem.command = `${EXTENSION_NAME}.startTour`;
   startTourItem.show();
 
@@ -36,18 +36,17 @@ export function registerStatusBar() {
     const startTourItem = createStartTourItem();
 
     reaction(
+      // @ts-ignore
       () => [store.currentTour, store.currentStep],
-      ([tour, step]) => {
+      ([tour, step]: [CodeTour | null, number]) => {
         if (tour) {
           if (!currentTourItem) {
             currentTourItem = createCurrentTourItem();
           }
 
-          // @ts-ignore
-          currentTourItem.text = `Step #${step + 1} of ${tour.steps.length} (${
-            // @ts-ignore
-            tour.title
-          })`;
+          currentTourItem.text = `Code Tour: #${step + 1} of ${
+            tour.steps.length
+          } (${tour.title})`;
 
           if (step === 0) {
             startTourItem.hide();

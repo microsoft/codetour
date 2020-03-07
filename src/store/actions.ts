@@ -1,4 +1,5 @@
 import {
+  commands,
   Comment,
   CommentAuthorInformation,
   CommentMode,
@@ -13,6 +14,9 @@ import {
   workspace
 } from "vscode";
 import { CodeTour, store } from ".";
+import { EXTENSION_NAME } from "../constants";
+
+const IN_TOUR_KEY = `${EXTENSION_NAME}:inTour`;
 
 const CONTROLLER_ID = "codetour";
 const CONTROLLER_LABEL = "Code Tour";
@@ -53,7 +57,9 @@ async function showDocument(uri: Uri, range: Range) {
 }
 
 async function renderStep() {
-  currentThread && currentThread.dispose();
+  if (currentThread) {
+    currentThread.dispose();
+  }
 
   const currentTour = store.currentTour!;
   const currentStep = store.currentStep;
@@ -93,12 +99,18 @@ export function startCodeTour(tour: CodeTour) {
   store.currentTour = tour;
   store.currentStep = 0;
 
+  commands.executeCommand("setContext", IN_TOUR_KEY, true);
+
   renderStep();
 }
 
 export function endCurrentCodeTour() {
-  currentThread && currentThread.dispose();
-  currentThread = null;
+  if (currentThread) {
+    currentThread.dispose();
+    currentThread = null;
+  }
+
+  commands.executeCommand("setContext", IN_TOUR_KEY, false);
 
   store.currentTour = null;
 }

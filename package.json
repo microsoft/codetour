@@ -31,18 +31,9 @@
   "contributes": {
     "commands": [
       {
-        "command": "codetour.startTour",
-        "title": "Start Tour",
-        "category": "Code Tour",
-        "icon": {
-          "dark": "images/dark/tour.svg",
-          "light": "images/light/tour.svg"
-        }
-      },
-      {
-        "command": "codetour.previousTourStep",
-        "title": "Previous",
-        "icon": "$(arrow-left)"
+        "command": "codetour.endTour",
+        "title": "Next",
+        "icon": "$(close)"
       },
       {
         "command": "codetour.nextTourStep",
@@ -50,23 +41,37 @@
         "icon": "$(arrow-right)"
       },
       {
-        "command": "codetour.resumeTour",
-        "title": "Resumse"
+        "command": "codetour.previousTourStep",
+        "title": "Previous",
+        "icon": "$(arrow-left)"
       },
       {
-        "command": "codetour.endTour",
-        "title": "Next",
-        "icon": "$(close)"
+        "command": "codetour.resumeTour",
+        "title": "Resume Current Tour",
+        "category": "Code Tour"
+      },
+      {
+        "command": "codetour.startTour",
+        "title": "Start Tour",
+        "category": "Code Tour",
+        "icon": {
+          "dark": "images/dark/tour.svg",
+          "light": "images/light/tour.svg"
+        }
       }
     ],
     "menus": {
       "commandPalette": [
         {
+          "command": "codetour.resumeTour",
+          "when": "codetour:inTour"
+        },
+        {
           "command": "codetour.startTour",
           "when": "codetour:hasTours"
         },
         {
-          "command": "codetour.previousTourStep",
+          "command": "codetour.endTour",
           "when": "false"
         },
         {
@@ -74,11 +79,7 @@
           "when": "false"
         },
         {
-          "command": "codetour.resumeTour",
-          "when": "false"
-        },
-        {
-          "command": "codetour.endTour",
+          "command": "codetour.previousTourStep",
           "when": "false"
         }
       ],
@@ -111,11 +112,7 @@
     },
     "jsonValidation": [
       {
-        "fileMatch": "tour.json",
-        "url": "https://cdn.jsdelivr.net/gh/vsls-contrib/code-tour/schema.json"
-      },
-      {
-        "fileMatch": "codetour.json",
+        "fileMatch": "(code)?tour.json",
         "url": "https://cdn.jsdelivr.net/gh/vsls-contrib/code-tour/schema.json"
       }
     ]

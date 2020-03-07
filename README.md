@@ -42,10 +42,11 @@ In addition to your repo's "main tour", you can also create one or more "sub-tou
 Within the tour file, you need to specify the following required properties:
 
 - `title` - The display name of the tour, which will be shown in the `Code Tours` tree view, quick pick, etc.
+- `description` - An optional description for the tour
 - `steps` - An array of tour steps
   - `file` - The file path (relative to the workspace root) that this step is associated with
   - `uri` - An absolute URI that this step is associated with. Note that `uri` and `file` are mutually exclusive, so only set one per step
-  - `line` - The line number that this step is associated with
+  - `line` - The 1-based line number that this step is associated with
   - `description` - The text which explains the current file/line number, and can include plain text and markdown syntax
 
 For an example, refer to the `.vscode/tour.json` file of this repository.

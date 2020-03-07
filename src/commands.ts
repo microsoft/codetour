@@ -8,6 +8,7 @@ import {
   startCodeTour,
   resumeCurrentCodeTour
 } from "./store/actions";
+import { discoverTours } from "./store/provider";
 
 interface CodeTourQuickPickItem extends vscode.QuickPickItem {
   tour: CodeTour;
@@ -64,6 +65,16 @@ export function registerCommands() {
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.nextTourStep`,
     moveCurrentCodeTourForward
+  );
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.refreshTours`,
+    async () => {
+      if (vscode.workspace.workspaceFolders) {
+        const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.toString();
+        await discoverTours(workspaceRoot);
+      }
+    }
   );
 
   vscode.commands.registerCommand(

@@ -8,6 +8,10 @@
       "type": "string",
       "description": "Specifies the title of the code tour."
     },
+    "description": {
+      "type": "string",
+      "description": "Specifies an optional description for the code tour."
+    },
     "steps": {
       "type": "array",
       "description": "Specifies the list of steps that are included in the code tour.",

@@ -19,7 +19,7 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
 
   constructor(private extensionPath: string) {
     reaction(
-      () => [store.hasTours],
+      () => [store.hasTours, store.mainTour, store.subTours],
       () => {
         this._onDidChangeTreeData.fire();
       }

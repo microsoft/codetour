@@ -46,6 +46,11 @@
         "icon": "$(arrow-left)"
       },
       {
+        "command": "codetour.refreshTours",
+        "title": "Refresh Tours",
+        "category": "Code Tour"
+      },
+      {
         "command": "codetour.resumeTour",
         "title": "Resume Current Tour",
         "category": "Code Tour"

@@ -65,7 +65,11 @@ async function renderStep() {
   const currentStep = store.currentStep;
 
   const step = currentTour!.steps[currentStep];
-  const range = new Range(step.line, 0, step.line, 0);
+
+  // Adjust the line number, to allow the user to specify
+  // them in 1-based format, not 0-based
+  const line = step.line - 1;
+  const range = new Range(line, 0, line, 0);
   let label = `Step #${currentStep + 1} of ${currentTour!.steps.length}`;
 
   if (currentTour.title) {

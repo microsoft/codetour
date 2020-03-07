@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Code Tour schema for the tour.json file",
+  "type": "object",
+  "required": ["title", "steps"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Specifies the title of the code tour."
+    },
+    "steps": {
+      "type": "array",
+      "description": "Specifies the list of steps that are included in the code tour.",
+      "default": [],
+      "items": {
+        "type": "object",
+        "required": ["line", "description"],
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "Specifies the file path (relative to the workspace root) that is associated with the current step."
+          },
+          "uri": {
+            "type": "string",
+            "description": "Specifies an absolute URI that is associated with the current step."
+          },
+          "line": {
+            "type": "number",
+            "description": "Specifies the line number that is associated with the current step."
+          },
+          "description": {
+            "type": "string",
+            "description": "Specifies the description of the current step."
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "name": "codetour",
+  "displayName": "Code Tour",
+  "description": "VS Code extension that allows you to take guided tours of a codebase, directly within the editor",
+  "publisher": "vsls-contrib",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vsls-contrib/code-tour"
+  },
+  "bugs": {
+    "url": "https://github.com/vsls-contrib/code-tour/issues"
+  },
+  "homepage": "https://github.com/vsls-contrib/code-tour#readme",
+  "license": "ISC",
+  "icon": "images/icon.png",
+  "engines": {
+    "vscode": "^1.42.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "Collaboration",
+    "Sharing"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codetour.startTour",
+        "title": "Start Tour",
+        "category": "Code Tour",
+        "icon": {
+          "dark": "images/dark/tour.svg",
+          "light": "images/light/tour.svg"
+        }
+      },
+      {
+        "command": "codetour.previousTourStep",
+        "title": "Previous",
+        "icon": "$(arrow-left)"
+      },
+      {
+        "command": "codetour.nextTourStep",
+        "title": "Next",
+        "icon": "$(arrow-right)"
+      },
+      {
+        "command": "codetour.resumeTour",
+        "title": "Resumse"
+      },
+      {
+        "command": "codetour.endTour",
+        "title": "Next",
+        "icon": "$(close)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "codetour.startTour",
+          "when": "codetour:hasTours"
+        },
+        {
+          "command": "codetour.previousTourStep",
+          "when": "false"
+        },
+        {
+          "command": "codetour.nextTourStep",
+          "when": "false"
+        },
+        {
+          "command": "codetour.resumeTour",
+          "when": "false"
+        },
+        {
+          "command": "codetour.endTour",
+          "when": "false"
+        }
+      ],
+      "comments/commentThread/title": [
+        {
+          "command": "codetour.previousTourStep",
+          "group": "inline@1",
+          "when": "commentController == codetour && commentThread =~ /hasPrevious/"
+        },
+        {
+          "command": "codetour.nextTourStep",
+          "group": "inline@2",
+          "when": "commentController == codetour && commentThread =~ /hasNext/"
+        },
+        {
+          "command": "codetour.endTour",
+          "group": "inline@3",
+          "when": "commentController == codetour"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "codetour.tours",
+          "name": "Code Tours",
+          "when": "codetour:hasTours"
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "mobx": "^5.14.2"
+  },
+  "devDependencies": {
+    "typescript": "^3.1.4",
+    "vscode": "^1.1.25",
+    "tslint": "^5.8.0",
+    "@types/node": "^8.10.25"
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "postinstall": "node ./node_modules/vscode/bin/install"
+  }
+}

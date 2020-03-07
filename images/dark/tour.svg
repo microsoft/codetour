@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<!DOCTYPE svg  PUBLIC '-//W3C//DTD SVG 1.1//EN'  'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>
+<svg height="16px" style="enable-background:new 0 0 16 16;" version="1.1" viewBox="0 0 16 16" width="16px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <g id="_x33_2-location_-_pin_map" style="enable-background:new    ;" fill="#CCCCCC">
+        <path d="M8,3C6.343,3,5,4.343,5,6c0,1.656,1.343,3,3,3c1.656,0,3-1.344,3-3C11,4.343,9.656,3,8,3z M8,8C6.896,8,6,7.104,6,6   s0.896-2,2-2c1.105,0,2,0.896,2,2S9.105,8,8,8z M8,0C4.686,0,2,2.686,2,6c0,3.313,6,10,6,10s6-6.687,6-10C14,2.686,11.314,0,8,0z    M3,6c0-2.762,2.239-5,5-5c2.762,0,5,2.238,5,5c0,2.761-5,8.5-5,8.5S3,8.761,3,6z"/>
+    </g>
+</svg>

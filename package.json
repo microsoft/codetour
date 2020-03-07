@@ -108,7 +108,17 @@
           "when": "codetour:hasTours"
         }
       ]
-    }
+    },
+    "jsonValidation": [
+      {
+        "fileMatch": "tour.json",
+        "url": "https://cdn.jsdelivr.net/gh/vsls-contrib/code-tour/schema.json"
+      },
+      {
+        "fileMatch": "codetour.json",
+        "url": "https://cdn.jsdelivr.net/gh/vsls-contrib/code-tour/schema.json"
+      }
+    ]
   },
   "dependencies": {
     "mobx": "^5.14.2"

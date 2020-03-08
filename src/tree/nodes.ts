@@ -15,6 +15,8 @@ export class CodeTourNode extends TreeItem {
       arguments: [tour]
     };
 
+    this.description = `${tour.steps.length} steps`;
+
     this.iconPath = {
       dark: path.join(extensionPath, "images/dark/tour.svg"),
       light: path.join(extensionPath, "images/dark/tour.svg")

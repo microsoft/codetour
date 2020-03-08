@@ -31,8 +31,21 @@
   "contributes": {
     "commands": [
       {
+        "command": "codetour.addTourStep",
+        "title": "Add Step",
+        "enablement": "!commentIsEmpty"
+      },
+      {
+        "command": "codetour.editTourStep",
+        "title": "Edit Step"
+      },
+      {
+        "command": "codetour.deleteTourStep",
+        "title": "Delete Step"
+      },
+      {
         "command": "codetour.endTour",
-        "title": "Next",
+        "title": "End Tour",
         "icon": "$(close)"
       },
       {
@@ -46,6 +59,12 @@
         "icon": "$(arrow-left)"
       },
       {
+        "command": "codetour.recordTour",
+        "title": "Record Tour",
+        "category": "Code Tour",
+        "icon": "$(add)"
+      },
+      {
         "command": "codetour.refreshTours",
         "title": "Refresh Tours",
         "category": "Code Tour"
@@ -54,6 +73,17 @@
         "command": "codetour.resumeTour",
         "title": "Resume Current Tour",
         "category": "Code Tour"
+      },
+      {
+        "command": "codetour.saveTour",
+        "title": "Save Tour",
+        "category": "Code Tour",
+        "icon": "$(save)",
+        "enablement": "!commentThreadIsEmpty"
+      },
+      {
+        "command": "codetour.saveTourStep",
+        "title": "Save Step"
       },
       {
         "command": "codetour.startTour",
@@ -72,8 +102,24 @@
           "when": "codetour:inTour"
         },
         {
+          "command": "codetour.saveTour",
+          "when": "codetour:recording"
+        },
+        {
           "command": "codetour.startTour",
           "when": "codetour:hasTours"
+        },
+        {
+          "command": "codetour.addTourStep",
+          "when": "false"
+        },
+        {
+          "command": "codetour.deleteTourStep",
+          "when": "false"
+        },
+        {
+          "command": "codetour.editTourStep",
+          "when": "false"
         },
         {
           "command": "codetour.endTour",
@@ -85,6 +131,10 @@
         },
         {
           "command": "codetour.previousTourStep",
+          "when": "false"
+        },
+        {
+          "command": "codetour.saveTourStep",
           "when": "false"
         }
       ],
@@ -100,9 +150,47 @@
           "when": "commentController == codetour && commentThread =~ /hasNext/"
         },
         {
-          "command": "codetour.endTour",
+          "command": "codetour.saveTour",
           "group": "inline@3",
+          "when": "commentController == codetour && codetour:recording"
+        },
+        {
+          "command": "codetour.endTour",
+          "group": "inline@4",
           "when": "commentController == codetour"
+        }
+      ],
+      "comments/commentThread/context": [
+        {
+          "command": "codetour.addTourStep",
+          "group": "inline",
+          "when": "commentController == codetour && commentThreadIsEmpty"
+        }
+      ],
+      "comments/comment/title": [
+        {
+          "command": "codetour.editTourStep",
+          "group": "group@1",
+          "when": "commentController == codetour && codetour:recording"
+        },
+        {
+          "command": "codetour.deleteTourStep",
+          "group": "group@2",
+          "when": "commentController == codetour && codetour:recording"
+        }
+      ],
+      "comments/comment/context": [
+        {
+          "command": "codetour.saveTourStep",
+          "group": "inline@2",
+          "when": "commentController == codetour && codetour:recording"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "codetour.recordTour",
+          "when": "view == codetour.tours",
+          "group": "navigation"
         }
       ]
     },

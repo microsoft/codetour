@@ -57,3 +57,17 @@ async function discoverSubTours(workspaceRoot: string): Promise<CodeTour[]> {
     return [];
   }
 }
+
+// TODO: Properly dispose of this at some point
+const watcher = vscode.workspace.createFileSystemWatcher(
+  "**/.vscode/tours/*.json"
+);
+
+function updateTours() {
+  const workspaceRoot = vscode.workspace.workspaceFolders![0].uri.toString();
+  discoverTours(workspaceRoot);
+}
+
+watcher.onDidChange(updateTours);
+watcher.onDidCreate(updateTours);
+watcher.onDidDelete(updateTours);

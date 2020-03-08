@@ -1,9 +1,8 @@
-import { Uri } from "vscode";
 import { observable } from "mobx";
 
 export interface CodeTourStep {
   file?: string;
-  uri?: Uri;
+  uri?: string;
   line: number;
   description: string;
 }
@@ -12,7 +11,6 @@ export interface CodeTour {
   title: string;
   description?: string;
   steps: CodeTourStep[];
-  isMain: boolean;
 }
 
 export interface Store {
@@ -21,6 +19,7 @@ export interface Store {
   currentTour: CodeTour | null;
   currentStep: number;
   hasTours: boolean;
+  isRecording: boolean;
 }
 
 export const store: Store = observable({
@@ -28,6 +27,7 @@ export const store: Store = observable({
   subTours: [],
   currentTour: null,
   currentStep: 0,
+  isRecording: false,
   get hasTours() {
     return !!this.mainTour || this.subTours.length > 0;
   }

@@ -11,7 +11,9 @@ import {
   TextEditorRevealType,
   Uri,
   window,
-  workspace
+  workspace,
+  TextDocument,
+  CommentController
 } from "vscode";
 import { CodeTour, store } from ".";
 import { EXTENSION_NAME } from "../constants";
@@ -36,16 +38,18 @@ export class CodeTourComment implements Comment {
 
   constructor(
     public body: string | MarkdownString,
-    public label: string = ""
+    public label: string = "",
+    public parent: CommentThread
   ) {}
 }
 
-const controller = comments.createCommentController(
-  CONTROLLER_ID,
-  CONTROLLER_LABEL
-);
+let controller: CommentController;
 
-let currentThread: CommentThread | null = null;
+export let currentThread: CommentThread | null = null;
+
+export function updateCurrentThread(thread: CommentThread) {
+  currentThread = thread;
+}
 
 async function showDocument(uri: Uri, range: Range) {
   const document =
@@ -56,7 +60,7 @@ async function showDocument(uri: Uri, range: Range) {
   document.revealRange(range, TextEditorRevealType.InCenter);
 }
 
-async function renderStep() {
+export async function renderCurrentStep() {
   if (currentThread) {
     currentThread.dispose();
   }
@@ -65,6 +69,10 @@ async function renderStep() {
   const currentStep = store.currentStep;
 
   const step = currentTour!.steps[currentStep];
+
+  if (!step) {
+    return;
+  }
 
   // Adjust the line number, to allow the user to specify
   // them in 1-based format, not 0-based
@@ -76,13 +84,17 @@ async function renderStep() {
     label += ` (${currentTour.title})`;
   }
 
-  const comment = new CodeTourComment(step.description, label);
-
   const workspaceRoot = workspace.workspaceFolders
     ? workspace.workspaceFolders[0].uri.toString()
     : "";
-  const uri = step.uri || Uri.parse(`${workspaceRoot}/${step.file}`);
-  currentThread = controller.createCommentThread(uri, range, [comment]);
+  const uri = step.uri
+    ? Uri.parse(step.uri)
+    : Uri.parse(`${workspaceRoot}/${step.file}`);
+
+  currentThread = controller.createCommentThread(uri, range, []);
+  currentThread.comments = [
+    new CodeTourComment(step.description, label, currentThread!)
+  ];
 
   const contextValues = [];
   if (store.currentStep > 0) {
@@ -101,17 +113,49 @@ async function renderStep() {
 
 export function startCodeTour(tour: CodeTour) {
   store.currentTour = tour;
-  store.currentStep = 0;
+  store.currentStep = tour.steps.length ? 0 : -1;
 
   commands.executeCommand("setContext", IN_TOUR_KEY, true);
 
-  renderStep();
+  controller = comments.createCommentController(
+    CONTROLLER_ID,
+    CONTROLLER_LABEL
+  );
+
+  controller.commentingRangeProvider = {
+    provideCommentingRanges: (document: TextDocument) => {
+      if (store.isRecording) {
+        return [new Range(0, 0, document.lineCount, 0)];
+      } else {
+        return null;
+      }
+    }
+  };
+
+  renderCurrentStep();
 }
 
-export function endCurrentCodeTour() {
+const KEEP_RECORDING_RESPONSE = "Continue Recording";
+export async function endCurrentCodeTour() {
+  if (store.isRecording) {
+    const response = await window.showInformationMessage(
+      "Are you sure you want to exit the current recording?",
+      "Exit",
+      KEEP_RECORDING_RESPONSE
+    );
+    if (response === KEEP_RECORDING_RESPONSE) {
+      return;
+    } else {
+      commands.executeCommand("setContext", "codetour:recording", false);
+    }
+  }
   if (currentThread) {
     currentThread.dispose();
     currentThread = null;
+  }
+
+  if (controller) {
+    controller.dispose();
   }
 
   commands.executeCommand("setContext", IN_TOUR_KEY, false);
@@ -122,13 +166,13 @@ export function endCurrentCodeTour() {
 export function moveCurrentCodeTourBackward() {
   --store.currentStep;
 
-  renderStep();
+  renderCurrentStep();
 }
 
 export function moveCurrentCodeTourForward() {
   store.currentStep++;
 
-  renderStep();
+  renderCurrentStep();
 }
 
 export function resumeCurrentCodeTour() {

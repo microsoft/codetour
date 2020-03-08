@@ -37,14 +37,20 @@ export function registerStatusBar() {
 
     reaction(
       // @ts-ignore
-      () => [store.currentTour, store.currentStep],
-      ([tour, step]: [CodeTour | null, number]) => {
+      () => [
+        store.currentTour,
+        store.currentStep,
+        store.isRecording,
+        store.currentTour ? store.currentTour.steps.length : null
+      ],
+      ([tour, step, isRecording]: [CodeTour | null, number, boolean]) => {
         if (tour) {
           if (!currentTourItem) {
             currentTourItem = createCurrentTourItem();
           }
 
-          currentTourItem.text = `Code Tour: #${step + 1} of ${
+          const prefix = isRecording ? "Recording " : "";
+          currentTourItem.text = `${prefix}Code Tour: #${step + 1} of ${
             tour.steps.length
           } (${tour.title})`;
 

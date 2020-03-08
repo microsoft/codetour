@@ -77,7 +77,7 @@ In addition to the `Code Tours` tree view and the status bar item, the Code Tour
 - `Code Tour: Start Tour` - Starts a tour for the currently opened workspace. This command is only visible if the current workspace actually has one or more code tours.
 
 - `Code Tour: Record Tour` - Starts the tour recorder, which allows you to create a new tour by creating a sequence of steps.
-- 
+  
 - `Code Tour: Refresh Tours` - Refreshes the `Code Tours` view, which can be handy if you'd created/modified/deleted tour files on disk.
 
 - `Code Tour: Resume Current Tour` - Resumse the current tour by navigating to the file/line number that's associated with the current step.

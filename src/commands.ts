@@ -137,7 +137,7 @@ export function registerCommands() {
 
       store.currentTour!.steps.push({
         file: vscode.workspace.asRelativePath(currentThread!.uri),
-        line: currentThread!.range.start.line,
+        line: currentThread!.range.start.line + 1,
         description: reply.text
       });
 

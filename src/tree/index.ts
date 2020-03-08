@@ -8,7 +8,7 @@ import {
   window
 } from "vscode";
 import { store } from "../store";
-import { CodeTourNode, CodeTourStepNode } from "./nodes";
+import { CodeTourNode, CodeTourStepNode, RecordTourNode } from "./nodes";
 
 class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
   private _disposables: Disposable[] = [];
@@ -38,24 +38,28 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
 
   async getChildren(element?: TreeItem): Promise<TreeItem[] | undefined> {
     if (!element) {
-      const tours = store.subTours.map(
-        tour => new CodeTourNode(tour, this.extensionPath, false)
-      );
-      if (store.mainTour) {
-        tours.unshift(
-          new CodeTourNode(store.mainTour, this.extensionPath, false)
+      if (!store.hasTours) {
+        return [new RecordTourNode()];
+      } else {
+        const tours = store.subTours.map(
+          tour => new CodeTourNode(tour, this.extensionPath, false)
         );
+        if (store.mainTour) {
+          tours.unshift(
+            new CodeTourNode(store.mainTour, this.extensionPath, false)
+          );
+        }
+        if (
+          store.isRecording &&
+          store.currentTour &&
+          !tours.find(tour => tour.tour.title === store.currentTour!.title)
+        ) {
+          tours.unshift(
+            new CodeTourNode(store.currentTour!, this.extensionPath, true)
+          );
+        }
+        return tours;
       }
-      if (
-        store.isRecording &&
-        store.currentTour &&
-        !tours.find(tour => tour.tour.title === store.currentTour!.title)
-      ) {
-        tours.unshift(
-          new CodeTourNode(store.currentTour!, this.extensionPath, true)
-        );
-      }
-      return tours;
     } else if (element instanceof CodeTourNode) {
       if (element.tour.steps.length === 0) {
         return [new TreeItem("No steps recorded yet")];

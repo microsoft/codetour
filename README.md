@@ -27,7 +27,7 @@ Once you've started a tour, the comment UI will guide you, and includes navigati
 - `Next` - Navigate to the next step in the current tour
 - `End Tour` - End the current tour and remove the comment UI
 
-When you're actively in a code tour, the status bar will also display the title and current step of the tour. If you navigate away from the active tour step, you can click on the status bar item and resume the tour at any time.
+Additionally, you can use the `ctrl+right` / `ctrl+left` (Windows/Linux) and `cmd+right` / `cmd+left` (macOS) keyboard shortcuts to move forwards and backwards in the tour. When you're actively in a code tour, the status bar will also display the title and current step of the tour. If you navigate away from the active tour step, you can click on the status bar item and resume the tour at any time.
 
 <img width="500px" src="https://user-images.githubusercontent.com/116461/76151723-ca00b580-606c-11ea-9bd5-81c1d9352cef.png" />
 
@@ -35,9 +35,13 @@ When you're actively in a code tour, the status bar will also display the title 
 
 If you'd like to create a code tour for your codebase, you can simply click the `+` button in the `Code Tours` tree view and/or run the `Code Tour: Record Tour` command. This will start the "tour recorder", which allows you to begin opening files, clicking the "comment bar" for the line you want to annotate, and then adding the respective description (including markdown!). Add as many steps as you want, and then when done, click the save icon in the comment UI to write the tour to the current project.
 
-While you're recording, the `Code Tours` [tree view](#tree-view) will display the currently recorded tour, and it's current set of steps. You can tell which tour is being recorded because it will have a microphone icon to the left of its name. 
+While you're recording, the `Code Tours` [tree view](#tree-view) will display the currently recorded tour, and it's current set of steps. You can tell which tour is being recorded because it will have a microphone icon to the left of its name.
 
 <img width="800px" src="https://user-images.githubusercontent.com/116461/76165260-c6c00500-6112-11ea-9cda-0a6cb9b72e8f.gif" />
+
+If you need to edit or delete a step while recording, click the `...` menu next to the step's description, and select the appropriate action.
+
+<img width="500px" src="https://user-images.githubusercontent.com/116461/76168548-1f50cb80-612e-11ea-9aca-8598b9e1c730.png" />
 
 Behind the scenes, the tour will be written as a JSON file to the `.vscode/tours` directory of the current workspace. This file is pretty simple and can be hand-edited if you'd like. Additionally, you can manually create tour files, by following the [tour schema](#tour-schema). You can then store these files to the `.vscode/tours` directory, or you can also create a tour at any of the following locations:
 
@@ -89,3 +93,10 @@ In addition to the `Code Tours` tree view and the status bar item, the Code Tour
 - `Code Tour: Refresh Tours` - Refreshes the `Code Tours` view, which can be handy if you'd created/modified/deleted tour files on disk.
 
 - `Code Tour: Resume Current Tour` - Resumse the current tour by navigating to the file/line number that's associated with the current step.
+
+## Keybdings
+
+In addition to the available commands, the Code Tour extension also contributes the following commands, which are active while you're currently taking a tour:
+
+- `ctrl+right` (Windows/Linux), `cmd+right` (macOS) - Move to the next step in the tour
+- `ctrl+left` (Windows/Linux) `cmd+left` (macOS) - Move to the previous step in the tour

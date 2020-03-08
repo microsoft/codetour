@@ -29,6 +29,10 @@ export const store: Store = observable({
   currentStep: 0,
   isRecording: false,
   get hasTours() {
-    return !!this.mainTour || this.subTours.length > 0;
+    return (
+      !!this.mainTour ||
+      this.subTours.length > 0 ||
+      (this.isRecording && this.currentTour)
+    );
   }
 });

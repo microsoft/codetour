@@ -10,16 +10,26 @@ import { EXTENSION_NAME } from "../constants";
 import { CodeTour } from "../store";
 
 export class CodeTourNode extends TreeItem {
-  constructor(public tour: CodeTour, extensionPath: string) {
-    super(tour.title!, TreeItemCollapsibleState.Collapsed);
+  constructor(
+    public tour: CodeTour,
+    extensionPath: string,
+    isRecording: boolean
+  ) {
+    super(
+      tour.title!,
+      isRecording
+        ? TreeItemCollapsibleState.Expanded
+        : TreeItemCollapsibleState.Collapsed
+    );
 
     this.tooltip = tour.description;
     this.description = `${tour.steps.length} steps`;
     this.contextValue = "codetour.tour";
 
+    const icon = isRecording ? "tour-recording" : "tour";
     this.iconPath = {
-      dark: path.join(extensionPath, "images/dark/tour.svg"),
-      light: path.join(extensionPath, "images/light/tour.svg")
+      dark: path.join(extensionPath, `images/dark/${icon}.svg`),
+      light: path.join(extensionPath, `images/light/${icon}.svg`)
     };
   }
 }

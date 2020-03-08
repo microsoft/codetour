@@ -19,7 +19,15 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
 
   constructor(private extensionPath: string) {
     reaction(
-      () => [store.hasTours, store.mainTour, store.subTours],
+      () => [
+        store.hasTours,
+        store.mainTour,
+        store.subTours,
+        store.isRecording,
+        store.currentTour
+          ? store.currentTour.steps.map(step => step.description)
+          : null
+      ],
       () => {
         this._onDidChangeTreeData.fire();
       }
@@ -31,16 +39,31 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
   async getChildren(element?: TreeItem): Promise<TreeItem[] | undefined> {
     if (!element) {
       const tours = store.subTours.map(
-        tour => new CodeTourNode(tour, this.extensionPath)
+        tour => new CodeTourNode(tour, this.extensionPath, false)
       );
       if (store.mainTour) {
-        tours.unshift(new CodeTourNode(store.mainTour, this.extensionPath));
+        tours.unshift(
+          new CodeTourNode(store.mainTour, this.extensionPath, false)
+        );
+      }
+      if (
+        store.isRecording &&
+        store.currentTour &&
+        !tours.find(tour => tour.tour.title === store.currentTour!.title)
+      ) {
+        tours.unshift(
+          new CodeTourNode(store.currentTour!, this.extensionPath, true)
+        );
       }
       return tours;
     } else if (element instanceof CodeTourNode) {
-      return element.tour.steps.map(
-        (_, index) => new CodeTourStepNode(element.tour, index)
-      );
+      if (element.tour.steps.length === 0) {
+        return [new TreeItem("No steps recorded yet")];
+      } else {
+        return element.tour.steps.map(
+          (_, index) => new CodeTourStepNode(element.tour, index)
+        );
+      }
     }
   }
 

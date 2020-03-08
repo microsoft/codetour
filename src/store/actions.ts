@@ -150,9 +150,11 @@ export async function endCurrentCodeTour() {
     if (response === KEEP_RECORDING_RESPONSE) {
       return;
     } else {
+      store.isRecording = false;
       commands.executeCommand("setContext", "codetour:recording", false);
     }
   }
+
   if (currentThread) {
     currentThread.dispose();
     currentThread = null;
@@ -162,9 +164,8 @@ export async function endCurrentCodeTour() {
     controller.dispose();
   }
 
-  commands.executeCommand("setContext", IN_TOUR_KEY, false);
-
   store.currentTour = null;
+  commands.executeCommand("setContext", IN_TOUR_KEY, false);
 }
 
 export function moveCurrentCodeTourBackward() {

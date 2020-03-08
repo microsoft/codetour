@@ -1,6 +1,6 @@
 # Code Tour 🗺️
 
-Code Tour is a Visual Studio Code extension, which allows you to take guided walkthroughs of a codebase, in order to make it easier to onboard, visualize bug repors, or understand the context of a code review/PR change. A "code tour" is simply a series of inline comments, each of which are associated with a specific file/line, and include a description of the respective code. The end user can start/stop tours at any time, and navigate the current tour at their own pace.
+Code Tour is a Visual Studio Code extension, which allows you to take guided walkthroughs of a codebase. It's like a virtual brownbag, that can make it easier to onboard to a new project/feature area, visualize bug reports, or understand the context of a code review/PR change. A "code tour" is simply a series of inline comments, each of which are associated with a specific file/line, and include a description of the respective code. The end user can start/stop tours at any time, and navigate the current tour at their own pace.
 
 <img width="800px" src="https://user-images.githubusercontent.com/116461/76151694-7b531b80-606c-11ea-96a6-0655eb6ab4e6.gif" />
 

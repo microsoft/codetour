@@ -14,7 +14,7 @@
     },
     {
       "file": "package.json",
-      "line": 112,
+      "line": 200,
       "description": "This view registration declares that the code tours tree view should be placed within the `Explorer` activity tab."
     },
     {
@@ -34,7 +34,7 @@
     },
     {
       "file": "src/commands.ts",
-      "line": 22,
+      "line": 24,
       "description": "When a node is clicked in the tree view, it will pass the target tour and simply start it."
     }
   ]

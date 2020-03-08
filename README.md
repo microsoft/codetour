@@ -33,6 +33,9 @@ When you're actively in a code tour, the status bar will also display the title 
 
 If you'd like to create a code tour for your codebase, you can simply click the `+` button in the `Code Tours` tree view and/or run the `Code Tour: Record Tour` command. This will start the "tour recorder", which allows you to simply open up a file, click the "comment bar" for the line you want to annotate, and then add the respective comment. Add as many steps as you want, and then when done, click the save icon in the comment UI to write the tour to the current project.
 
+<img width="700px" src="https://user-images.githubusercontent.com/116461/76155936-fab21080-60a7-11ea-8417-a74078459b7a.gif" />
+
+
 Behind the scenes, the tour will be written as a JSON file to the `.vscode/tours` directory of the current workspace. This file is pretty simple and can be hand-edited if you'd like. Additionally, you can manually create tour files manually, by following the [tour schema](#tour-schema). You can write these files to the `.vscode/tours` directory, or you can also create a tour at any of the following locations:
 
 - `codetour.json`

@@ -115,7 +115,7 @@ export function registerCommands() {
 
     if (
       await vscode.window.showInformationMessage(
-        "Code tour recording started! Start creating steps now.",
+        "Code tour recording started. Start creating steps and then save it when done.",
         "Cancel"
       )
     ) {
@@ -234,7 +234,11 @@ export function registerCommands() {
     vscode.commands.executeCommand("setContext", "codetour:recording", false);
     store.isRecording = false;
 
-    vscode.window.showInformationMessage("Code tour saved!");
+    vscode.window.showInformationMessage(
+      `The "${
+        store.currentTour!.title
+      }" code tour was saved to the current workspace.`
+    );
     currentThread!.dispose();
     endCurrentCodeTour();
   });

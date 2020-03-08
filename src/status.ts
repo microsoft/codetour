@@ -58,8 +58,10 @@ export function registerStatusBar() {
             startTourItem.hide();
           }
         } else {
-          currentTourItem && currentTourItem.dispose();
-          currentTourItem = null;
+          if (currentTourItem) {
+            currentTourItem.dispose();
+            currentTourItem = null;
+          }
 
           startTourItem.show();
         }

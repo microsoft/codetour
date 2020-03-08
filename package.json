@@ -1,7 +1,7 @@
 {
   "name": "codetour",
   "displayName": "Code Tour",
-  "description": "VS Code extension that allows you to take guided tours of a codebase, directly within the editor",
+  "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
   "version": "0.0.1",
   "repository": {
@@ -89,10 +89,7 @@
         "command": "codetour.startTour",
         "title": "Start Tour",
         "category": "Code Tour",
-        "icon": {
-          "dark": "images/dark/tour.svg",
-          "light": "images/light/tour.svg"
-        }
+        "icon": "$(play)"
       }
     ],
     "menus": {
@@ -191,6 +188,13 @@
           "command": "codetour.recordTour",
           "when": "view == codetour.tours",
           "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "codetour.startTour",
+          "when": "viewItem == codetour.tour",
+          "group": "inline@1"
         }
       ]
     },

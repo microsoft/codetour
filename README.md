@@ -1,25 +1,25 @@
 # Code Tour 🗺️
 
-Code Tour is a Visual Studio Code extension, which allows you to take guided walkthroughs of a codebase. It's like a virtual brownbag, that can make it easier to onboard to a new project/feature area, visualize bug reports, or understand the context of a code review/PR change. A "code tour" is simply a series of inline comments, each of which are associated with a specific file/line, and include a description of the respective code. The end user can start/stop tours at any time, and navigate the current tour at their own pace.
+Code Tour is a Visual Studio Code extension, which allows you to record and playback guided walkthroughs of your codebases. It's like a virtual brownbag, that can make it easier to onboard to a new project/feature area, visualize bug reports, or understand the context of a code review/PR change. A "code tour" is simply a series of interactive steps, each of which are associated with a specific file/line, and include a description of the respective code. This allows developers to clone a repo, and then immediately start **learning it**, without needing to refer to a `CONTRIBUTING.md` file and/or rely on help from others.
 
 <img width="800px" src="https://user-images.githubusercontent.com/116461/76151694-7b531b80-606c-11ea-96a6-0655eb6ab4e6.gif" />
 
 ## Starting a tour
 
-In order to start a tour, simply open up a codebase that has one or more tours. If this is the first time you've ever opened this codebase, then you'll be presented with a toast notification, asking if you'd like to take a tour of it. Otherwise, you can manually start a tour via any of the following methods:
+In order to start a tour, simply open up a codebase that has one or more tours. If this is the first time you've ever opened this codebase, then you'll be presented with a toast notification asking if you'd like to take a tour of it. Otherwise, you can manually start a tour via any of the following methods:
 
-1. Clicking the `Start Code Tour` button in the [status bar](#status-bar)
+1. Clicking the `> Start Code Tour` button in the [status bar](#status-bar)
 1. Selecting on a tour in the [`Code Tours` view](#tree-view) in the `Explorer` tab
 
    <img width="191" src="https://user-images.githubusercontent.com/116461/76151744-22d04e00-606d-11ea-8927-046e73f11098.png" />
 
 1. Running the `Code Tour: Start Tour` [command](#contributed-commands), and selecting the tour you'd like to take
 
-If the current workspace only has a single code tour, then any of the above actions will automatically start the tour. Otherwise, you'll be presented with a list of tours to select from.
+If the current workspace only has a single code tour, then any of the above actions will automatically start that tour. Otherwise, you'll be presented with a list of tours to select from.
 
 ## Navigating a tour
 
-Once you've started a tour, the comment UI includes navigation actions that allow you to perform the following:
+Once you've started a tour, the comment UI will guide you, and includes navigation actions that allow you to perform the following:
 
 - `Previous` - Navigate back to the previous step in the current tour
 - `Next` - Navigate to the next step in the current tour
@@ -31,11 +31,11 @@ When you're actively in a code tour, the status bar will also display the title 
 
 ## Authoring tours
 
-If you'd like to create a code tour for your codebase, you can simply click the `+` button in the `Code Tours` tree view and/or run the `Code Tour: Record Tour` command. This will start the "tour recorder", which allows you to simply open up a file, click the "comment bar" for the line you want to annotate, and then add the respective comment. Add as many steps as you want, and then when done, click the save icon in the comment UI to write the tour to the current project.
+If you'd like to create a code tour for your codebase, you can simply click the `+` button in the `Code Tours` tree view and/or run the `Code Tour: Record Tour` command. This will start the "tour recorder", which allows you to begin opening files, clicking the "comment bar" for the line you want to annotate, and then adding the respective description (including markdown!). Add as many steps as you want, and then when done, click the save icon in the comment UI to write the tour to the current project.
 
 <img width="800px" src="https://user-images.githubusercontent.com/116461/76155936-fab21080-60a7-11ea-8417-a74078459b7a.gif" />
 
-Behind the scenes, the tour will be written as a JSON file to the `.vscode/tours` directory of the current workspace. This file is pretty simple and can be hand-edited if you'd like. Additionally, you can manually create tour files manually, by following the [tour schema](#tour-schema). You can write these files to the `.vscode/tours` directory, or you can also create a tour at any of the following locations:
+Behind the scenes, the tour will be written as a JSON file to the `.vscode/tours` directory of the current workspace. This file is pretty simple and can be hand-edited if you'd like. Additionally, you can manually create tour files, by following the [tour schema](#tour-schema). You can then store these files to the `.vscode/tours` directory, or you can also create a tour at any of the following locations:
 
 - `codetour.json`
 - `tour.json`
@@ -58,7 +58,7 @@ For an example, refer to the `.vscode/tour.json` file of this repository.
 
 ## Tree View
 
-If the currently opened workspace has any code tours, you'll see a new tree view called `Code Tours`, that's added to the `Explorer` tab. This view simply lists the set of available code tours, along with their title. If you select a tour it will start it, and therefore, this is simply a more convenient equivalent to running the `Code Tour: Start Tour` command.
+If the currently opened workspace has any code tours, you'll see a new tree view called `Code Tours`, that's added to the `Explorer` tab. This view simply lists the set of available code tours, along with their title and number of steps. If you select a tour it will start it, and therefore, this is simply a more convenient alternative to running the `Code Tour: Start Tour` command. However, you can also expand a tour and start it at a specific step.
 
 <img width="191px" src="https://user-images.githubusercontent.com/116461/76151744-22d04e00-606d-11ea-8927-046e73f11098.png" />
 
@@ -77,7 +77,7 @@ In addition to the `Code Tours` tree view and the status bar item, the Code Tour
 - `Code Tour: Start Tour` - Starts a tour for the currently opened workspace. This command is only visible if the current workspace actually has one or more code tours.
 
 - `Code Tour: Record Tour` - Starts the tour recorder, which allows you to create a new tour by creating a sequence of steps.
-  
+
 - `Code Tour: Refresh Tours` - Refreshes the `Code Tours` view, which can be handy if you'd created/modified/deleted tour files on disk.
 
 - `Code Tour: Resume Current Tour` - Resumse the current tour by navigating to the file/line number that's associated with the current step.

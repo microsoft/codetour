@@ -1,3 +1,4 @@
+import { reaction } from "mobx";
 import {
   Disposable,
   Event,
@@ -7,8 +8,7 @@ import {
   window
 } from "vscode";
 import { store } from "../store";
-import { CodeTourNode } from "./nodes";
-import { reaction } from "mobx";
+import { CodeTourNode, CodeTourStepNode } from "./nodes";
 
 class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
   private _disposables: Disposable[] = [];
@@ -37,6 +37,10 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
         tours.unshift(new CodeTourNode(store.mainTour, this.extensionPath));
       }
       return tours;
+    } else if (element instanceof CodeTourNode) {
+      return element.tour.steps.map(
+        (_, index) => new CodeTourStepNode(element.tour, index)
+      );
     }
   }
 

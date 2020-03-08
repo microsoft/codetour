@@ -111,9 +111,9 @@ export async function renderCurrentStep() {
   showDocument(uri, range);
 }
 
-export function startCodeTour(tour: CodeTour) {
+export function startCodeTour(tour: CodeTour, stepNumber?: number) {
   store.currentTour = tour;
-  store.currentStep = tour.steps.length ? 0 : -1;
+  store.currentStep = stepNumber ? stepNumber : tour.steps.length ? 0 : -1;
 
   commands.executeCommand("setContext", IN_TOUR_KEY, true);
 

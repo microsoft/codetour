@@ -14,6 +14,7 @@ import {
 } from "./store/actions";
 import { discoverTours } from "./store/provider";
 import * as path from "path";
+import { CodeTourNode } from "./tree/nodes";
 
 interface CodeTourQuickPickItem extends vscode.QuickPickItem {
   tour: CodeTour;
@@ -22,9 +23,10 @@ interface CodeTourQuickPickItem extends vscode.QuickPickItem {
 export function registerCommands() {
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.startTour`,
-    async (tour?: CodeTour) => {
+    async (tour?: CodeTour | CodeTourNode, stepNumber?: number) => {
       if (tour) {
-        return startCodeTour(tour);
+        const targetTour = tour instanceof CodeTourNode ? tour.tour : tour;
+        return startCodeTour(targetTour, stepNumber);
       }
 
       let items: CodeTourQuickPickItem[] = store.subTours

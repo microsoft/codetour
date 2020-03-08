@@ -13,7 +13,6 @@ import {
   updateCurrentThread
 } from "./store/actions";
 import { discoverTours } from "./store/provider";
-import * as path from "path";
 import { CodeTourNode } from "./tree/nodes";
 
 interface CodeTourQuickPickItem extends vscode.QuickPickItem {
@@ -223,14 +222,8 @@ export function registerCommands() {
     }
 
     const tour = JSON.stringify(store.currentTour, null, 2);
-    const uri = vscode.Uri.parse(
-      path.join(
-        vscode.workspace.workspaceFolders![0].uri.toString(),
-        ".vscode",
-        "tours",
-        `${file}.json`
-      )
-    );
+    const workspaceRoot = vscode.workspace.workspaceFolders![0].uri.toString();
+    const uri = vscode.Uri.parse(`${workspaceRoot}/.vscode/tours/${file}.json`);
     vscode.workspace.fs.writeFile(uri, new Buffer(tour));
 
     vscode.commands.executeCommand("setContext", "codetour:recording", false);

@@ -117,6 +117,10 @@ export function startCodeTour(tour: CodeTour, stepNumber?: number) {
 
   commands.executeCommand("setContext", IN_TOUR_KEY, true);
 
+  if (controller) {
+    controller.dispose();
+  }
+
   controller = comments.createCommentController(
     CONTROLLER_ID,
     CONTROLLER_LABEL

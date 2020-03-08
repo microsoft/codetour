@@ -9,9 +9,9 @@ Code Tour is a Visual Studio Code extension, which allows you to record and play
 In order to start a tour, simply open up a codebase that has one or more tours. If this is the first time you've ever opened this codebase, then you'll be presented with a toast notification asking if you'd like to take a tour of it. Otherwise, you can manually start a tour via any of the following methods:
 
 1. Clicking the `> Start Code Tour` button in the [status bar](#status-bar)
-1. Selecting on a tour in the [`Code Tours` view](#tree-view) in the `Explorer` tab
+1. Selecting on a tour (or specific step) in the [`Code Tours` view](#tree-view) in the `Explorer` activity tab
 
-   <img width="191" src="https://user-images.githubusercontent.com/116461/76151744-22d04e00-606d-11ea-8927-046e73f11098.png" />
+   <img width="250px" src="https://user-images.githubusercontent.com/116461/76164362-8610bd80-610b-11ea-9621-4ba2d47a8a52.png" />
 
 1. Running the `Code Tour: Start Tour` [command](#contributed-commands), and selecting the tour you'd like to take
 
@@ -60,7 +60,9 @@ For an example, refer to the `.vscode/tour.json` file of this repository.
 
 If the currently opened workspace has any code tours, you'll see a new tree view called `Code Tours`, that's added to the `Explorer` tab. This view simply lists the set of available code tours, along with their title and number of steps. If you select a tour it will start it, and therefore, this is simply a more convenient alternative to running the `Code Tour: Start Tour` command. However, you can also expand a tour and start it at a specific step.
 
-<img width="191px" src="https://user-images.githubusercontent.com/116461/76151744-22d04e00-606d-11ea-8927-046e73f11098.png" />
+<img width="250px" src="https://user-images.githubusercontent.com/116461/76164362-8610bd80-610b-11ea-9621-4ba2d47a8a52.png" />
+
+> The tree view is automatically kept up to date, as you add/edit/delete tours within the current workspace. So feel free to [record](#authoring-tours) and/or edit tours, and then navigate them when done.
 
 ## Status Bar
 

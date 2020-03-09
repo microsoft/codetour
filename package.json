@@ -32,7 +32,7 @@
     "commands": [
       {
         "command": "codetour.addTourStep",
-        "title": "Add Step",
+        "title": "Add Step to Tour",
         "enablement": "!commentIsEmpty"
       },
       {
@@ -192,9 +192,19 @@
       ],
       "view/item/context": [
         {
+          "command": "codetour.saveTour",
+          "when": "viewItem =~ /codetour.tour.recording/",
+          "group": "inline@1"
+        },
+        {
+          "command": "codetour.endTour",
+          "when": "viewItem =~ /codetour.tour(.recording)?.active/",
+          "group": "inline@2"
+        },
+        {
           "command": "codetour.startTour",
           "when": "viewItem == codetour.tour",
-          "group": "inline@1"
+          "group": "inline@3"
         }
       ]
     },

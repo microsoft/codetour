@@ -1,0 +1,11 @@
+{
+  "title": "bar",
+  "description": "",
+  "steps": [
+    {
+      "file": "src/extension.ts",
+      "line": 35,
+      "description": "blah"
+    }
+  ]
+}

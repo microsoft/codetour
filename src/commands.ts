@@ -116,7 +116,7 @@ export function registerCommands() {
 
     if (
       await vscode.window.showInformationMessage(
-        "Code tour recording started. Start creating steps and then save it when done.",
+        "Code tour recording started. Start creating steps by clicking the + button to the left of each line of code.",
         "Cancel"
       )
     ) {
@@ -213,13 +213,10 @@ export function registerCommands() {
   );
 
   vscode.commands.registerCommand(`${EXTENSION_NAME}.saveTour`, async () => {
-    const file = await vscode.window.showInputBox({
-      prompt: "Specify the name of the tour"
-    });
-
-    if (!file) {
-      return;
-    }
+    const file = store.currentTour?.title
+      .toLocaleLowerCase()
+      .replace(/\s/g, "-")
+      .replace(/[^\w\d-_]/g, "");
 
     const tour = JSON.stringify(store.currentTour, null, 2);
     const workspaceRoot = vscode.workspace.workspaceFolders![0].uri.toString();
@@ -232,7 +229,7 @@ export function registerCommands() {
     vscode.window.showInformationMessage(
       `The "${
         store.currentTour!.title
-      }" code tour was saved to the current workspace.`
+      }" code tour was saved to to ".vscode/tours/${file}.json"`
     );
     currentThread!.dispose();
     endCurrentCodeTour();

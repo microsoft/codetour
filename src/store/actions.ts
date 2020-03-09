@@ -141,7 +141,11 @@ export function startCodeTour(tour: CodeTour, stepNumber?: number) {
 
 const KEEP_RECORDING_RESPONSE = "Continue Recording";
 export async function endCurrentCodeTour() {
-  if (store.isRecording) {
+  if (
+    store.isRecording &&
+    store.currentTour &&
+    store.currentTour.steps.length > 0
+  ) {
     const response = await window.showInformationMessage(
       "Are you sure you want to exit the current recording?",
       "Exit",

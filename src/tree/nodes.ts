@@ -7,7 +7,7 @@ import {
   workspace
 } from "vscode";
 import { EXTENSION_NAME } from "../constants";
-import { CodeTour } from "../store";
+import { CodeTour, store } from "../store";
 
 export class CodeTourNode extends TreeItem {
   constructor(
@@ -24,7 +24,18 @@ export class CodeTourNode extends TreeItem {
 
     this.tooltip = tour.description;
     this.description = `${tour.steps.length} steps`;
-    this.contextValue = "codetour.tour";
+
+    const contextValues = ["codetour.tour"];
+
+    if (isRecording) {
+      contextValues.push("recording");
+    }
+
+    if (store.currentTour && tour.title === store.currentTour?.title) {
+      contextValues.push("active");
+    }
+
+    this.contextValue = contextValues.join(".");
 
     const icon = isRecording ? "tour-recording" : "tour";
     this.iconPath = {

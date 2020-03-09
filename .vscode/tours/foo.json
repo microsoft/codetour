@@ -1,0 +1,11 @@
+{
+  "title": "foo",
+  "description": "",
+  "steps": [
+    {
+      "file": "schema.json",
+      "line": 21,
+      "description": "Test"
+    }
+  ]
+}

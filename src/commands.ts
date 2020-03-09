@@ -98,7 +98,7 @@ export function registerCommands() {
     }
 
     const description = await vscode.window.showInputBox({
-      prompt: "Specify the description of the tour"
+      prompt: "(Optional) Specify the description of the tour"
     });
 
     store.isRecording = true;

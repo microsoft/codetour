@@ -31,13 +31,20 @@ export class CodeTourNode extends TreeItem {
       contextValues.push("recording");
     }
 
-    if (store.currentTour && tour.title === store.currentTour?.title) {
+    const isActive =
+      store.currentTour && tour.title === store.currentTour?.title;
+    if (isActive) {
       contextValues.push("active");
     }
 
     this.contextValue = contextValues.join(".");
 
-    const icon = isRecording ? "tour-recording" : "tour";
+    const icon = isRecording
+      ? "tour-recording"
+      : isActive
+      ? "tour-active"
+      : "tour";
+
     this.iconPath = {
       dark: path.join(extensionPath, `images/dark/${icon}.svg`),
       light: path.join(extensionPath, `images/light/${icon}.svg`)

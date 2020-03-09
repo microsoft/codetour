@@ -24,6 +24,10 @@
     "Collaboration",
     "Sharing"
   ],
+  "extensionKind": [
+    "workspace",
+    "ui"
+  ],
   "activationEvents": [
     "*"
   ],

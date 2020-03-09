@@ -1,8 +1,13 @@
+## v0.0.5 (03/09/2020)
+
+- Added an icon to the `Code Tours` tree view which indicates the currently active tour
+- Added support for creating/replaying tours when connected to a remote environment (thanks @alefragnani!)
+
 ## v0.0.4 (03/09/2020)
 
 - Added the save/end tour commands to the `Code Tours` tree view
 - The tour file name is now auto-generated based on the specified title
-  
+
 ## v0.0.3 (03/08/2020)
 
 - Fixed a bug where recorded tours didn't always save properly on Windows

@@ -88,7 +88,7 @@
       },
       {
         "command": "codetour.resumeTour",
-        "title": "Resume Current Tour",
+        "title": "Resume Tour",
         "category": "Code Tour"
       },
       {
@@ -236,18 +236,43 @@
           "group": "inline@3"
         },
         {
-          "command": "codetour.changeTourTitle",
+          "command": "codetour.saveTour",
+          "when": "viewItem =~ /codetour.tour.recording/",
+          "group": "active@1"
+        },
+        {
+          "command": "codetour.resumeTour",
+          "when": "viewItem =~ /codetour.tour(.recording)?.active/",
+          "group": "active@2"
+        },
+        {
+          "command": "codetour.endTour",
+          "when": "viewItem =~ /codetour.tour(.recording)?.active/",
+          "group": "active@3"
+        },
+        {
+          "command": "codetour.startTour",
           "when": "viewItem == codetour.tour",
           "group": "basic@1"
         },
         {
+          "command": "codetour.changeTourTitle",
+          "when": "viewItem =~ /^codetour.tour/",
+          "group": "change@1"
+        },
+        {
           "command": "codetour.changeTourDescription",
-          "when": "viewItem == codetour.tour",
-          "group": "basic@2"
+          "when": "viewItem =~ /^codetour.tour/",
+          "group": "change@2"
         },
         {
           "command": "codetour.deleteTour",
-          "when": "viewItem == codetour.tour",
+          "when": "viewItem =~ /^codetour.tour/",
+          "group": "delete@1"
+        },
+        {
+          "command": "codetour.deleteTourStep",
+          "when": "viewItem == codetour.tour.step",
           "group": "manage@1"
         }
       ]

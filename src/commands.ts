@@ -205,10 +205,14 @@ export function registerCommands() {
     // @ts-ignore
     tour[property] = propertyValue;
 
-    const uri = vscode.Uri.parse(tour.id);
-    delete tour.id;
-    const tourContent = JSON.stringify(tour, null, 2);
-    vscode.workspace.fs.writeFile(uri, new Buffer(tourContent));
+    // We don't need to persist the tour change
+    // if it doesn't have an id (e.g. is pending being saved)
+    if (tour.id) {
+      const uri = vscode.Uri.parse(tour.id);
+      delete tour.id;
+      const tourContent = JSON.stringify(tour, null, 2);
+      vscode.workspace.fs.writeFile(uri, new Buffer(tourContent));
+    }
   }
 
   vscode.commands.registerCommand(
@@ -224,8 +228,14 @@ export function registerCommands() {
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.deleteTour`,
     async (node: CodeTourNode) => {
-      const uri = vscode.Uri.parse(node.tour.id);
-      vscode.workspace.fs.delete(uri);
+      if (store.currentTour && node.tour.title === store.currentTour.title) {
+        await endCurrentCodeTour();
+      }
+
+      if (node.tour.id) {
+        const uri = vscode.Uri.parse(node.tour.id);
+        vscode.workspace.fs.delete(uri);
+      }
     }
   );
 

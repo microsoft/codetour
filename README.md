@@ -31,12 +31,18 @@ Additionally, you can use the `ctrl+right` / `ctrl+left` (Windows/Linux) and `cm
 
 <img width="500px" src="https://user-images.githubusercontent.com/116461/76151723-ca00b580-606c-11ea-9bd5-81c1d9352cef.png" />
 
+If you navigate away from the current step and need to resume, you can do that via any of the following actions:
+
+- Right-clicking the active tour in the `Code Tours` tree and selecting `Resume Tour`
+- Clicking the `Code Tour` status bar item
+- Running the `Code Tour: Resume Tour` command in the command palette
+
 At any time, you can end the current code tour by means of one of the following actions:
 
 - Click the `x` button in the current step comment
 - Click the `x` button next to the active tour in the `Code Tours` tree
 - Running the `Code Tour: End Tour` command in the command palette
-  
+
 ## Authoring tours
 
 If you'd like to create a code tour for your codebase, you can simply click the `+` button in the `Code Tours` tree view and/or run the `Code Tour: Record Tour` command. This will start the "tour recorder", which allows you to begin opening files, clicking the "comment bar" for the line you want to annotate, and then adding the respective description (including markdown!). Add as many steps as you want, and then when done, click the save icon in the comment UI to write the tour to the current project.

@@ -1,7 +1,7 @@
 ## v0.0.6 (03/13/2020)
 
-- Added the `Code Tour: End Tour` command to the command palette
 - Added the `'Resume Tour`, `End Tour`, `Change Title`, `Change Description` and `Delete Tour` commands to the `Code Tours` tree view to enable easily managing existing tours
+- Added the `Code Tour: End Tour` command to the command palette
 
 ## v0.0.5 (03/09/2020)
 

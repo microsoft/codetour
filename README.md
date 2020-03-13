@@ -94,7 +94,7 @@ In addition to the `Code Tours` tree view and the status bar item, the Code Tour
 
 - `Code Tour: Resume Current Tour` - Resumse the current tour by navigating to the file/line number that's associated with the current step.
 
-## Keybdings
+## Keybindings
 
 In addition to the available commands, the Code Tour extension also contributes the following commands, which are active while you're currently taking a tour:
 

@@ -109,6 +109,7 @@ export function registerCommands() {
     );
 
     startCodeTour({
+      id: "",
       title,
       description,
       steps: []
@@ -190,6 +191,44 @@ export function registerCommands() {
     }
   );
 
+  async function updateTourProperty(tour: CodeTour, property: string) {
+    const propertyValue = await vscode.window.showInputBox({
+      prompt: `Enter the ${property} for this tour`,
+      // @ts-ignore
+      value: tour[property]
+    });
+
+    if (!propertyValue) {
+      return;
+    }
+
+    // @ts-ignore
+    tour[property] = propertyValue;
+
+    const uri = vscode.Uri.parse(tour.id);
+    delete tour.id;
+    const tourContent = JSON.stringify(tour, null, 2);
+    vscode.workspace.fs.writeFile(uri, new Buffer(tourContent));
+  }
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.changeTourDescription`,
+    (node: CodeTourNode) => updateTourProperty(node.tour, "description")
+  );
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.changeTourTitle`,
+    (node: CodeTourNode) => updateTourProperty(node.tour, "title")
+  );
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.deleteTour`,
+    async (node: CodeTourNode) => {
+      const uri = vscode.Uri.parse(node.tour.id);
+      vscode.workspace.fs.delete(uri);
+    }
+  );
+
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.deleteTourStep`,
     async (comment: CodeTourComment) => {
@@ -218,6 +257,7 @@ export function registerCommands() {
       .replace(/\s/g, "-")
       .replace(/[^\w\d-_]/g, "");
 
+    delete store.currentTour?.id;
     const tour = JSON.stringify(store.currentTour, null, 2);
     const workspaceRoot = vscode.workspace.workspaceFolders![0].uri.toString();
     const uri = vscode.Uri.parse(`${workspaceRoot}/.vscode/tours/${file}.json`);

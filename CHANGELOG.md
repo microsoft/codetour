@@ -1,3 +1,7 @@
+## v0.0.6 (03/13/2020)
+
+- Added the `Change Title`, `Change Description` and `Delete Tour` commands to the `Code Tours` tree view to enable easily managing existing tours
+
 ## v0.0.5 (03/09/2020)
 
 - Added an icon to the `Code Tours` tree view which indicates the currently active tour

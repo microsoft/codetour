@@ -50,7 +50,9 @@ async function discoverSubTours(workspaceRoot: string): Promise<CodeTour[]> {
           const tourContent = (
             await vscode.workspace.fs.readFile(tourUri)
           ).toString();
-          return JSON.parse(tourContent);
+          const tour = JSON.parse(tourContent);
+          tour.id = tourUri.toString();
+          return tour;
         })
     );
   } catch {

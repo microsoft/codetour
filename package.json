@@ -40,12 +40,24 @@
         "enablement": "!commentIsEmpty"
       },
       {
-        "command": "codetour.editTourStep",
-        "title": "Edit Step"
+        "command": "codetour.changeTourDescription",
+        "title": "Change Description"
+      },
+      {
+        "command": "codetour.changeTourTitle",
+        "title": "Change Title"
+      },
+      {
+        "command": "codetour.deleteTour",
+        "title": "Delete Tour"
       },
       {
         "command": "codetour.deleteTourStep",
         "title": "Delete Step"
+      },
+      {
+        "command": "codetour.editTourStep",
+        "title": "Edit Step"
       },
       {
         "command": "codetour.endTour",
@@ -112,6 +124,18 @@
         },
         {
           "command": "codetour.addTourStep",
+          "when": "false"
+        },
+        {
+          "command": "codetour.changeTourTitle",
+          "when": "false"
+        },
+        {
+          "command": "codetour.changeTourDescription",
+          "when": "false"
+        },
+        {
+          "command": "codetour.deleteTour",
           "when": "false"
         },
         {
@@ -209,6 +233,21 @@
           "command": "codetour.startTour",
           "when": "viewItem == codetour.tour",
           "group": "inline@3"
+        },
+        {
+          "command": "codetour.changeTourTitle",
+          "when": "viewItem == codetour.tour",
+          "group": "basic@1"
+        },
+        {
+          "command": "codetour.changeTourDescription",
+          "when": "viewItem == codetour.tour",
+          "group": "basic@2"
+        },
+        {
+          "command": "codetour.deleteTour",
+          "when": "viewItem == codetour.tour",
+          "group": "manage@1"
         }
       ]
     },

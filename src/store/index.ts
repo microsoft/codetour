@@ -1,16 +1,19 @@
 import { observable } from "mobx";
 
 export interface CodeTourStep {
+  title?: string;
+  description: string;
   file?: string;
   uri?: string;
   line: number;
-  description: string;
 }
 
 export interface CodeTour {
+  id: string;
   title: string;
   description?: string;
   steps: CodeTourStep[];
+  ref?: string;
 }
 
 export interface Store {

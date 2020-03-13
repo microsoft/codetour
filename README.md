@@ -31,6 +31,12 @@ Additionally, you can use the `ctrl+right` / `ctrl+left` (Windows/Linux) and `cm
 
 <img width="500px" src="https://user-images.githubusercontent.com/116461/76151723-ca00b580-606c-11ea-9bd5-81c1d9352cef.png" />
 
+At any time, you can end the current code tour by means of one of the following actions:
+
+- Click the `x` button in the current step comment
+- Click the `x` button next to the active tour in the `Code Tours` tree
+- Running the `Code Tour: End Tour` command in the command palette
+  
 ## Authoring tours
 
 If you'd like to create a code tour for your codebase, you can simply click the `+` button in the `Code Tours` tree view and/or run the `Code Tour: Record Tour` command. This will start the "tour recorder", which allows you to begin opening files, clicking the "comment bar" for the line you want to annotate, and then adding the respective description (including markdown!). Add as many steps as you want, and then when done, click the save icon in the comment UI to write the tour to the current project.
@@ -42,6 +48,8 @@ While you're recording, the `Code Tours` [tree view](#tree-view) will display th
 If you need to edit or delete a step while recording, click the `...` menu next to the step's description, and select the appropriate action.
 
 <img width="500px" src="https://user-images.githubusercontent.com/116461/76168548-1f50cb80-612e-11ea-9aca-8598b9e1c730.png" />
+
+Additionally, at any time, you can right-click a tour in the `Code Tours` tree and change it's title/description, or delete the tour entirely.
 
 Behind the scenes, the tour will be written as a JSON file to the `.vscode/tours` directory of the current workspace. This file is pretty simple and can be hand-edited if you'd like. Additionally, you can manually create tour files, by following the [tour schema](#tour-schema). You can then store these files to the `.vscode/tours` directory, or you can also create a tour at any of the following locations:
 

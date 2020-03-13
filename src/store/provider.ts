@@ -30,7 +30,9 @@ async function discoverMainTour(
       const mainTourContent = (
         await vscode.workspace.fs.readFile(uri)
       ).toString();
-      return JSON.parse(mainTourContent);
+      const tour = JSON.parse(mainTourContent);
+      tour.id = uri.toString();
+      return tour;
     } catch {}
   }
 

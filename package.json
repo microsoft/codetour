@@ -1,17 +1,17 @@
 {
   "name": "codetour",
-  "displayName": "Code Tour",
+  "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
   "version": "0.0.6",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vsls-contrib/code-tour"
+    "url": "https://github.com/vsls-contrib/codetour"
   },
   "bugs": {
-    "url": "https://github.com/vsls-contrib/code-tour/issues"
+    "url": "https://github.com/vsls-contrib/codetour/issues"
   },
-  "homepage": "https://github.com/vsls-contrib/code-tour#readme",
+  "homepage": "https://github.com/vsls-contrib/codetour#readme",
   "license": "ISC",
   "icon": "images/icon.png",
   "engines": {
@@ -88,23 +88,23 @@
       {
         "command": "codetour.recordTour",
         "title": "Record Tour",
-        "category": "Code Tour",
+        "category": "CodeTour",
         "icon": "$(add)"
       },
       {
         "command": "codetour.refreshTours",
         "title": "Refresh Tours",
-        "category": "Code Tour"
+        "category": "CodeTour"
       },
       {
         "command": "codetour.resumeTour",
         "title": "Resume Tour",
-        "category": "Code Tour"
+        "category": "CodeTour"
       },
       {
         "command": "codetour.saveTour",
         "title": "Save Tour",
-        "category": "Code Tour",
+        "category": "CodeTour",
         "icon": "$(save)",
         "enablement": "!commentThreadIsEmpty"
       },
@@ -115,7 +115,7 @@
       {
         "command": "codetour.startTour",
         "title": "Start Tour",
-        "category": "Code Tour",
+        "category": "CodeTour",
         "icon": "$(play)"
       }
     ],
@@ -311,7 +311,7 @@
       "explorer": [
         {
           "id": "codetour.tours",
-          "name": "Code Tours"
+          "name": "CodeTour"
         }
       ]
     },

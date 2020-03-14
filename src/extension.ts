@@ -5,6 +5,7 @@ import { registerStatusBar } from "./status";
 import { store } from "./store";
 import { discoverTours } from "./store/provider";
 import { registerTreeProvider } from "./tree";
+import { initializeGitApi } from "./git";
 
 async function promptForTour(
   workspaceRoot: string,
@@ -35,5 +36,7 @@ export async function activate(context: vscode.ExtensionContext) {
     registerStatusBar();
 
     promptForTour(workspaceRoot, context.globalState);
+
+    initializeGitApi();
   }
 }

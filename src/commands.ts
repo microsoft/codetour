@@ -12,6 +12,7 @@ import {
 import { discoverTours } from "./store/provider";
 import { CodeTourNode, CodeTourStepNode } from "./tree/nodes";
 import { runInAction } from "mobx";
+import { api, RefType } from "./git";
 
 interface CodeTourQuickPickItem extends vscode.QuickPickItem {
   tour: CodeTour;
@@ -289,6 +290,23 @@ export function registerCommands() {
   );
 
   vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.changeTourRef`,
+    async (node: CodeTourNode) => {
+      const uri = vscode.Uri.parse(node.tour.id!);
+      const ref = await promptForTourRef(uri);
+      if (ref) {
+        if (ref === "HEAD") {
+          delete node.tour.ref;
+        } else {
+          node.tour.ref = ref;
+        }
+      }
+
+      saveTourIfNeccessary(node.tour);
+    }
+  );
+
+  vscode.commands.registerCommand(
     `${EXTENSION_NAME}.deleteTour`,
     async (node: CodeTourNode) => {
       if (
@@ -352,6 +370,58 @@ export function registerCommands() {
     }
   );
 
+  interface GitRefQuickPickItem extends vscode.QuickPickItem {
+    ref?: string;
+  }
+
+  async function promptForTourRef(
+    uri: vscode.Uri
+  ): Promise<string | undefined> {
+    const repository = api.getRepository(uri);
+    if (!repository) {
+      return;
+    }
+    let items: GitRefQuickPickItem[] = [
+      {
+        label: "$(circle-slash) None",
+        description: "Allow the tour to apply to all versions of the repo",
+        ref: "HEAD",
+        alwaysShow: true
+      },
+      {
+        label: "$(git-commit) Current commit",
+        description: "Keep the tour stable as the repo changes over time",
+        ref: repository.state.HEAD ? repository.state.HEAD.commit! : "",
+        alwaysShow: true
+      }
+    ];
+
+    const tags = repository.state.refs
+      .filter(ref => ref.type === RefType.Tag)
+      .map(ref => ref.name!)
+      .sort()
+      .map(ref => ({
+        label: `$(tag) ${ref}`,
+        description: "Lock the tour to this tag",
+        ref
+      }));
+
+    if (tags) {
+      items.push(...tags);
+    }
+
+    const response = await vscode.window.showQuickPick<GitRefQuickPickItem>(
+      items,
+      {
+        placeHolder: "Select the Git ref to associate the tour with:"
+      }
+    );
+
+    if (response) {
+      return response.ref;
+    }
+  }
+
   vscode.commands.registerCommand(`${EXTENSION_NAME}.saveTour`, async () => {
     const file = store
       .activeTour!.tour.title.toLocaleLowerCase()
@@ -360,9 +430,16 @@ export function registerCommands() {
 
     const tour = store.activeTour!.tour;
     delete tour.id;
-    const tourContent = JSON.stringify(tour, null, 2);
+
     const workspaceRoot = vscode.workspace.workspaceFolders![0].uri.toString();
     const uri = vscode.Uri.parse(`${workspaceRoot}/.vscode/tours/${file}.json`);
+
+    const ref = await promptForTourRef(uri);
+    if (ref && ref !== "HEAD") {
+      tour.ref = ref;
+    }
+
+    const tourContent = JSON.stringify(tour, null, 2);
 
     vscode.workspace.fs.writeFile(uri, new Buffer(tourContent));
 

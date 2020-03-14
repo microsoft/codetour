@@ -18,6 +18,7 @@ import {
 import { CodeTour, store } from ".";
 import { EXTENSION_NAME } from "../constants";
 import { reaction } from "mobx";
+import { api } from "../git";
 
 const IN_TOUR_KEY = `${EXTENSION_NAME}:inTour`;
 
@@ -82,9 +83,22 @@ async function renderCurrentStep() {
   const workspaceRoot = workspace.workspaceFolders
     ? workspace.workspaceFolders[0].uri.toString()
     : "";
-  const uri = step.uri
+  let uri = step.uri
     ? Uri.parse(step.uri)
     : Uri.parse(`${workspaceRoot}/${step.file}`);
+
+  if (currentTour.ref && currentTour.ref !== "HEAD") {
+    const repo = api.getRepository(uri);
+
+    if (
+      repo &&
+      repo.state.HEAD &&
+      repo.state.HEAD.name !== currentTour.ref &&
+      repo.state.HEAD.commit !== currentTour.ref
+    ) {
+      uri = await api.toGitUri(uri, currentTour.ref);
+    }
+  }
 
   store.activeTour!.thread = controller.createCommentThread(uri, range, []);
   store.activeTour!.thread.comments = [

@@ -44,6 +44,10 @@
         "title": "Change Description"
       },
       {
+        "command": "codetour.changeTourRef",
+        "title": "Change Git Ref"
+      },
+      {
         "command": "codetour.changeTourTitle",
         "title": "Change Title"
       },
@@ -68,7 +72,7 @@
         "command": "codetour.endTour",
         "title": "End Tour",
         "category": "Code Tour",
-        "icon": "$(close)"
+        "icon": "$(debug-stop)"
       },
       {
         "command": "codetour.moveTourStepBack",
@@ -121,7 +125,7 @@
         "command": "codetour.startTour",
         "title": "Start Tour",
         "category": "CodeTour",
-        "icon": "$(play)"
+        "icon": "$(debug-start)"
       }
     ],
     "menus": {
@@ -144,6 +148,10 @@
         },
         {
           "command": "codetour.addTourStep",
+          "when": "false"
+        },
+        {
+          "command": "codetour.changeTourRef",
           "when": "false"
         },
         {
@@ -298,6 +306,11 @@
           "command": "codetour.changeTourDescription",
           "when": "viewItem =~ /^codetour.tour(.recording)?(.active)?$/",
           "group": "change@2"
+        },
+        {
+          "command": "codetour.changeTourRef",
+          "when": "viewItem =~ /^codetour.tour(.recording)?(.active)?$/ && gitOpenRepositoryCount != 0",
+          "group": "change@3"
         },
         {
           "command": "codetour.editTour",

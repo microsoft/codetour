@@ -56,7 +56,7 @@ function getStepLabel(tour: CodeTour, step: number) {
 }
 
 export class CodeTourStepNode extends TreeItem {
-  constructor(tour: CodeTour, stepNumber: number) {
+  constructor(public tour: CodeTour, public stepNumber: number) {
     super(getStepLabel(tour, stepNumber));
 
     const step = tour.steps[stepNumber];
@@ -76,6 +76,17 @@ export class CodeTourStepNode extends TreeItem {
         );
 
     this.iconPath = ThemeIcon.File;
+
+    const contextValues = ["codetour.tourStep"];
+    if (stepNumber > 0) {
+      contextValues.push("hasPrevious");
+    }
+
+    if (stepNumber < tour.steps.length - 1) {
+      contextValues.push("hasNext");
+    }
+
+    this.contextValue = contextValues.join(".");
   }
 }
 

@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { store, CodeTour } from "./store";
+import { store } from "./store";
 import { EXTENSION_NAME } from "./constants";
 import { reaction } from "mobx";
 
@@ -38,23 +38,25 @@ export function registerStatusBar() {
     reaction(
       // @ts-ignore
       () => [
-        store.currentTour,
+        store.currentTour
+          ? [store.currentTour.title, store.currentTour.steps.length]
+          : null,
         store.currentStep,
-        store.isRecording,
-        store.currentTour ? store.currentTour.steps.length : null
+        store.isRecording
       ],
-      ([tour, step, isRecording]: [CodeTour | null, number, boolean]) => {
-        if (tour) {
+      () => {
+        if (store.currentTour) {
           if (!currentTourItem) {
             currentTourItem = createCurrentTourItem();
           }
 
-          const prefix = isRecording ? "Recording " : "";
-          currentTourItem.text = `${prefix}Code Tour: #${step + 1} of ${
-            tour.steps.length
-          } (${tour.title})`;
+          const prefix = store.isRecording ? "Recording " : "";
+          currentTourItem.text = `${prefix}Code Tour: #${store.currentStep +
+            1} of ${store.currentTour.steps.length} (${
+            store.currentTour.title
+          })`;
 
-          if (step === 0) {
+          if (store.currentStep === 0) {
             startTourItem.hide();
           }
         } else {

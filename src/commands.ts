@@ -13,7 +13,7 @@ import {
   updateCurrentThread
 } from "./store/actions";
 import { discoverTours } from "./store/provider";
-import { CodeTourNode } from "./tree/nodes";
+import { CodeTourNode, CodeTourStepNode } from "./tree/nodes";
 
 interface CodeTourQuickPickItem extends vscode.QuickPickItem {
   tour: CodeTour;
@@ -191,6 +191,15 @@ export function registerCommands() {
     }
   );
 
+  function saveTourIfNeccessary(tour: CodeTour) {
+    if (tour.id) {
+      const uri = vscode.Uri.parse(tour.id);
+      delete tour.id;
+      const tourContent = JSON.stringify(tour, null, 2);
+      vscode.workspace.fs.writeFile(uri, new Buffer(tourContent));
+    }
+  }
+
   async function updateTourProperty(tour: CodeTour, property: string) {
     const propertyValue = await vscode.window.showInputBox({
       prompt: `Enter the ${property} for this tour`,
@@ -205,15 +214,26 @@ export function registerCommands() {
     // @ts-ignore
     tour[property] = propertyValue;
 
-    // We don't need to persist the tour change
-    // if it doesn't have an id (e.g. is pending being saved)
-    if (tour.id) {
-      const uri = vscode.Uri.parse(tour.id);
-      delete tour.id;
-      const tourContent = JSON.stringify(tour, null, 2);
-      vscode.workspace.fs.writeFile(uri, new Buffer(tourContent));
-    }
+    saveTourIfNeccessary(tour);
   }
+
+  function moveStep(tour: CodeTour, stepNumber: number, movement: number) {
+    const step = tour.steps[stepNumber];
+    tour.steps.splice(stepNumber, 1);
+    tour.steps.splice(stepNumber + movement, 0, step);
+
+    saveTourIfNeccessary(tour);
+  }
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.moveTourStepBack`,
+    (node: CodeTourStepNode) => moveStep(node.tour, node.stepNumber, -1)
+  );
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.moveTourStepForward`,
+    (node: CodeTourStepNode) => moveStep(node.tour, node.stepNumber, 1)
+  );
 
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.changeTourDescription`,

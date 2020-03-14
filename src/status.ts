@@ -23,7 +23,7 @@ function createStartTourItem() {
     vscode.StatusBarAlignment.Left
   );
 
-  startTourItem.text = "$(play) Start Code Tour";
+  startTourItem.text = "$(play) Start CodeTour";
   startTourItem.command = `${EXTENSION_NAME}.startTour`;
   startTourItem.show();
 
@@ -51,7 +51,7 @@ export function registerStatusBar() {
           }
 
           const prefix = store.isRecording ? "Recording " : "";
-          currentTourItem.text = `${prefix}Code Tour: #${store.currentStep +
+          currentTourItem.text = `${prefix}CodeTour: #${store.currentStep +
             1} of ${store.currentTour.steps.length} (${
             store.currentTour.title
           })`;

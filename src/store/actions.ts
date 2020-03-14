@@ -21,7 +21,7 @@ import { EXTENSION_NAME } from "../constants";
 const IN_TOUR_KEY = `${EXTENSION_NAME}:inTour`;
 
 const CONTROLLER_ID = "codetour";
-const CONTROLLER_LABEL = "Code Tour";
+const CONTROLLER_LABEL = "CodeTour";
 const CONTROLLER_ICON = Uri.parse(
   "https://cdn.jsdelivr.net/gh/vsls-contrib/code-tour/images/icon.png"
 );

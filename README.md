@@ -1,6 +1,6 @@
 # CodeTour 🗺️
 
-Code Tour is a Visual Studio Code extension, which allows you to record and playback guided walkthroughs of your codebases. It's like a virtual brownbag, that can make it easier to onboard to a new project/feature area, visualize bug reports, or understand the context of a code review/PR change. A "code tour" is simply a series of interactive steps, each of which are associated with a specific file/line, and include a description of the respective code. This allows developers to clone a repo, and then immediately start **learning it**, without needing to refer to a `CONTRIBUTING.md` file and/or rely on help from others.
+CodeTour is a Visual Studio Code extension, which allows you to record and playback guided walkthroughs of your codebases. It's like a virtual brownbag, that can make it easier to onboard (or reboard!) to a new project/feature area, visualize bug reports, or understand the context of a code review/PR change. A "code tour" is simply a series of interactive steps, each of which are associated with a specific file/line, and include a description of the respective code. This allows developers to clone a repo, and then immediately start **learning it**, without needing to refer to a `CONTRIBUTING.md` file and/or rely on help from others.
 
 <img width="800px" src="https://user-images.githubusercontent.com/116461/76165260-c6c00500-6112-11ea-9cda-0a6cb9b72e8f.gif" />
 
@@ -8,12 +8,12 @@ Code Tour is a Visual Studio Code extension, which allows you to record and play
 
 In order to start a tour, simply open up a codebase that has one or more tours. If this is the first time you've ever opened this codebase, then you'll be presented with a toast notification asking if you'd like to take a tour of it. Otherwise, you can manually start a tour via any of the following methods:
 
-1. Clicking the `> Start Code Tour` button in the [status bar](#status-bar)
-1. Selecting on a tour (or specific step) in the [`Code Tours` view](#tree-view) in the `Explorer` activity tab
+1. Clicking the `> Start CodeTour` button in the [status bar](#status-bar)
+1. Selecting oa tour (or specific step) in the [`CodeTours` view](#tree-view) in the `Explorer` activity tab
 
    <img width="250px" src="https://user-images.githubusercontent.com/116461/76164362-8610bd80-610b-11ea-9621-4ba2d47a8a52.png" />
 
-1. Running the `Code Tour: Start Tour` [command](#contributed-commands), and selecting the tour you'd like to take
+1. Running the `CodeTour: Start Tour` [command](#contributed-commands), and selecting the tour you'd like to take
 
 <img width="800px" src="https://user-images.githubusercontent.com/116461/76151694-7b531b80-606c-11ea-96a6-0655eb6ab4e6.gif" />
 
@@ -23,31 +23,32 @@ If the current workspace only has a single code tour, then any of the above acti
 
 Once you've started a tour, the comment UI will guide you, and includes navigation actions that allow you to perform the following:
 
-- `Previous` - Navigate back to the previous step in the current tour
-- `Next` - Navigate to the next step in the current tour
+- `Move Previous` - Navigate back to the previous step in the current tour
+- `Move Next` - Navigate to the next step in the current tour
+- `Edit Tour` - Begin editing the current tour (see [authoring](#authoring-tours) for details)
 - `End Tour` - End the current tour and remove the comment UI
 
-Additionally, you can use the `ctrl+right` / `ctrl+left` (Windows/Linux) and `cmd+right` / `cmd+left` (macOS) keyboard shortcuts to move forwards and backwards in the tour. When you're actively in a code tour, the status bar will also display the title and current step of the tour. If you navigate away from the active tour step, you can click on the status bar item and resume the tour at any time.
+Additionally, you can use the `ctrl+right` / `ctrl+left` (Windows/Linux) and `cmd+right` / `cmd+left` (macOS) keyboard shortcuts to move forwards and backwards in the tour. When you're actively in a code tour, the status bar will also display the title and current step of the tour.
 
 <img width="500px" src="https://user-images.githubusercontent.com/116461/76151723-ca00b580-606c-11ea-9bd5-81c1d9352cef.png" />
 
 If you navigate away from the current step and need to resume, you can do that via any of the following actions:
 
-- Right-clicking the active tour in the `Code Tours` tree and selecting `Resume Tour`
-- Clicking the `Code Tour` status bar item
-- Running the `Code Tour: Resume Tour` command in the command palette
+- Right-clicking the active tour in the `CodeTours` tree and selecting `Resume Tour`
+- Clicking the `CodeTour` status bar item
+- Running the `CodeTour: Resume Tour` command in the command palette
 
 At any time, you can end the current code tour by means of one of the following actions:
 
 - Click the `x` button in the current step comment
-- Click the `x` button next to the active tour in the `Code Tours` tree
-- Running the `Code Tour: End Tour` command in the command palette
+- Click the `x` button next to the active tour in the `CodeTours` tree
+- Running the `CodeTour: End Tour` command in the command palette
 
 ## Authoring tours
 
-If you'd like to create a code tour for your codebase, you can simply click the `+` button in the `Code Tours` tree view and/or run the `Code Tour: Record Tour` command. This will start the "tour recorder", which allows you to begin opening files, clicking the "comment bar" for the line you want to annotate, and then adding the respective description (including markdown!). Add as many steps as you want, and then when done, click the save icon in the comment UI to write the tour to the current project.
+If you'd like to create a code tour for your codebase, you can simply click the `+` button in the `CodeTours` tree view and/or run the `CodeTour: Record Tour` command. This will start the "tour recorder", which allows you to begin opening files, clicking the "comment bar" for the line you want to annotate, and then adding the respective description (including markdown!). Add as many steps as you want, and then when done, click the save icon in the comment UI to write the tour to the currently opened workspace.
 
-While you're recording, the `Code Tours` [tree view](#tree-view) will display the currently recorded tour, and it's current set of steps. You can tell which tour is being recorded because it will have a microphone icon to the left of its name.
+While you're recording, the `CodeTours` [tree view](#tree-view) will display the currently recorded tour, and it's current set of steps. You can tell which tour is being recorded because it will have a microphone icon to the left of its name.
 
 <img width="800px" src="https://user-images.githubusercontent.com/116461/76165260-c6c00500-6112-11ea-9cda-0a6cb9b72e8f.gif" />
 
@@ -55,7 +56,30 @@ If you need to edit or delete a step while recording, click the `...` menu next 
 
 <img width="500px" src="https://user-images.githubusercontent.com/116461/76168548-1f50cb80-612e-11ea-9aca-8598b9e1c730.png" />
 
-Additionally, at any time, you can right-click a tour in the `Code Tours` tree and change it's title/description, or delete the tour entirely.
+### Editing a tour
+
+If you want to edit an existing tour, simply right-click the tour in the `CodeTour` tree and select `Edit Tour`. Alternatively, you can edit a tour you're actively viewing by clicking the pencil icon in the current step's comment bar.
+
+At any time, you can right-click a tour in the `CodeTour` tree and change it's title/description, by selecting the `Change Title` or `Change Description` menu items. Additinoally, you can delete a tour by right-clicking it in the `CodeTour` tree and seelcting `Delete Tour`.
+
+### Re-arranging steps
+
+While you're recording a tour, each new step that you add will be appended to the end of the tour. However, you can move existing steps up and down in the order by performing one of the following actions:
+
+- Hover over the step in the `CodeTour` tree and click the up/down arrow icon
+- Right-click the step i the `CodeTour` tree and select the `Move Up` or `Move Down` menu items
+- Click the `...` menu in the step comment UI and select `Move Up` or `Move Down`
+
+If you want to add a new step in the middle of a tour, simply navigate to the step that you want to insert a new step after, and then create the new step.
+
+### Deleting steps
+
+If you no longer need a specific step in a tour, you can delete it by means of one of the following actions:
+
+- Right-clicking the step in the `CodeTour` tree and selecting `Delete Step`
+- Navigating to the step in the replay/comment UI, selecting the `...` menu next to the comment description and selecting `Delete Step`
+
+### Tour Files
 
 Behind the scenes, the tour will be written as a JSON file to the `.vscode/tours` directory of the current workspace. This file is pretty simple and can be hand-edited if you'd like. Additionally, you can manually create tour files, by following the [tour schema](#tour-schema). You can then store these files to the `.vscode/tours` directory, or you can also create a tour at any of the following locations:
 
@@ -80,7 +104,7 @@ For an example, refer to the `.vscode/tour.json` file of this repository.
 
 ## Tree View
 
-If the currently opened workspace has any code tours, you'll see a new tree view called `Code Tours`, that's added to the `Explorer` tab. This view simply lists the set of available code tours, along with their title and number of steps. If you select a tour it will start it, and therefore, this is simply a more convenient alternative to running the `Code Tour: Start Tour` command. However, you can also expand a tour and start it at a specific step.
+If the currently opened workspace has any code tours, you'll see a new tree view called `CodeTour`, that's added to the `Explorer` tab. This view simply lists the set of available code tours, along with their title and number of steps. If you select a tour it will start it, and therefore, this is simply a more convenient alternative to running the `CodeTour: Start Tour` command. However, you can also expand a tour and start it at a specific step.
 
 <img width="250px" src="https://user-images.githubusercontent.com/116461/76164362-8610bd80-610b-11ea-9621-4ba2d47a8a52.png" />
 
@@ -90,23 +114,25 @@ Additionally, the tree view will display the tour currently being [recorded](#au
 
 ## Status Bar
 
-In addition to the `Code Tours` tree view, this extension also contributes a new status bar item called `Start Code Tour` to your status bar. It's only visible when the current workspace has one or more tours, and when clicked, it allows you to select a tour and then begin navigating it.
+In addition to the `CodeTour` tree view, this extension also contributes a new status bar item called `Start CodeTour` to your status bar. It's only visible when the current workspace has one or more tours, and when clicked, it allows you to select a tour and then begin navigating it.
 
-While you're within a tour, the status bar will update to show the title and step of the current tour. When clicked, it will open the file/line of the current tour step, which allows you to open other files while taking a tour, and then resumse the tour when ready. Once you end the current tour, the status bar will transition back to displaying the `Start Code Tour` button.
+While you're within a tour, the status bar will update to show the title and step of the current tour. When clicked, it will open the file/line of the current tour step, which allows you to open other files while taking a tour, and then resumse the tour when ready. Once you end the current tour, the status bar will transition back to displaying the `Start CodeTour` button.
 
-> If you don't want this status bar item, simply right-click it and select `Hide Code Tour (Extension)`.
+> If you don't want this status bar item, simply right-click it and select `Hide CodeTour (Extension)`.
 
 ## Contributed Commands
 
-In addition to the `Code Tours` tree view and the status bar item, the Code Tour extension also contributes the following commands to the command palette:
+In addition to the `CodeTour` tree view and the status bar item, the Code Tour extension also contributes the following commands to the command palette:
 
-- `Code Tour: Start Tour` - Starts a tour for the currently opened workspace. This command is only visible if the current workspace actually has one or more code tours.
+- `CodeTour: Start Tour` - Starts a tour for the currently opened workspace. This command is only visible if the current workspace actually has one or more code tours.
 
-- `Code Tour: Record Tour` - Starts the tour recorder, which allows you to create a new tour by creating a sequence of steps.
+- `CodeTour: Record Tour` - Starts the tour recorder, which allows you to create a new tour by creating a sequence of steps.
 
-- `Code Tour: Refresh Tours` - Refreshes the `Code Tours` view, which can be handy if you'd created/modified/deleted tour files on disk.
+- `CodeTour: Refresh Tours` - Refreshes the `Code Tours` view, which can be handy if you'd created/modified/deleted tour files on disk.
 
-- `Code Tour: Resume Current Tour` - Resumse the current tour by navigating to the file/line number that's associated with the current step.
+- `CodeTour: End Tour` - Ends the currently active tour.
+- 
+- `CodeTour: Resume Current Tour` - Resumse the current tour by navigating to the file/line number that's associated with the current step.
 
 ## Keybindings
 

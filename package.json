@@ -3,7 +3,7 @@
   "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "repository": {
     "type": "git",
     "url": "https://github.com/vsls-contrib/codetour"
@@ -54,6 +54,11 @@
       {
         "command": "codetour.deleteTourStep",
         "title": "Delete Step"
+      },
+      {
+        "command": "codetour.editTour",
+        "title": "Edit Tour",
+        "icon": "$(edit)"
       },
       {
         "command": "codetour.editTourStep",
@@ -158,6 +163,10 @@
           "when": "false"
         },
         {
+          "command": "codetour.editTour",
+          "when": "false"
+        },
+        {
           "command": "codetour.editTourStep",
           "when": "false"
         },
@@ -186,6 +195,11 @@
           "when": "commentController == codetour && commentThread =~ /hasNext/"
         },
         {
+          "command": "codetour.editTour",
+          "group": "inline@3",
+          "when": "commentController == codetour && !codetour:recording"
+        },
+        {
           "command": "codetour.saveTour",
           "group": "inline@3",
           "when": "commentController == codetour && codetour:recording"
@@ -205,13 +219,23 @@
       ],
       "comments/comment/title": [
         {
+          "command": "codetour.moveTourStepBack",
+          "group": "move@1",
+          "when": "commentController == codetour && codetour:recording && commentThread =~ /hasPrevious/"
+        },
+        {
+          "command": "codetour.moveTourStepForward",
+          "group": "move@2",
+          "when": "commentController == codetour && codetour:recording && commentThread =~ /hasNext/"
+        },
+        {
           "command": "codetour.editTourStep",
-          "group": "group@1",
+          "group": "mutate@1",
           "when": "commentController == codetour && codetour:recording"
         },
         {
           "command": "codetour.deleteTourStep",
-          "group": "group@2",
+          "group": "mutate@2",
           "when": "commentController == codetour && codetour:recording"
         }
       ],
@@ -252,12 +276,12 @@
         },
         {
           "command": "codetour.resumeTour",
-          "when": "viewItem =~ /codetour.tour(.recording)?.active/",
+          "when": "viewItem =~ /codetour.tour(.recording)?.active$/",
           "group": "active@2"
         },
         {
           "command": "codetour.endTour",
-          "when": "viewItem =~ /codetour.tour(.recording)?.active/",
+          "when": "viewItem =~ /codetour.tour(.recording)?.active$/",
           "group": "active@3"
         },
         {
@@ -267,18 +291,23 @@
         },
         {
           "command": "codetour.changeTourTitle",
-          "when": "viewItem =~ /^codetour.tour/",
+          "when": "viewItem =~ /^codetour.tour(.recording)?(.active)?$/",
           "group": "change@1"
         },
         {
           "command": "codetour.changeTourDescription",
-          "when": "viewItem =~ /^codetour.tour/",
+          "when": "viewItem =~ /^codetour.tour(.recording)?(.active)?$/",
           "group": "change@2"
         },
         {
+          "command": "codetour.editTour",
+          "when": "viewItem =~ /^codetour.tour(.active)?$/",
+          "group": "edit@1"
+        },
+        {
           "command": "codetour.deleteTour",
-          "when": "viewItem =~ /^codetour.tour/",
-          "group": "delete@1"
+          "when": "viewItem =~ /^codetour.tour(.recording)?(.active)?$/",
+          "group": "edit@2"
         },
         {
           "command": "codetour.moveTourStepBack",
@@ -302,7 +331,7 @@
         },
         {
           "command": "codetour.deleteTourStep",
-          "when": "viewItem == codetour.tourStep",
+          "when": "viewItem =~ /^codetour.tourStep/",
           "group": "manage@1"
         }
       ]

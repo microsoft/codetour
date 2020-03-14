@@ -1,8 +1,11 @@
-## v0.0.7 (03/13/2020)
+## v0.0.7 (03/14/2020)
 
-- Added the ability to move steps back/forward in order to rearrange steps in a tour
+- Added the `Edit Tour` command to tour nodes in the `CodeTour` tree, in order to allow editing existing tours
+- Added the `Move Up` and `Move Down` commands to tour step nodes in the `CodeTour` tree, in order to allow re-arranging steps in a tour
+- Added the `Delete Step` command to tour step nodes in the `CodeTour` tree
+- Added the ability to insert a step after the current step, as opposed to always at the end of the tour
 - Updated the workspace tour notification to display when any tours are available, not just a "main tour"
-  
+
 ## v0.0.6 (03/13/2020)
 
 - Added the `'Resume Tour`, `End Tour`, `Change Title`, `Change Description` and `Delete Tour` commands to the `Code Tours` tree view to enable easily managing existing tours

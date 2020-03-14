@@ -44,10 +44,15 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
       if (!store.hasTours) {
         return [new RecordTourNode()];
       } else {
-        const tours = store.tours.map(
-          tour => new CodeTourNode(tour, this.extensionPath, false)
-        );
+        const tours = store.tours.map(tour => {
+          const isRecording =
+            store.isRecording &&
+            store.activeTour &&
+            store.activeTour.id === tour.id;
+          return new CodeTourNode(tour, this.extensionPath, isRecording!);
+        });
 
+        // Add the currently recording, in-memory tour to the tree
         if (
           store.isRecording &&
           store.activeTour &&

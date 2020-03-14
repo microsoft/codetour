@@ -55,7 +55,7 @@ async function showDocument(uri: Uri, range: Range) {
   document.revealRange(range, TextEditorRevealType.InCenter);
 }
 
-export async function renderCurrentStep() {
+async function renderCurrentStep() {
   if (store.activeTour!.thread) {
     store.activeTour!.thread.dispose();
   }
@@ -108,15 +108,6 @@ export async function renderCurrentStep() {
 }
 
 export function startCodeTour(tour: CodeTour, stepNumber?: number) {
-  store.activeTour = {
-    id: tour.id,
-    tour,
-    step: stepNumber ? stepNumber : tour.steps.length ? 0 : -1,
-    thread: null
-  };
-
-  commands.executeCommand("setContext", IN_TOUR_KEY, true);
-
   if (controller) {
     controller.dispose();
   }
@@ -136,7 +127,14 @@ export function startCodeTour(tour: CodeTour, stepNumber?: number) {
     }
   };
 
-  renderCurrentStep();
+  store.activeTour = {
+    id: tour.id,
+    tour,
+    step: stepNumber ? stepNumber : tour.steps.length ? 0 : -1,
+    thread: null
+  };
+
+  commands.executeCommand("setContext", IN_TOUR_KEY, true);
 }
 
 const KEEP_RECORDING_RESPONSE = "Continue Recording";
@@ -174,16 +172,33 @@ export async function endCurrentCodeTour() {
 
 export function moveCurrentCodeTourBackward() {
   --store.activeTour!.step;
-
-  renderCurrentStep();
 }
 
 export function moveCurrentCodeTourForward() {
   store.activeTour!.step++;
-
-  renderCurrentStep();
 }
 
 export function resumeCurrentCodeTour() {
   showDocument(store.activeTour!.thread!.uri, store.activeTour!.thread!.range);
 }
+
+reaction(
+  () => [
+    store.activeTour
+      ? [
+          store.activeTour.step,
+          store.activeTour.tour.title,
+          store.activeTour.tour.steps.map(step => [
+            step.title,
+            step.description,
+            step.line
+          ])
+        ]
+      : null
+  ],
+  () => {
+    if (store.activeTour) {
+      renderCurrentStep();
+    }
+  }
+);

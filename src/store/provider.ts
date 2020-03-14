@@ -2,6 +2,8 @@ import * as vscode from "vscode";
 import { CodeTour } from ".";
 import { store } from ".";
 import { VSCODE_DIRECTORY, EXTENSION_NAME } from "../constants";
+import { endCurrentCodeTour } from "./actions";
+import { set } from "mobx";
 
 const MAIN_TOUR_FILES = [
   `${EXTENSION_NAME}.json`,
@@ -11,12 +13,32 @@ const MAIN_TOUR_FILES = [
 ];
 
 const SUB_TOUR_DIRECTORY = `${VSCODE_DIRECTORY}/tours`;
-
 const HAS_TOURS_KEY = `${EXTENSION_NAME}:hasTours`;
 
 export async function discoverTours(workspaceRoot: string): Promise<void> {
-  store.mainTour = await discoverMainTour(workspaceRoot);
-  store.subTours = await discoverSubTours(workspaceRoot);
+  const mainTour = await discoverMainTour(workspaceRoot);
+  const tours = await discoverSubTours(workspaceRoot);
+
+  if (mainTour) {
+    tours.push(mainTour);
+  }
+
+  store.tours = tours.sort((a, b) => a.title.localeCompare(b.title));
+
+  if (store.activeTour) {
+    const tour = tours.find(tour => tour.id === store.activeTour!.id);
+
+    if (tour) {
+      // Since the active tour could be already observed,
+      // we want to update it in place with the new properties.
+      set(store.activeTour.tour, tour);
+    } else {
+      // The user deleted the tour
+      // file that's associated with
+      // the active tour
+      endCurrentCodeTour();
+    }
+  }
 
   vscode.commands.executeCommand("setContext", HAS_TOURS_KEY, store.hasTours);
 }

@@ -3,26 +3,25 @@ import { registerCommands } from "./commands";
 import { EXTENSION_NAME } from "./constants";
 import { registerStatusBar } from "./status";
 import { store } from "./store";
-import { startCodeTour } from "./store/actions";
 import { discoverTours } from "./store/provider";
 import { registerTreeProvider } from "./tree";
 
-async function promptForMainTour(
+async function promptForTour(
   workspaceRoot: string,
   globalState: vscode.Memento
 ) {
   const key = `${EXTENSION_NAME}:${workspaceRoot}`;
-  if (store.mainTour && !globalState.get(key)) {
+  if (store.hasTours && !globalState.get(key)) {
+    globalState.update(key, true);
+
     if (
       await vscode.window.showInformationMessage(
-        "This workspace has a guided tour you can take to get familiar with the codebase.",
-        "Start Tour"
+        "This workspace has guided tours you can take to get familiar with the codebase.",
+        "Start CodeTour"
       )
     ) {
-      startCodeTour(store.mainTour);
+      vscode.commands.executeCommand(`${EXTENSION_NAME}.startTour`);
     }
-
-    globalState.update(key, true);
   }
 }
 
@@ -35,6 +34,6 @@ export async function activate(context: vscode.ExtensionContext) {
     registerTreeProvider(context.extensionPath);
     registerStatusBar();
 
-    promptForMainTour(workspaceRoot, context.globalState);
+    promptForTour(workspaceRoot, context.globalState);
   }
 }

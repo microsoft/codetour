@@ -8,9 +8,7 @@ import {
   startCodeTour,
   resumeCurrentCodeTour,
   CodeTourComment,
-  renderCurrentStep,
-  currentThread,
-  updateCurrentThread
+  renderCurrentStep
 } from "./store/actions";
 import { discoverTours } from "./store/provider";
 import { CodeTourNode, CodeTourStepNode } from "./tree/nodes";
@@ -28,21 +26,11 @@ export function registerCommands() {
         return startCodeTour(targetTour, stepNumber);
       }
 
-      let items: CodeTourQuickPickItem[] = store.subTours
-        .map(tour => ({
-          label: tour.title!,
-          tour: tour,
-          detail: tour.description
-        }))
-        .sort((a, b) => a.label.localeCompare(b.label));
-
-      if (store.mainTour) {
-        items.unshift({
-          label: store.mainTour.title,
-          tour: store.mainTour,
-          detail: store.mainTour.description
-        });
-      }
+      let items: CodeTourQuickPickItem[] = store.tours.map(tour => ({
+        label: tour.title!,
+        tour: tour,
+        detail: tour.description
+      }));
 
       if (items.length === 1) {
         return startCodeTour(items[0].tour);
@@ -130,30 +118,29 @@ export function registerCommands() {
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.addTourStep`,
     (reply: vscode.CommentReply) => {
-      if (currentThread) {
-        currentThread.dispose();
+      if (store.activeTour!.thread) {
+        store.activeTour!.thread.dispose();
       }
 
-      store.currentStep++;
-      updateCurrentThread(reply.thread);
+      store.activeTour!.step++;
+      store.activeTour!.thread = reply.thread;
 
-      store.currentTour!.steps.push({
-        file: vscode.workspace.asRelativePath(currentThread!.uri),
-        line: currentThread!.range.start.line + 1,
+      const tour = store.activeTour!.tour;
+      const thread = store.activeTour!.thread;
+
+      tour.steps.push({
+        file: vscode.workspace.asRelativePath(thread!.uri),
+        line: thread!.range.start.line + 1,
         description: reply.text
       });
 
-      let label = `Step #${store.currentTour!.steps.length} of ${
-        store.currentTour!.steps.length
-      }`;
+      let label = `Step #${tour.steps.length} of ${tour.steps.length}`;
 
-      if (store.currentTour!.steps.length > 1) {
-        currentThread!.contextValue = "hasPrevious";
+      if (tour.steps.length > 1) {
+        thread!.contextValue = "hasPrevious";
       }
 
-      currentThread!.comments = [
-        new CodeTourComment(reply.text, label, currentThread!)
-      ];
+      thread!.comments = [new CodeTourComment(reply.text, label, thread!)];
     }
   );
 
@@ -179,7 +166,9 @@ export function registerCommands() {
           ? comment.body.value
           : comment.body;
 
-      store.currentTour!.steps[store.currentStep].description = content;
+      store.activeTour!.tour!.steps[
+        store.activeTour!.step
+      ].description = content;
 
       comment.parent.comments = comment.parent.comments.map(cmt => {
         if ((cmt as CodeTourComment).id === comment.id) {
@@ -248,7 +237,7 @@ export function registerCommands() {
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.deleteTour`,
     async (node: CodeTourNode) => {
-      if (store.currentTour && node.tour.title === store.currentTour.title) {
+      if (store.activeTour && node.tour.title === store.activeTour.tour.title) {
         await endCurrentCodeTour();
       }
 
@@ -267,14 +256,14 @@ export function registerCommands() {
         return;
       }
 
-      store.currentTour?.steps.splice(store.currentStep, 1);
+      store.activeTour!.tour?.steps.splice(store.activeTour!.step, 1);
 
       thread.dispose();
 
-      if (store.currentTour?.steps.length === 0) {
-        store.currentStep = -1;
-      } else if (store.currentStep > 0) {
-        store.currentStep--;
+      if (store.activeTour!.tour.steps.length === 0) {
+        store.activeTour!.step = -1;
+      } else if (store.activeTour!.step > 0) {
+        store.activeTour!.step--;
       }
 
       renderCurrentStep();
@@ -282,13 +271,13 @@ export function registerCommands() {
   );
 
   vscode.commands.registerCommand(`${EXTENSION_NAME}.saveTour`, async () => {
-    const file = store.currentTour?.title
-      .toLocaleLowerCase()
+    const file = store
+      .activeTour!.tour.title.toLocaleLowerCase()
       .replace(/\s/g, "-")
       .replace(/[^\w\d-_]/g, "");
 
-    delete store.currentTour?.id;
-    const tour = JSON.stringify(store.currentTour, null, 2);
+    delete store.activeTour!.tour?.id;
+    const tour = JSON.stringify(store.activeTour!.tour, null, 2);
     const workspaceRoot = vscode.workspace.workspaceFolders![0].uri.toString();
     const uri = vscode.Uri.parse(`${workspaceRoot}/.vscode/tours/${file}.json`);
     vscode.workspace.fs.writeFile(uri, new Buffer(tour));
@@ -298,10 +287,10 @@ export function registerCommands() {
 
     vscode.window.showInformationMessage(
       `The "${
-        store.currentTour!.title
+        store.activeTour!.tour.title
       }" code tour was saved to to ".vscode/tours/${file}.json"`
     );
-    currentThread!.dispose();
+    store.activeTour!.thread!.dispose();
     endCurrentCodeTour();
   });
 }

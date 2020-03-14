@@ -1,7 +1,8 @@
 ## v0.0.7 (03/13/2020)
 
 - Added the ability to move steps back/forward in order to rearrange steps in a tour
-
+- Updated the workspace tour notification to display when any tours are available, not just a "main tour"
+  
 ## v0.0.6 (03/13/2020)
 
 - Added the `'Resume Tour`, `End Tour`, `Change Title`, `Change Description` and `Delete Tour` commands to the `Code Tours` tree view to enable easily managing existing tours

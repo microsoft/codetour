@@ -38,25 +38,28 @@ export function registerStatusBar() {
     reaction(
       // @ts-ignore
       () => [
-        store.currentTour
-          ? [store.currentTour.title, store.currentTour.steps.length]
+        store.activeTour
+          ? [
+              store.activeTour.step,
+              store.activeTour.tour.title,
+              store.activeTour.tour.steps.length
+            ]
           : null,
-        store.currentStep,
         store.isRecording
       ],
       () => {
-        if (store.currentTour) {
+        if (store.activeTour) {
           if (!currentTourItem) {
             currentTourItem = createCurrentTourItem();
           }
 
           const prefix = store.isRecording ? "Recording " : "";
-          currentTourItem.text = `${prefix}CodeTour: #${store.currentStep +
-            1} of ${store.currentTour.steps.length} (${
-            store.currentTour.title
+          currentTourItem.text = `${prefix}CodeTour: #${store.activeTour.step +
+            1} of ${store.activeTour.tour.steps.length} (${
+            store.activeTour.tour.title
           })`;
 
-          if (store.currentStep === 0) {
+          if (store.activeTour.step === 0) {
             startTourItem.hide();
           }
         } else {

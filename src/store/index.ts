@@ -1,4 +1,7 @@
 import { observable } from "mobx";
+import { CommentThread } from "vscode";
+
+export const PENDING_TOUR_ID = "@@RECORDING";
 
 export interface CodeTourStep {
   title?: string;
@@ -16,26 +19,31 @@ export interface CodeTour {
   ref?: string;
 }
 
+export interface ActiveTour {
+  // When a tour is being recorded, and hasn't
+  // been saved yet, it won't have an ID
+  id?: string;
+
+  tour: CodeTour;
+  step: number;
+
+  // When recording, a tour can be active, without
+  // having created an actual comment yet.
+  thread: CommentThread | null | undefined;
+}
+
 export interface Store {
-  mainTour: CodeTour | null;
-  subTours: CodeTour[];
-  currentTour: CodeTour | null;
-  currentStep: number;
+  tours: CodeTour[];
+  activeTour: ActiveTour | null;
   hasTours: boolean;
   isRecording: boolean;
 }
 
 export const store: Store = observable({
-  mainTour: null,
-  subTours: [],
-  currentTour: null,
-  currentStep: 0,
+  tours: [],
+  activeTour: null,
   isRecording: false,
   get hasTours() {
-    return (
-      !!this.mainTour ||
-      this.subTours.length > 0 ||
-      (this.isRecording && this.currentTour)
-    );
+    return this.tours.length > 0;
   }
 });

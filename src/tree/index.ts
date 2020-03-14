@@ -20,15 +20,14 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
   constructor(private extensionPath: string) {
     reaction(
       () => [
+        store.tours,
         store.hasTours,
-        store.mainTour,
-        store.subTours,
         store.isRecording,
-        store.currentTour
+        store.activeTour
           ? [
-              store.currentTour.title,
-              store.currentTour.description,
-              store.currentTour.steps.map(step => step.description)
+              store.activeTour.tour.title,
+              store.activeTour.tour.description,
+              store.activeTour.tour.steps.map(step => step.description)
             ]
           : null
       ],
@@ -45,21 +44,17 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
       if (!store.hasTours) {
         return [new RecordTourNode()];
       } else {
-        const tours = store.subTours.map(
+        const tours = store.tours.map(
           tour => new CodeTourNode(tour, this.extensionPath, false)
         );
-        if (store.mainTour) {
-          tours.unshift(
-            new CodeTourNode(store.mainTour, this.extensionPath, false)
-          );
-        }
+
         if (
           store.isRecording &&
-          store.currentTour &&
-          !tours.find(tour => tour.tour.title === store.currentTour!.title)
+          store.activeTour &&
+          !tours.find(tour => tour.tour.title === store.activeTour!.tour!.title)
         ) {
           tours.unshift(
-            new CodeTourNode(store.currentTour!, this.extensionPath, true)
+            new CodeTourNode(store.activeTour!.tour, this.extensionPath, true)
           );
         }
         return tours;

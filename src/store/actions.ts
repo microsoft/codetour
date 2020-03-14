@@ -17,6 +17,7 @@ import {
 } from "vscode";
 import { CodeTour, store } from ".";
 import { EXTENSION_NAME } from "../constants";
+import { reaction } from "mobx";
 
 const IN_TOUR_KEY = `${EXTENSION_NAME}:inTour`;
 
@@ -45,12 +46,6 @@ export class CodeTourComment implements Comment {
 
 let controller: CommentController;
 
-export let currentThread: CommentThread | null = null;
-
-export function updateCurrentThread(thread: CommentThread) {
-  currentThread = thread;
-}
-
 async function showDocument(uri: Uri, range: Range) {
   const document =
     window.visibleTextEditors.find(
@@ -61,12 +56,12 @@ async function showDocument(uri: Uri, range: Range) {
 }
 
 export async function renderCurrentStep() {
-  if (currentThread) {
-    currentThread.dispose();
+  if (store.activeTour!.thread) {
+    store.activeTour!.thread.dispose();
   }
 
-  const currentTour = store.currentTour!;
-  const currentStep = store.currentStep;
+  const currentTour = store.activeTour!.tour;
+  const currentStep = store.activeTour!.step;
 
   const step = currentTour!.steps[currentStep];
 
@@ -91,13 +86,13 @@ export async function renderCurrentStep() {
     ? Uri.parse(step.uri)
     : Uri.parse(`${workspaceRoot}/${step.file}`);
 
-  currentThread = controller.createCommentThread(uri, range, []);
-  currentThread.comments = [
-    new CodeTourComment(step.description, label, currentThread!)
+  store.activeTour!.thread = controller.createCommentThread(uri, range, []);
+  store.activeTour!.thread.comments = [
+    new CodeTourComment(step.description, label, store.activeTour!.thread!)
   ];
 
   const contextValues = [];
-  if (store.currentStep > 0) {
+  if (currentStep > 0) {
     contextValues.push("hasPrevious");
   }
 
@@ -105,15 +100,20 @@ export async function renderCurrentStep() {
     contextValues.push("hasNext");
   }
 
-  currentThread.contextValue = contextValues.join(".");
-  currentThread.collapsibleState = CommentThreadCollapsibleState.Expanded;
+  store.activeTour!.thread.contextValue = contextValues.join(".");
+  store.activeTour!.thread.collapsibleState =
+    CommentThreadCollapsibleState.Expanded;
 
   showDocument(uri, range);
 }
 
 export function startCodeTour(tour: CodeTour, stepNumber?: number) {
-  store.currentTour = tour;
-  store.currentStep = stepNumber ? stepNumber : tour.steps.length ? 0 : -1;
+  store.activeTour = {
+    id: tour.id,
+    tour,
+    step: stepNumber ? stepNumber : tour.steps.length ? 0 : -1,
+    thread: null
+  };
 
   commands.executeCommand("setContext", IN_TOUR_KEY, true);
 
@@ -143,8 +143,8 @@ const KEEP_RECORDING_RESPONSE = "Continue Recording";
 export async function endCurrentCodeTour() {
   if (
     store.isRecording &&
-    store.currentTour &&
-    store.currentTour.steps.length > 0
+    store.activeTour &&
+    store.activeTour.tour.steps.length > 0
   ) {
     const response = await window.showInformationMessage(
       "Are you sure you want to exit the current recording?",
@@ -159,31 +159,31 @@ export async function endCurrentCodeTour() {
     }
   }
 
-  if (currentThread) {
-    currentThread.dispose();
-    currentThread = null;
+  if (store.activeTour?.thread) {
+    store.activeTour!.thread.dispose();
+    store.activeTour!.thread = null;
   }
 
   if (controller) {
     controller.dispose();
   }
 
-  store.currentTour = null;
+  store.activeTour = null;
   commands.executeCommand("setContext", IN_TOUR_KEY, false);
 }
 
 export function moveCurrentCodeTourBackward() {
-  --store.currentStep;
+  --store.activeTour!.step;
 
   renderCurrentStep();
 }
 
 export function moveCurrentCodeTourForward() {
-  store.currentStep++;
+  store.activeTour!.step++;
 
   renderCurrentStep();
 }
 
 export function resumeCurrentCodeTour() {
-  showDocument(currentThread!.uri, currentThread!.range);
+  showDocument(store.activeTour!.thread!.uri, store.activeTour!.thread!.range);
 }

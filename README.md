@@ -66,6 +66,10 @@ If you want to edit an existing tour, simply right-click the tour in the `CodeTo
 
 At any time, you can right-click a tour in the `CodeTour` tree and change it's title/description, by selecting the `Change Title` or `Change Description` menu items. Additinoally, you can delete a tour by right-clicking it in the `CodeTour` tree and seelcting `Delete Tour`.
 
+### Selection
+
+By default, each step is associated with the line of code that you create the comment on. However, if you want to call out a span of code as part of the step, simply highlight the code before you add the step, and the selection will be captured as part of the step.
+
 ### Re-arranging steps
 
 While you're recording a tour, each new step that you add will be appended to the end of the tour. However, you can move existing steps up and down in the order by performing one of the following actions:

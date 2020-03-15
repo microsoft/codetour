@@ -13,7 +13,8 @@ import {
   window,
   workspace,
   TextDocument,
-  CommentController
+  CommentController,
+  Selection
 } from "vscode";
 import { CodeTour, store } from ".";
 import { EXTENSION_NAME } from "../constants";
@@ -47,11 +48,15 @@ export class CodeTourComment implements Comment {
 
 let controller: CommentController;
 
-async function showDocument(uri: Uri, range: Range) {
+async function showDocument(uri: Uri, range: Range, selection?: Selection) {
   const document =
     window.visibleTextEditors.find(
       editor => editor.document.uri.toString() === uri.toString()
-    ) || (await window.showTextDocument(uri));
+    ) || (await window.showTextDocument(uri, { preserveFocus: false }));
+
+  if (selection) {
+    document.selection = selection;
+  }
 
   document.revealRange(range, TextEditorRevealType.InCenter);
 }
@@ -118,7 +123,22 @@ async function renderCurrentStep() {
   store.activeTour!.thread.collapsibleState =
     CommentThreadCollapsibleState.Expanded;
 
-  showDocument(uri, range);
+  let selection;
+  if (step.selection) {
+    // Adjust the 1-based positions
+    // to the 0-based positions that
+    // VS Code's editor uses.
+    selection = new Selection(
+      step.selection.start.line - 1,
+      step.selection.start.character - 1,
+      step.selection.end.line - 1,
+      step.selection.end.character - 1
+    );
+  } else {
+    selection = new Selection(range.start, range.end);
+  }
+
+  showDocument(uri, range, selection);
 }
 
 export function startCodeTour(tour: CodeTour, stepNumber?: number) {

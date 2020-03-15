@@ -3,12 +3,18 @@ import { CommentThread } from "vscode";
 
 export const PENDING_TOUR_ID = "@@RECORDING";
 
+export interface CodeTourStepPosition {
+  line: number;
+  character: number;
+}
+
 export interface CodeTourStep {
   title?: string;
   description: string;
   file?: string;
   uri?: string;
   line: number;
+  selection?: { start: CodeTourStepPosition; end: CodeTourStepPosition };
 }
 
 export interface CodeTour {

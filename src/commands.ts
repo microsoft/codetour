@@ -11,7 +11,7 @@ import {
 } from "./store/actions";
 import { discoverTours } from "./store/provider";
 import { CodeTourNode, CodeTourStepNode } from "./tree/nodes";
-import { runInAction } from "mobx";
+import { runInAction, comparer } from "mobx";
 import { api, RefType } from "./git";
 
 interface CodeTourQuickPickItem extends vscode.QuickPickItem {
@@ -156,6 +156,44 @@ export function registerCommands() {
           line: thread!.range.start.line + 1,
           description: reply.text
         };
+
+        const activeEditor = vscode.window.activeTextEditor;
+        if (
+          activeEditor &&
+          activeEditor.selection &&
+          !activeEditor.selection.isEmpty
+        ) {
+          const { start, end } = activeEditor.selection;
+
+          // Convert the selection from 0-based
+          // to 1-based to make it easier to
+          // edit the JSON tour file by hand.
+          const selection = {
+            start: {
+              line: start.line + 1,
+              character: start.character + 1
+            },
+            end: {
+              line: end.line + 1,
+              character: end.character + 1
+            }
+          };
+
+          const previousStep = store.activeTour!.tour.steps[
+            store.activeTour!.step - 1
+          ];
+
+          // Check whether the end-user forgot to "reset"
+          // the selection from the previous step, and if so,
+          // ignore it from this step since it's not likely useful.
+          if (
+            !previousStep ||
+            !previousStep.selection ||
+            !comparer.structural(previousStep.selection, selection)
+          ) {
+            (step as any).selection = selection;
+          }
+        }
 
         tour.steps.splice(stepNumber, 0, step);
 

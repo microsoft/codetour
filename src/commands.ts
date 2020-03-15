@@ -381,16 +381,25 @@ export function registerCommands() {
     if (!repository) {
       return;
     }
+
+    const currentBranch = repository.state.HEAD!.name;
     let items: GitRefQuickPickItem[] = [
       {
         label: "$(circle-slash) None",
-        description: "Allow the tour to apply to all versions of the repo",
+        description:
+          "Allow the tour to apply to all versions of this repository",
         ref: "HEAD",
         alwaysShow: true
       },
       {
+        label: `$(git-branch) Current branch (${currentBranch})`,
+        description: "Allow the tour to apply to all versions of this branch",
+        ref: currentBranch,
+        alwaysShow: true
+      },
+      {
         label: "$(git-commit) Current commit",
-        description: "Keep the tour stable as the repo changes over time",
+        description: "Keep the tour associated with a specific commit",
         ref: repository.state.HEAD ? repository.state.HEAD.commit! : "",
         alwaysShow: true
       }
@@ -402,7 +411,7 @@ export function registerCommands() {
       .sort()
       .map(ref => ({
         label: `$(tag) ${ref}`,
-        description: "Lock the tour to this tag",
+        description: "Keep the tour associated with a specific tag",
         ref
       }));
 

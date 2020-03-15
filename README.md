@@ -6,14 +6,18 @@ CodeTour is a Visual Studio Code extension, which allows you to record and playb
 
 ## Starting a tour
 
-In order to start a tour, simply open up a codebase that has one or more tours. If this is the first time you've ever opened this codebase, then you'll be presented with a toast notification asking if you'd like to take a tour of it. Otherwise, you can manually start a tour via any of the following methods:
+In order to start a tour, simply open up a codebase that has one or more tours. If this is the first time you've ever opened this codebase, then you'll be presented with a toast notification asking if you'd like to take a tour of it.
+
+<img width="400px" src="https://user-images.githubusercontent.com/116461/76691619-d0ada080-6609-11ea-81bf-c1f022dbff43.png" />
+
+Otherwise, you can manually start a tour via any of the following methods:
 
 1. Clicking the `> Start CodeTour` button in the [status bar](#status-bar)
-1. Selecting oa tour (or specific step) in the [`CodeTours` view](#tree-view) in the `Explorer` activity tab
+2. Selecting oa tour (or specific step) in the [`CodeTours` view](#tree-view) in the `Explorer` activity tab
 
    <img width="250px" src="https://user-images.githubusercontent.com/116461/76164362-8610bd80-610b-11ea-9621-4ba2d47a8a52.png" />
 
-1. Running the `CodeTour: Start Tour` [command](#contributed-commands), and selecting the tour you'd like to take
+3. Running the `CodeTour: Start Tour` [command](#contributed-commands), and selecting the tour you'd like to take
 
 <img width="800px" src="https://user-images.githubusercontent.com/116461/76151694-7b531b80-606c-11ea-96a6-0655eb6ab4e6.gif" />
 
@@ -79,6 +83,21 @@ If you no longer need a specific step in a tour, you can delete it by means of o
 - Right-clicking the step in the `CodeTour` tree and selecting `Delete Step`
 - Navigating to the step in the replay/comment UI, selecting the `...` menu next to the comment description and selecting `Delete Step`
 
+### Versioning tours
+
+When you record a tour, you'll be asked which git "ref" to associate it with. This allows you to define how resilient you want the tour to be, as changes are made to the respective codebase.
+
+<img width="600px" src="https://user-images.githubusercontent.com/116461/76692462-3f8ff700-6614-11ea-88a1-6fbded8e8507.png" />
+
+You can choose to associate with the tour with the following ref types:
+
+- `None` - The tour isn't associated with any ref, and therefore, the file/line numbers in the tour might get out of sync over time. The benefit of this option is that it enables the code to be edited as part of the tour, since the tour will walk the user through whichever branch/commit they have checked out.
+- `Current Branch` - The tour is restricted to the current branch. This can have the same resiliency challenges as `None`, but, it allows you to maintain a special branch for your tours that can be versioned seperately. If the end-user has the associated branch checked out, then the tour will enable them to make edits to files as its taken. Otherwise, the tour will replay with read-only files.
+- `Current Commit` - The tour is restricted to the current commit, and therefore, will never get out of sync. If the end-user's `HEAD` points at the specified commit, then the tour will enable them to make edits to files as its taken. Otherwise, the tour will replay with read-only files.
+- Tags - The tour is restricted to the selected tag, and therefore, will never get out of sync. The repo's entire list of tags will be displayed, which allows you to easily select one.
+  
+At any time, you can edit the tour's ref by right-clicking it in the `CodeTour` tree and selecting `Change Git Ref`. This let's you "rebase" a tour to a tag/commit as you change/update your code and/or codebase.
+
 ### Tour Files
 
 Behind the scenes, the tour will be written as a JSON file to the `.vscode/tours` directory of the current workspace. This file is pretty simple and can be hand-edited if you'd like. Additionally, you can manually create tour files, by following the [tour schema](#tour-schema). You can then store these files to the `.vscode/tours` directory, or you can also create a tour at any of the following locations:
@@ -131,7 +150,7 @@ In addition to the `CodeTour` tree view and the status bar item, the Code Tour e
 - `CodeTour: Refresh Tours` - Refreshes the `Code Tours` view, which can be handy if you'd created/modified/deleted tour files on disk.
 
 - `CodeTour: End Tour` - Ends the currently active tour.
-- 
+-
 - `CodeTour: Resume Current Tour` - Resumse the current tour by navigating to the file/line number that's associated with the current step.
 
 ## Keybindings

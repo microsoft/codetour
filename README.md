@@ -68,7 +68,9 @@ At any time, you can right-click a tour in the `CodeTour` tree and change it's t
 
 ### Selection
 
-By default, each step is associated with the line of code that you create the comment on. However, if you want to call out a span of code as part of the step, simply highlight the code before you add the step, and the selection will be captured as part of the step.
+By default, each step is associated with the line of code you create the comment on. However, if you want to call out a specific span of code as part of the step, simply highlight the code before you add the step, and the selection will be captured as part of the step.
+
+<img width="800px" src="https://user-images.githubusercontent.com/116461/76705627-b96cc280-669e-11ea-982a-d754c4f001aa.gif" />
 
 ### Re-arranging steps
 

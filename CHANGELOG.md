@@ -1,3 +1,9 @@
+## v0.0.9 (03/15/2020)
+
+- Added the ability to record a text selection as part of a step
+  
+  ![Selection](https://user-images.githubusercontent.com/116461/76705627-b96cc280-669e-11ea-982a-d754c4f001aa.gif)
+
 ## v0.0.8 (03/14/2020)
 
 - Added the ability to associate a tour with a specific Git tag and/or commit, in order to enable it to be resilient to code changes

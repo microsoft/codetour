@@ -4,6 +4,7 @@ import { store } from ".";
 import { VSCODE_DIRECTORY, EXTENSION_NAME } from "../constants";
 import { endCurrentCodeTour } from "./actions";
 import { set } from "mobx";
+import { comparer } from "mobx";
 
 const MAIN_TOUR_FILES = [
   `${EXTENSION_NAME}.json`,
@@ -26,12 +27,14 @@ export async function discoverTours(workspaceRoot: string): Promise<void> {
   store.tours = tours.sort((a, b) => a.title.localeCompare(b.title));
 
   if (store.activeTour) {
-    const tour = tours.find(tour => tour.id === store.activeTour!.id);
+    const tour = tours.find(tour => tour.id === store.activeTour!.tour.id);
 
     if (tour) {
-      // Since the active tour could be already observed,
-      // we want to update it in place with the new properties.
-      set(store.activeTour.tour, tour);
+      if (!comparer.structural(store.activeTour.tour, tour)) {
+        // Since the active tour could be already observed,
+        // we want to update it in place with the new properties.
+        set(store.activeTour.tour, tour);
+      }
     } else {
       // The user deleted the tour
       // file that's associated with

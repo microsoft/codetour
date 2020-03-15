@@ -142,7 +142,6 @@ export function startCodeTour(tour: CodeTour, stepNumber?: number) {
   };
 
   store.activeTour = {
-    id: tour.id,
     tour,
     step: stepNumber ? stepNumber : tour.steps.length ? 0 : -1,
     thread: null
@@ -151,24 +150,10 @@ export function startCodeTour(tour: CodeTour, stepNumber?: number) {
   commands.executeCommand("setContext", IN_TOUR_KEY, true);
 }
 
-const KEEP_RECORDING_RESPONSE = "Continue Recording";
 export async function endCurrentCodeTour() {
-  if (
-    store.isRecording &&
-    store.activeTour &&
-    store.activeTour.tour.steps.length > 0
-  ) {
-    const response = await window.showInformationMessage(
-      "Are you sure you want to exit the current recording?",
-      "Exit",
-      KEEP_RECORDING_RESPONSE
-    );
-    if (response === KEEP_RECORDING_RESPONSE) {
-      return;
-    } else {
-      store.isRecording = false;
-      commands.executeCommand("setContext", "codetour:recording", false);
-    }
+  if (store.isRecording) {
+    store.isRecording = false;
+    commands.executeCommand("setContext", "codetour:recording", false);
   }
 
   if (store.activeTour?.thread) {

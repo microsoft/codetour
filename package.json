@@ -3,7 +3,7 @@
   "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "repository": {
     "type": "git",
     "url": "https://github.com/vsls-contrib/codetour"
@@ -111,13 +111,6 @@
         "category": "CodeTour"
       },
       {
-        "command": "codetour.saveTour",
-        "title": "Save Tour",
-        "category": "CodeTour",
-        "icon": "$(save)",
-        "enablement": "!commentThreadIsEmpty"
-      },
-      {
         "command": "codetour.saveTourStep",
         "title": "Save Step"
       },
@@ -137,10 +130,6 @@
         {
           "command": "codetour.resumeTour",
           "when": "codetour:inTour"
-        },
-        {
-          "command": "codetour.saveTour",
-          "when": "codetour:recording"
         },
         {
           "command": "codetour.startTour",
@@ -203,19 +192,14 @@
           "when": "commentController == codetour && commentThread =~ /hasNext/"
         },
         {
-          "command": "codetour.editTour",
-          "group": "inline@3",
-          "when": "commentController == codetour && !codetour:recording"
-        },
-        {
-          "command": "codetour.saveTour",
-          "group": "inline@3",
-          "when": "commentController == codetour && codetour:recording"
-        },
-        {
           "command": "codetour.endTour",
-          "group": "inline@4",
+          "group": "inline@3",
           "when": "commentController == codetour"
+        },
+        {
+          "command": "codetour.editTour",
+          "group": "inline@4",
+          "when": "commentController == codetour && !codetour:recording"
         }
       ],
       "comments/commentThread/context": [
@@ -263,34 +247,24 @@
       ],
       "view/item/context": [
         {
-          "command": "codetour.saveTour",
-          "when": "viewItem =~ /codetour.tour.recording/",
-          "group": "inline@1"
-        },
-        {
           "command": "codetour.endTour",
           "when": "viewItem =~ /codetour.tour(.recording)?.active/",
-          "group": "inline@2"
+          "group": "inline@1"
         },
         {
           "command": "codetour.startTour",
           "when": "viewItem == codetour.tour",
-          "group": "inline@3"
-        },
-        {
-          "command": "codetour.saveTour",
-          "when": "viewItem =~ /codetour.tour.recording/",
-          "group": "active@1"
+          "group": "inline@2"
         },
         {
           "command": "codetour.resumeTour",
           "when": "viewItem =~ /codetour.tour(.recording)?.active$/",
-          "group": "active@2"
+          "group": "active@1"
         },
         {
           "command": "codetour.endTour",
           "when": "viewItem =~ /codetour.tour(.recording)?.active$/",
-          "group": "active@3"
+          "group": "active@2"
         },
         {
           "command": "codetour.startTour",

@@ -77,6 +77,29 @@ export function registerCommands() {
     resumeCurrentCodeTour
   );
 
+  async function writeTourFile(title: string, ref?: string): Promise<CodeTour> {
+    const file = title
+      .toLocaleLowerCase()
+      .replace(/\s/g, "-")
+      .replace(/[^\w\d-_]/g, "");
+
+    const workspaceRoot = vscode.workspace.workspaceFolders![0].uri.toString();
+    const uri = vscode.Uri.parse(`${workspaceRoot}/.vscode/tours/${file}.json`);
+
+    const tour = { title, steps: [] };
+    if (ref && ref !== "HEAD") {
+      (tour as any).ref = ref;
+    }
+
+    const tourContent = JSON.stringify(tour, null, 2);
+    await vscode.workspace.fs.writeFile(uri, new Buffer(tourContent));
+
+    (tour as any).id = uri.toString();
+
+    // @ts-ignore
+    return tour as CodeTour;
+  }
+
   vscode.commands.registerCommand(`${EXTENSION_NAME}.recordTour`, async () => {
     const title = await vscode.window.showInputBox({
       prompt: "Specify the title of the tour"
@@ -86,9 +109,10 @@ export function registerCommands() {
       return;
     }
 
-    const description = await vscode.window.showInputBox({
-      prompt: "(Optional) Specify the description of the tour"
-    });
+    const ref = await promptForTourRef();
+    const tour = await writeTourFile(title, ref);
+
+    startCodeTour(tour);
 
     store.isRecording = true;
     await vscode.commands.executeCommand(
@@ -97,19 +121,15 @@ export function registerCommands() {
       true
     );
 
-    startCodeTour({
-      id: "",
-      title,
-      description,
-      steps: []
-    });
-
     if (
       await vscode.window.showInformationMessage(
         "Code tour recording started. Start creating steps by clicking the + button to the left of each line of code.",
         "Cancel"
       )
     ) {
+      const uri = vscode.Uri.parse(tour.id);
+      vscode.workspace.fs.delete(uri);
+
       endCurrentCodeTour();
       store.isRecording = false;
       vscode.commands.executeCommand("setContext", "codetour:recording", false);
@@ -138,6 +158,8 @@ export function registerCommands() {
         };
 
         tour.steps.splice(stepNumber, 0, step);
+
+        saveTour(tour);
 
         let label = `Step #${stepNumber + 1} of ${tour.steps.length}`;
 
@@ -202,6 +224,8 @@ export function registerCommands() {
         store.activeTour!.step
       ].description = content;
 
+      saveTour(store.activeTour!.tour);
+
       comment.parent.comments = comment.parent.comments.map(cmt => {
         if ((cmt as CodeTourComment).id === comment.id) {
           cmt.mode = vscode.CommentMode.Preview;
@@ -212,13 +236,15 @@ export function registerCommands() {
     }
   );
 
-  function saveTourIfNeccessary(tour: CodeTour) {
-    if (tour.id) {
-      const uri = vscode.Uri.parse(tour.id);
-      delete tour.id;
-      const tourContent = JSON.stringify(tour, null, 2);
-      vscode.workspace.fs.writeFile(uri, new Buffer(tourContent));
-    }
+  async function saveTour(tour: CodeTour) {
+    const uri = vscode.Uri.parse(tour.id);
+    const newTour = {
+      ...tour
+    };
+    delete newTour.id;
+    const tourContent = JSON.stringify(newTour, null, 2);
+
+    return vscode.workspace.fs.writeFile(uri, new Buffer(tourContent));
   }
 
   async function updateTourProperty(tour: CodeTour, property: string) {
@@ -235,7 +261,7 @@ export function registerCommands() {
     // @ts-ignore
     tour[property] = propertyValue;
 
-    saveTourIfNeccessary(tour);
+    saveTour(tour);
   }
 
   function moveStep(
@@ -260,13 +286,13 @@ export function registerCommands() {
     // the tour play along with it as well.
     if (
       store.activeTour &&
-      tour.id === store.activeTour.id &&
+      tour.id === store.activeTour.tour.id &&
       stepNumber === store.activeTour.step
     ) {
       store.activeTour.step += movement;
     }
 
-    saveTourIfNeccessary(tour);
+    saveTour(tour);
   }
 
   vscode.commands.registerCommand(
@@ -292,8 +318,7 @@ export function registerCommands() {
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.changeTourRef`,
     async (node: CodeTourNode) => {
-      const uri = vscode.Uri.parse(node.tour.id!);
-      const ref = await promptForTourRef(uri);
+      const ref = await promptForTourRef();
       if (ref) {
         if (ref === "HEAD") {
           delete node.tour.ref;
@@ -302,7 +327,7 @@ export function registerCommands() {
         }
       }
 
-      saveTourIfNeccessary(node.tour);
+      saveTour(node.tour);
     }
   );
 
@@ -353,19 +378,16 @@ export function registerCommands() {
 
         tour.steps.splice(step, 1);
 
-        if (
-          store.activeTour &&
-          tour.title === store.activeTour.tour.title &&
-          step === store.activeTour.step
-        ) {
-          if (tour.steps.length === 0) {
-            store.activeTour!.step = -1;
-          } else if (step > 0) {
+        if (store.activeTour && store.activeTour.tour.id === tour.id) {
+          if (
+            step <= store.activeTour!.step &&
+            (store.activeTour!.step > 0 || tour.steps.length === 0)
+          ) {
             store.activeTour!.step--;
           }
         }
 
-        saveTourIfNeccessary(tour);
+        saveTour(tour);
       }
     }
   );
@@ -374,9 +396,8 @@ export function registerCommands() {
     ref?: string;
   }
 
-  async function promptForTourRef(
-    uri: vscode.Uri
-  ): Promise<string | undefined> {
+  async function promptForTourRef(): Promise<string | undefined> {
+    const uri = vscode.workspace.workspaceFolders![0].uri;
     const repository = api.getRepository(uri);
     if (!repository) {
       return;
@@ -430,38 +451,4 @@ export function registerCommands() {
       return response.ref;
     }
   }
-
-  vscode.commands.registerCommand(`${EXTENSION_NAME}.saveTour`, async () => {
-    const file = store
-      .activeTour!.tour.title.toLocaleLowerCase()
-      .replace(/\s/g, "-")
-      .replace(/[^\w\d-_]/g, "");
-
-    const tour = store.activeTour!.tour;
-    delete tour.id;
-
-    const workspaceRoot = vscode.workspace.workspaceFolders![0].uri.toString();
-    const uri = vscode.Uri.parse(`${workspaceRoot}/.vscode/tours/${file}.json`);
-
-    const ref = await promptForTourRef(uri);
-    if (ref && ref !== "HEAD") {
-      tour.ref = ref;
-    }
-
-    const tourContent = JSON.stringify(tour, null, 2);
-
-    vscode.workspace.fs.writeFile(uri, new Buffer(tourContent));
-
-    vscode.commands.executeCommand("setContext", "codetour:recording", false);
-    store.isRecording = false;
-
-    vscode.window.showInformationMessage(
-      `The "${
-        store.activeTour!.tour.title
-      }" code tour was saved to to ".vscode/tours/${file}.json"`
-    );
-    store.activeTour!.thread!.dispose();
-    store.activeTour = null;
-    endCurrentCodeTour();
-  });
 }

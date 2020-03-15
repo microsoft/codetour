@@ -31,7 +31,7 @@ export class CodeTourNode extends TreeItem {
       contextValues.push("recording");
     }
 
-    const isActive = store.activeTour && tour.id === store.activeTour?.id;
+    const isActive = store.activeTour && tour.id === store.activeTour?.tour.id;
     if (isActive) {
       contextValues.push("active");
     }

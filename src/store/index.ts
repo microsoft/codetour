@@ -20,10 +20,6 @@ export interface CodeTour {
 }
 
 export interface ActiveTour {
-  // When a tour is being recorded, and hasn't
-  // been saved yet, it won't have an ID
-  id?: string;
-
   tour: CodeTour;
   step: number;
 

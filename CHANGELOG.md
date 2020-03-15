@@ -1,7 +1,8 @@
 ## v0.0.8 (03/14/2020)
 
 - Added the ability to associate a tour with a specific Git tag and/or commit, in order to enable it to be resilient to code changes
-  
+- Updated the tour recorder so that tours are automatically saved upon creation, and on each step/change
+
 ## v0.0.7 (03/14/2020)
 
 - Added the `Edit Tour` command to tour nodes in the `CodeTour` tree, in order to allow editing existing tours

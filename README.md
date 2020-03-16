@@ -179,3 +179,11 @@ In addition to the available commands, the Code Tour extension also contributes 
 
 - `ctrl+right` (Windows/Linux), `cmd+right` (macOS) - Move to the next step in the tour
 - `ctrl+left` (Windows/Linux) `cmd+left` (macOS) - Move to the previous step in the tour
+
+## Extension API
+
+In order to enable other extensions to contribute/manage their own code tours, the CodeTour extension exposes an API with the following methods:
+
+- `startTour(tour: CodeTour, stepNumber: number, workspaceRoot: Uri, startInEditMode: boolean = false): void` - Starts the specified tour, at a specific step, and using a specific workspace root to resolve relative file paths. Additionally, you can specify whether the tour should be started in edit/record mode or not. Once the tour has been started, the end-user can use the status bar, command palette, key bindings and comment UI to navigate and edit the tour, just like a "normal" tour.
+
+- `endCurrentTour(): void` - Ends the currently running tour (if there is one). Note that this is simply a programatic way to end the tour, and the end-user can also choose to end the tour using either the command palette (running the `CodeTour: End Tour` command) or comment UI (clicking the red square, stop icon) as usual.

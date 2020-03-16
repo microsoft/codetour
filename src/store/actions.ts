@@ -147,7 +147,8 @@ async function renderCurrentStep() {
 export function startCodeTour(
   tour: CodeTour,
   stepNumber?: number,
-  workspaceRoot?: Uri
+  workspaceRoot?: Uri,
+  startInEditMode: boolean = false
 ) {
   if (controller) {
     controller.dispose();
@@ -158,6 +159,8 @@ export function startCodeTour(
     CONTROLLER_LABEL
   );
 
+  // TODO: Correctly limit the commenting ranges
+  // to files within the workspace root
   controller.commentingRangeProvider = {
     provideCommentingRanges: (document: TextDocument) => {
       if (store.isRecording) {
@@ -176,6 +179,11 @@ export function startCodeTour(
   };
 
   commands.executeCommand("setContext", IN_TOUR_KEY, true);
+
+  if (startInEditMode) {
+    store.isRecording = true;
+    commands.executeCommand("setContext", "codetour:recording", true);
+  }
 }
 
 export async function endCurrentCodeTour() {

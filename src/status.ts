@@ -31,46 +31,50 @@ function createStartTourItem() {
 }
 
 let currentTourItem: vscode.StatusBarItem | null = null;
+let startTourItem: vscode.StatusBarItem | null = null;
+
 export function registerStatusBar() {
   if (store.hasTours) {
-    const startTourItem = createStartTourItem();
+    startTourItem = createStartTourItem();
+  }
 
-    reaction(
-      // @ts-ignore
-      () => [
-        store.activeTour
-          ? [
-              store.activeTour.step,
-              store.activeTour.tour.title,
-              store.activeTour.tour.steps.length
-            ]
-          : null,
-        store.isRecording
-      ],
-      () => {
-        if (store.activeTour) {
-          if (!currentTourItem) {
-            currentTourItem = createCurrentTourItem();
-          }
+  reaction(
+    // @ts-ignore
+    () => [
+      store.activeTour
+        ? [
+            store.activeTour.step,
+            store.activeTour.tour.title,
+            store.activeTour.tour.steps.length
+          ]
+        : null,
+      store.isRecording
+    ],
+    () => {
+      if (store.activeTour) {
+        if (!currentTourItem) {
+          currentTourItem = createCurrentTourItem();
+        }
 
-          const prefix = store.isRecording ? "Recording " : "";
-          currentTourItem.text = `${prefix}CodeTour: #${store.activeTour.step +
-            1} of ${store.activeTour.tour.steps.length} (${
-            store.activeTour.tour.title
-          })`;
+        const prefix = store.isRecording ? "Recording " : "";
+        currentTourItem.text = `${prefix}CodeTour: #${store.activeTour.step +
+          1} of ${store.activeTour.tour.steps.length} (${
+          store.activeTour.tour.title
+        })`;
 
-          if (store.activeTour.step === 0) {
-            startTourItem.hide();
-          }
-        } else {
-          if (currentTourItem) {
-            currentTourItem.dispose();
-            currentTourItem = null;
-          }
+        if (store.activeTour.step === 0 && startTourItem) {
+          startTourItem.hide();
+        }
+      } else {
+        if (currentTourItem) {
+          currentTourItem.dispose();
+          currentTourItem = null;
+        }
 
+        if (startTourItem) {
           startTourItem.show();
         }
       }
-    );
-  }
+    }
+  );
 }

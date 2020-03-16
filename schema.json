@@ -12,6 +12,10 @@
       "type": "string",
       "description": "Specifies an optional description for the code tour."
     },
+    "ref": {
+      "type": "string",
+      "description": "Indicates the git ref (branch/commit/tag) that this tour associate with."
+    },
     "steps": {
       "type": "array",
       "description": "Specifies the list of steps that are included in the code tour.",
@@ -31,6 +35,10 @@
           "line": {
             "type": "number",
             "description": "Specifies the line number that is associated with the current step."
+          },
+          "title": {
+            "type": "string",
+            "description": "Specifies an optional title for the step"
           },
           "description": {
             "type": "string",

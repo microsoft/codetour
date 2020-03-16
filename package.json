@@ -3,7 +3,7 @@
   "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "repository": {
     "type": "git",
     "url": "https://github.com/vsls-contrib/codetour"
@@ -62,6 +62,7 @@
       {
         "command": "codetour.editTour",
         "title": "Edit Tour",
+        "category": "CodeTour",
         "icon": "$(edit)"
       },
       {
@@ -71,7 +72,7 @@
       {
         "command": "codetour.endTour",
         "title": "End Tour",
-        "category": "Code Tour",
+        "category": "CodeTour",
         "icon": "$(debug-stop)"
       },
       {
@@ -124,6 +125,10 @@
     "menus": {
       "commandPalette": [
         {
+          "command": "codetour.editTour",
+          "when": "codetour:inTour && !codetour:recording"
+        },
+        {
           "command": "codetour.endTour",
           "when": "codetour:inTour"
         },
@@ -157,10 +162,6 @@
         },
         {
           "command": "codetour.deleteTourStep",
-          "when": "false"
-        },
-        {
-          "command": "codetour.editTour",
           "when": "false"
         },
         {

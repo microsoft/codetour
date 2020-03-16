@@ -51,8 +51,21 @@ export class CodeTourNode extends TreeItem {
   }
 }
 
-function getStepLabel(tour: CodeTour, step: number) {
-  return tour.steps[step].uri ? tour.steps[step].uri! : tour.steps[step].file!;
+const HEADING_PATTERN = /^#+\s*(.*)/;
+function getStepLabel(tour: CodeTour, stepNumber: number) {
+  const step = tour.steps[stepNumber];
+
+  const prefix = `#${stepNumber + 1} - `;
+  let label;
+  if (step.title) {
+    label = step.title;
+  } else if (HEADING_PATTERN.test(step.description.trim())) {
+    label = step.description.trim().match(HEADING_PATTERN)![1];
+  } else {
+    label = step.uri ? step.uri! : step.file!;
+  }
+
+  return `${prefix}${label}`;
 }
 
 export class CodeTourStepNode extends TreeItem {
@@ -66,8 +79,6 @@ export class CodeTourStepNode extends TreeItem {
       title: "Start Tour",
       arguments: [tour, stepNumber]
     };
-
-    this.description = step.description;
 
     this.resourceUri = step.uri
       ? Uri.parse(step.uri)!

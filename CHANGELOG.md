@@ -1,3 +1,9 @@
+## v0.0.10 (03/16/2020)
+
+- Introduced support for step titles, which provide a friendly display name in the `CodeTour` tree
+- Added an extension API, so that other VS Code extensions (e.g. [GistPad](https://aka.ms/gistpad)) can manage code tours
+- Added the `CodeTour: Edit Tour` command, that allows you to edit the tour you're currently playing.
+  
 ## v0.0.9 (03/15/2020)
 
 - Added the ability to record a text selection as part of a step

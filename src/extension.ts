@@ -6,6 +6,7 @@ import { store } from "./store";
 import { discoverTours } from "./store/provider";
 import { registerTreeProvider } from "./tree";
 import { initializeGitApi } from "./git";
+import { startCodeTour, endCurrentCodeTour } from "./store/actions";
 
 async function promptForTour(
   workspaceRoot: string,
@@ -39,4 +40,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
     initializeGitApi();
   }
+
+  return {
+    startTour: startCodeTour,
+    endCurrentTour: endCurrentCodeTour
+  };
 }

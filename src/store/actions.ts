@@ -85,9 +85,12 @@ async function renderCurrentStep() {
     label += ` (${currentTour.title})`;
   }
 
-  const workspaceRoot = workspace.workspaceFolders
+  const workspaceRoot = store.activeTour!.workspaceRoot
+    ? store.activeTour!.workspaceRoot
+    : workspace.workspaceFolders
     ? workspace.workspaceFolders[0].uri.toString()
     : "";
+
   let uri = step.uri
     ? Uri.parse(step.uri)
     : Uri.parse(`${workspaceRoot}/${step.file}`);
@@ -141,7 +144,11 @@ async function renderCurrentStep() {
   showDocument(uri, range, selection);
 }
 
-export function startCodeTour(tour: CodeTour, stepNumber?: number) {
+export function startCodeTour(
+  tour: CodeTour,
+  stepNumber?: number,
+  workspaceRoot?: Uri
+) {
   if (controller) {
     controller.dispose();
   }
@@ -164,6 +171,7 @@ export function startCodeTour(tour: CodeTour, stepNumber?: number) {
   store.activeTour = {
     tour,
     step: stepNumber ? stepNumber : tour.steps.length ? 0 : -1,
+    workspaceRoot,
     thread: null
   };
 

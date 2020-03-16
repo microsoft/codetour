@@ -13,7 +13,7 @@ import { discoverTours } from "./store/provider";
 import { CodeTourNode, CodeTourStepNode } from "./tree/nodes";
 import { runInAction, comparer } from "mobx";
 import { api, RefType } from "./git";
-
+import * as path from "path";
 interface CodeTourQuickPickItem extends vscode.QuickPickItem {
   tour: CodeTour;
 }
@@ -151,8 +151,15 @@ export function registerCommands() {
         const thread = store.activeTour!.thread;
         const stepNumber = store.activeTour!.step;
 
+        const file = store.activeTour!.workspaceRoot
+          ? path.relative(
+              store.activeTour!.workspaceRoot.toString(),
+              thread!.uri.toString()
+            )
+          : vscode.workspace.asRelativePath(thread!.uri);
+
         const step = {
-          file: vscode.workspace.asRelativePath(thread!.uri),
+          file,
           line: thread!.range.start.line + 1,
           description: reply.text
         };
@@ -231,7 +238,11 @@ export function registerCommands() {
       } else if (store.activeTour) {
         // We need to re-start the tour so that the associated
         // comment controller is put into edit mode
-        startCodeTour(store.activeTour!.tour, store.activeTour!.step);
+        startCodeTour(
+          store.activeTour!.tour,
+          store.activeTour!.step,
+          store.activeTour.workspaceRoot
+        );
       }
     }
   );

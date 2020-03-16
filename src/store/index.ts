@@ -1,5 +1,5 @@
 import { observable } from "mobx";
-import { CommentThread } from "vscode";
+import { CommentThread, Uri } from "vscode";
 
 export const PENDING_TOUR_ID = "@@RECORDING";
 
@@ -32,6 +32,10 @@ export interface ActiveTour {
   // When recording, a tour can be active, without
   // having created an actual comment yet.
   thread: CommentThread | null | undefined;
+
+  // In order to resolve relative file
+  // paths, we need to know the workspace root
+  workspaceRoot?: Uri;
 }
 
 export interface Store {

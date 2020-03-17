@@ -9,15 +9,19 @@ import {
 import { EXTENSION_NAME } from "../constants";
 import { CodeTour, store } from "../store";
 
+function isRecording(tour: CodeTour) {
+  return (
+    store.isRecording &&
+    store.activeTour &&
+    store.activeTour.tour.id === tour.id
+  );
+}
+
 export class CodeTourNode extends TreeItem {
-  constructor(
-    public tour: CodeTour,
-    extensionPath: string,
-    isRecording: boolean
-  ) {
+  constructor(public tour: CodeTour, extensionPath: string) {
     super(
       tour.title!,
-      isRecording
+      isRecording(tour)
         ? TreeItemCollapsibleState.Expanded
         : TreeItemCollapsibleState.Collapsed
     );
@@ -27,7 +31,7 @@ export class CodeTourNode extends TreeItem {
 
     const contextValues = ["codetour.tour"];
 
-    if (isRecording) {
+    if (isRecording(tour)) {
       contextValues.push("recording");
     }
 
@@ -38,7 +42,7 @@ export class CodeTourNode extends TreeItem {
 
     this.contextValue = contextValues.join(".");
 
-    const icon = isRecording
+    const icon = isRecording(tour)
       ? "tour-recording"
       : isActive
       ? "tour-active"
@@ -55,7 +59,7 @@ const HEADING_PATTERN = /^#+\s*(.*)/;
 function getStepLabel(tour: CodeTour, stepNumber: number) {
   const step = tour.steps[stepNumber];
 
-  const prefix = `#${stepNumber + 1} - `;
+  const prefix = `${stepNumber + 1} - `;
   let label;
   if (step.title) {
     label = step.title;

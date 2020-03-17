@@ -136,6 +136,45 @@ export function registerCommands() {
     }
   });
 
+  function getStepSelection() {
+    const activeEditor = vscode.window.activeTextEditor;
+    if (
+      activeEditor &&
+      activeEditor.selection &&
+      !activeEditor.selection.isEmpty
+    ) {
+      const { start, end } = activeEditor.selection;
+
+      // Convert the selection from 0-based
+      // to 1-based to make it easier to
+      // edit the JSON tour file by hand.
+      const selection = {
+        start: {
+          line: start.line + 1,
+          character: start.character + 1
+        },
+        end: {
+          line: end.line + 1,
+          character: end.character + 1
+        }
+      };
+
+      const previousStep = store.activeTour!.tour.steps[
+        store.activeTour!.step - 1
+      ];
+
+      // Check whether the end-user forgot to "reset"
+      // the selection from the previous step, and if so,
+      // ignore it from this step since it's not likely useful.
+      if (
+        !previousStep ||
+        !previousStep.selection ||
+        !comparer.structural(previousStep.selection, selection)
+      ) {
+        return selection;
+      }
+    }
+  }
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.addTourStep`,
     (reply: vscode.CommentReply) => {
@@ -164,42 +203,9 @@ export function registerCommands() {
           description: reply.text
         };
 
-        const activeEditor = vscode.window.activeTextEditor;
-        if (
-          activeEditor &&
-          activeEditor.selection &&
-          !activeEditor.selection.isEmpty
-        ) {
-          const { start, end } = activeEditor.selection;
-
-          // Convert the selection from 0-based
-          // to 1-based to make it easier to
-          // edit the JSON tour file by hand.
-          const selection = {
-            start: {
-              line: start.line + 1,
-              character: start.character + 1
-            },
-            end: {
-              line: end.line + 1,
-              character: end.character + 1
-            }
-          };
-
-          const previousStep = store.activeTour!.tour.steps[
-            store.activeTour!.step - 1
-          ];
-
-          // Check whether the end-user forgot to "reset"
-          // the selection from the previous step, and if so,
-          // ignore it from this step since it's not likely useful.
-          if (
-            !previousStep ||
-            !previousStep.selection ||
-            !comparer.structural(previousStep.selection, selection)
-          ) {
-            (step as any).selection = selection;
-          }
+        const selection = getStepSelection();
+        if (selection) {
+          (step as any).selection = selection;
         }
 
         tour.steps.splice(stepNumber, 0, step);
@@ -269,9 +275,15 @@ export function registerCommands() {
           ? comment.body.value
           : comment.body;
 
-      store.activeTour!.tour!.steps[
-        store.activeTour!.step
-      ].description = content;
+      runInAction(() => {
+        const tourStep = store.activeTour!.tour!.steps[store.activeTour!.step];
+        tourStep.description = content;
+
+        const selection = getStepSelection();
+        if (selection) {
+          tourStep.selection = selection;
+        }
+      });
 
       saveTour(store.activeTour!.tour);
 
@@ -317,7 +329,7 @@ export function registerCommands() {
     movement: number,
     node: CodeTourStepNode | CodeTourComment
   ) {
-    let tour, stepNumber;
+    let tour: CodeTour, stepNumber: number;
 
     if (node instanceof CodeTourComment) {
       tour = store.activeTour!.tour;
@@ -327,21 +339,23 @@ export function registerCommands() {
       stepNumber = node.stepNumber;
     }
 
-    const step = tour.steps[stepNumber];
-    tour.steps.splice(stepNumber, 1);
-    tour.steps.splice(stepNumber + movement, 0, step);
+    runInAction(async () => {
+      const step = tour.steps[stepNumber];
+      tour.steps.splice(stepNumber, 1);
+      tour.steps.splice(stepNumber + movement, 0, step);
 
-    // If the user is moving the currently active step, then move
-    // the tour play along with it as well.
-    if (
-      store.activeTour &&
-      tour.id === store.activeTour.tour.id &&
-      stepNumber === store.activeTour.step
-    ) {
-      store.activeTour.step += movement;
-    }
+      // If the user is moving the currently active step, then move
+      // the tour play along with it as well.
+      if (
+        store.activeTour &&
+        tour.id === store.activeTour.tour.id &&
+        stepNumber === store.activeTour.step
+      ) {
+        store.activeTour.step += movement;
+      }
 
-    saveTour(tour);
+      await saveTour(tour);
+    });
   }
 
   vscode.commands.registerCommand(

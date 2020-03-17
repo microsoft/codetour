@@ -32,9 +32,11 @@ Once you've started a tour, the comment UI will guide you, and includes navigati
 - `Edit Tour` - Begin editing the current tour (see [authoring](#authoring-tours) for details)
 - `End Tour` - End the current tour and remove the comment UI
 
-Additionally, you can use the `ctrl+right` / `ctrl+left` (Windows/Linux) and `cmd+right` / `cmd+left` (macOS) keyboard shortcuts to move forwards and backwards in the tour. When you're actively in a code tour, the status bar will also display the title and current step of the tour.
-
 <img width="500px" src="https://user-images.githubusercontent.com/116461/76151723-ca00b580-606c-11ea-9bd5-81c1d9352cef.png" />
+
+Additionally, you can use the `ctrl+right` / `ctrl+left` (Windows/Linux) and `cmd+right` / `cmd+left` (macOS) keyboard shortcuts to move forwards and backwards in the tour. The `CodeTour` tree view and status bar is also kept in sync with your current tour/step, to help the developer easily understand where they're at in the context of the broader tour.
+
+![Navigating](https://user-images.githubusercontent.com/116461/76807453-a1319c00-67a1-11ea-9b88-7e448072f33d.gif)
 
 If you navigate away from the current step and need to resume, you can do that via any of the following actions:
 
@@ -75,6 +77,8 @@ While you can any heading leve for the step title, we'd recommend using `###` or
 By default, each step is associated with the line of code you created the comment on (i.e. the line you clicked the `+` on the comment bar for). However, if you want to call out a specific span of code as part of the step, simply highlight the code before you add the step (clicking the `Add Tour to Step` button), and the selection will be captured as part of the step.
 
 <img width="800px" src="https://user-images.githubusercontent.com/116461/76705627-b96cc280-669e-11ea-982a-d754c4f001aa.gif" />
+
+If you need to tweak the selection that's associated with a step, simply edit the step, reset the selection and then save it.
 
 ### Re-arranging steps
 

@@ -52,7 +52,10 @@ async function showDocument(uri: Uri, range: Range, selection?: Selection) {
   const document =
     window.visibleTextEditors.find(
       editor => editor.document.uri.toString() === uri.toString()
-    ) || (await window.showTextDocument(uri, { preserveFocus: false }));
+    ) || (await window.showTextDocument(uri, { preserveFocus: true }));
+
+  // TODO: Figure out how to force focus when navigating
+  // to documents which are already open.
 
   if (selection) {
     document.selection = selection;

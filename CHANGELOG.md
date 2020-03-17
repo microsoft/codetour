@@ -1,3 +1,9 @@
+## v0.0.11 (03/16/2020)
+
+- Updated the `CodeTour` tree to auto-select tree node that is associated with the currently viewing tour step
+- Text highlights can now be edited when editing a tour code
+- Added support for collapsing all nodes in the `CodeTour` tree
+  
 ## v0.0.10 (03/16/2020)
 
 - Introduced support for step titles, which allow defining friendly names for a tour's steps in the `CodeTour` tree

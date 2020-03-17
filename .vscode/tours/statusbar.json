@@ -5,7 +5,17 @@
     {
       "file": "src/extension.ts",
       "line": 36,
-      "description": "### Activation\nThe status bar provider is registered upon extension activiation"
+      "description": "### Activation\nThe status bar provider is registered upon extension activiation",
+      "selection": {
+        "start": {
+          "line": 32,
+          "character": 5
+        },
+        "end": {
+          "line": 36,
+          "character": 49
+        }
+      }
     },
     {
       "file": "src/status.ts",

@@ -9,6 +9,7 @@ import {
 } from "vscode";
 import { store } from "../store";
 import { CodeTourNode, CodeTourStepNode, RecordTourNode } from "./nodes";
+import { EXTENSION_NAME } from "../constants";
 
 class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
   private _disposables: Disposable[] = [];
@@ -48,23 +49,9 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
         return [new RecordTourNode()];
       } else {
         const tours = store.tours.map(tour => {
-          const isRecording =
-            store.isRecording &&
-            store.activeTour &&
-            store.activeTour.tour.id === tour.id;
-          return new CodeTourNode(tour, this.extensionPath, isRecording!);
+          return new CodeTourNode(tour, this.extensionPath);
         });
 
-        // Add the currently recording, in-memory tour to the tree
-        if (
-          store.isRecording &&
-          store.activeTour &&
-          !tours.find(tour => tour.tour.title === store.activeTour!.tour!.title)
-        ) {
-          tours.unshift(
-            new CodeTourNode(store.activeTour!.tour, this.extensionPath, true)
-          );
-        }
         return tours;
       }
     } else if (element instanceof CodeTourNode) {
@@ -78,14 +65,48 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
     }
   }
 
+  async getParent(element: TreeItem): Promise<TreeItem | null> {
+    if (element instanceof CodeTourStepNode) {
+      return new CodeTourNode(element.tour, this.extensionPath);
+    } else {
+      return null;
+    }
+  }
+
   dispose() {
     this._disposables.forEach(disposable => disposable.dispose());
   }
 }
 
 export function registerTreeProvider(extensionPath: string) {
-  window.registerTreeDataProvider(
-    "codetour.tours",
-    new CodeTourTreeProvider(extensionPath)
+  const treeDataProvider = new CodeTourTreeProvider(extensionPath);
+  const treeView = window.createTreeView(`${EXTENSION_NAME}.tours`, {
+    showCollapseAll: true,
+    treeDataProvider
+  });
+
+  reaction(
+    () => [
+      store.activeTour
+        ? [
+            store.activeTour.tour.title,
+            store.activeTour.tour.steps.map(step => [step.title]),
+            store.activeTour.step
+          ]
+        : null
+    ],
+    () => {
+      if (store.activeTour) {
+        treeView.reveal(
+          new CodeTourStepNode(store.activeTour.tour, store.activeTour!.step),
+          {
+            focus: true
+          }
+        );
+      } else {
+        // TODO: Once VS Code supports it, we want
+        // to de-select the step node once the tour ends.
+      }
+    }
   );
 }

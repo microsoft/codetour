@@ -3,7 +3,7 @@ import { CodeTour } from ".";
 import { store } from ".";
 import { VSCODE_DIRECTORY, EXTENSION_NAME } from "../constants";
 import { endCurrentCodeTour } from "./actions";
-import { set } from "mobx";
+import { set, runInAction } from "mobx";
 import { comparer } from "mobx";
 
 const MAIN_TOUR_FILES = [
@@ -24,24 +24,26 @@ export async function discoverTours(workspaceRoot: string): Promise<void> {
     tours.push(mainTour);
   }
 
-  store.tours = tours.sort((a, b) => a.title.localeCompare(b.title));
+  runInAction(() => {
+    store.tours = tours.sort((a, b) => a.title.localeCompare(b.title));
 
-  if (store.activeTour) {
-    const tour = tours.find(tour => tour.id === store.activeTour!.tour.id);
+    if (store.activeTour) {
+      const tour = tours.find(tour => tour.id === store.activeTour!.tour.id);
 
-    if (tour) {
-      if (!comparer.structural(store.activeTour.tour, tour)) {
-        // Since the active tour could be already observed,
-        // we want to update it in place with the new properties.
-        set(store.activeTour.tour, tour);
+      if (tour) {
+        if (!comparer.structural(store.activeTour.tour, tour)) {
+          // Since the active tour could be already observed,
+          // we want to update it in place with the new properties.
+          set(store.activeTour.tour, tour);
+        }
+      } else {
+        // The user deleted the tour
+        // file that's associated with
+        // the active tour
+        endCurrentCodeTour();
       }
-    } else {
-      // The user deleted the tour
-      // file that's associated with
-      // the active tour
-      endCurrentCodeTour();
     }
-  }
+  });
 
   vscode.commands.executeCommand("setContext", HAS_TOURS_KEY, store.hasTours);
 }

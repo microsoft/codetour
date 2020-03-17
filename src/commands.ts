@@ -77,14 +77,29 @@ export function registerCommands() {
     resumeCurrentCodeTour
   );
 
-  async function writeTourFile(title: string, ref?: string): Promise<CodeTour> {
+  function getTourFileUri(title: string) {
     const file = title
       .toLocaleLowerCase()
       .replace(/\s/g, "-")
       .replace(/[^\w\d-_]/g, "");
 
     const workspaceRoot = vscode.workspace.workspaceFolders![0].uri.toString();
-    const uri = vscode.Uri.parse(`${workspaceRoot}/.vscode/tours/${file}.json`);
+    return vscode.Uri.parse(`${workspaceRoot}/.vscode/tours/${file}.json`);
+  }
+
+  async function checkIfTourExists(title: string) {
+    const uri = getTourFileUri(title);
+
+    try {
+      const stat = await vscode.workspace.fs.stat(uri);
+      return stat.type === vscode.FileType.File;
+    } catch {
+      return false;
+    }
+  }
+
+  async function writeTourFile(title: string, ref?: string): Promise<CodeTour> {
+    const uri = getTourFileUri(title);
 
     const tour = { title, steps: [] };
     if (ref && ref !== "HEAD") {
@@ -100,41 +115,70 @@ export function registerCommands() {
     return tour as CodeTour;
   }
 
-  vscode.commands.registerCommand(`${EXTENSION_NAME}.recordTour`, async () => {
-    const title = await vscode.window.showInputBox({
-      prompt: "Specify the title of the tour"
-    });
+  const REENTER_TITLE_RESPONSE = "Re-enter title";
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.recordTour`,
+    async (placeHolderTitle?: string) => {
+      const title = await vscode.window.showInputBox({
+        prompt: "Specify the title of the tour",
+        value: placeHolderTitle
+      });
 
-    if (!title) {
-      return;
+      if (!title) {
+        return;
+      }
+
+      const tourExists = await checkIfTourExists(title);
+      if (tourExists) {
+        const response = await vscode.window.showErrorMessage(
+          `This workspace already includes a tour with the title "${title}."`,
+          REENTER_TITLE_RESPONSE,
+          "Overwrite existing tour"
+        );
+
+        if (response === REENTER_TITLE_RESPONSE) {
+          return vscode.commands.executeCommand(
+            `${EXTENSION_NAME}.recordTour`,
+            title
+          );
+        } else if (!response) {
+          // If the end-user closes the error
+          // dialog, then cancel the recording.
+          return;
+        }
+      }
+
+      const ref = await promptForTourRef();
+      const tour = await writeTourFile(title, ref);
+
+      startCodeTour(tour);
+
+      store.isRecording = true;
+      await vscode.commands.executeCommand(
+        "setContext",
+        "codetour:recording",
+        true
+      );
+
+      if (
+        await vscode.window.showInformationMessage(
+          "Code tour recording started. Start creating steps by clicking the + button to the left of each line of code.",
+          "Cancel"
+        )
+      ) {
+        const uri = vscode.Uri.parse(tour.id);
+        vscode.workspace.fs.delete(uri);
+
+        endCurrentCodeTour();
+        store.isRecording = false;
+        vscode.commands.executeCommand(
+          "setContext",
+          "codetour:recording",
+          false
+        );
+      }
     }
-
-    const ref = await promptForTourRef();
-    const tour = await writeTourFile(title, ref);
-
-    startCodeTour(tour);
-
-    store.isRecording = true;
-    await vscode.commands.executeCommand(
-      "setContext",
-      "codetour:recording",
-      true
-    );
-
-    if (
-      await vscode.window.showInformationMessage(
-        "Code tour recording started. Start creating steps by clicking the + button to the left of each line of code.",
-        "Cancel"
-      )
-    ) {
-      const uri = vscode.Uri.parse(tour.id);
-      vscode.workspace.fs.delete(uri);
-
-      endCurrentCodeTour();
-      store.isRecording = false;
-      vscode.commands.executeCommand("setContext", "codetour:recording", false);
-    }
-  });
+  );
 
   function getStepSelection() {
     const activeEditor = vscode.window.activeTextEditor;

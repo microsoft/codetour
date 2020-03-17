@@ -59,7 +59,7 @@ const HEADING_PATTERN = /^#+\s*(.*)/;
 function getStepLabel(tour: CodeTour, stepNumber: number) {
   const step = tour.steps[stepNumber];
 
-  const prefix = `${stepNumber + 1} - `;
+  const prefix = `#${stepNumber + 1} - `;
   let label;
   if (step.title) {
     label = step.title;

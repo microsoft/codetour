@@ -3,6 +3,7 @@
 - Updated the `CodeTour` tree to auto-select tree node that is associated with the currently viewing tour step
 - Text highlights can now be edited when editing a tour code
 - Added support for collapsing all nodes in the `CodeTour` tree
+- Added a prompt when trying to record a tour, using a title that is already in use by an existing tour
   
 ## v0.0.10 (03/16/2020)
 

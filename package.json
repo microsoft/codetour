@@ -66,6 +66,10 @@
         "icon": "$(edit)"
       },
       {
+        "command": "codetour.editTourAtStep",
+        "title": "Edit Step"
+      },
+      {
         "command": "codetour.editTourStep",
         "title": "Edit Step"
       },
@@ -162,6 +166,10 @@
         },
         {
           "command": "codetour.deleteTourStep",
+          "when": "false"
+        },
+        {
+          "command": "codetour.editTourAtStep",
           "when": "false"
         },
         {
@@ -299,28 +307,33 @@
         },
         {
           "command": "codetour.moveTourStepBack",
-          "when": "viewItem =~ /^codetour.tourStep.hasPrevious/",
+          "when": "viewItem =~ /^codetour.tourStep.hasPrevious/ && codetour:recording",
           "group": "inline@1"
         },
         {
           "command": "codetour.moveTourStepForward",
-          "when": "viewItem =~ /codetour.tourStep.*(.hasNext)/",
+          "when": "viewItem =~ /codetour.tourStep.*(.hasNext)/ && codetour:recording",
           "group": "inline@2"
         },
         {
           "command": "codetour.moveTourStepBack",
-          "when": "viewItem =~ /^codetour.tourStep.hasPrevious/",
+          "when": "viewItem =~ /^codetour.tourStep.hasPrevious/ && codetour:recording",
           "group": "basic@1"
         },
         {
           "command": "codetour.moveTourStepForward",
-          "when": "viewItem =~ /codetour.tourStep.*(.hasNext)/",
+          "when": "viewItem =~ /codetour.tourStep.*(.hasNext)/ && codetour:recording",
           "group": "basic@2"
+        },
+        {
+          "command": "codetour.editTourAtStep",
+          "when": "viewItem =~ /^codetour.tourStep/ && !codetour:recording",
+          "group": "manage@1"
         },
         {
           "command": "codetour.deleteTourStep",
           "when": "viewItem =~ /^codetour.tourStep/",
-          "group": "manage@1"
+          "group": "manage@2"
         }
       ]
     },
@@ -332,6 +345,12 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "codetour.tours",
+        "contents": "This workspace doesn't have any code tours yet\n[Record a new tour](command:codetour.recordTour)"
+      }
+    ],
     "jsonValidation": [
       {
         "fileMatch": "(code)?tour.json",

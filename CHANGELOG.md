@@ -1,20 +1,25 @@
+## v0.0.12 (03/16/2020)
+
+- Added a new `Edit Step` command to the `CodeTour` tree, which allows you to start editing a tour at a specific step
+- Updated the `CodeTour` tree to only show the move step up/down commands while you're actively recording that step
+
 ## v0.0.11 (03/16/2020)
 
 - Updated the `CodeTour` tree to auto-select tree node that is associated with the currently viewing tour step
 - Text highlights can now be edited when editing a tour code
 - Added support for collapsing all nodes in the `CodeTour` tree
 - Added a prompt when trying to record a tour, using a title that is already in use by an existing tour
-  
+
 ## v0.0.10 (03/16/2020)
 
 - Introduced support for step titles, which allow defining friendly names for a tour's steps in the `CodeTour` tree
 - Exposed an extension API, so that other VS Code extensions (e.g. [GistPad](https://aka.ms/gistpad)) can start and end tours that they manage
 - Added the `CodeTour: Edit Tour` command, that allows you to edit the tour you're currently playing.
-  
+
 ## v0.0.9 (03/15/2020)
 
 - Added the ability to record a text selection as part of a step
-  
+
   ![Selection](https://user-images.githubusercontent.com/116461/76705627-b96cc280-669e-11ea-982a-d754c4f001aa.gif)
 
 ## v0.0.8 (03/14/2020)

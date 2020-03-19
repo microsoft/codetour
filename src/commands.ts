@@ -274,6 +274,13 @@ export function registerCommands() {
   );
 
   vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.editTourAtStep`,
+    async (node: CodeTourStepNode) => {
+      startCodeTour(node.tour, node.stepNumber, undefined, true);
+    }
+  );
+
+  vscode.commands.registerCommand(
     `${EXTENSION_NAME}.editTour`,
     async (node: CodeTourNode | vscode.CommentThread) => {
       store.isRecording = true;

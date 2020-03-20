@@ -130,7 +130,7 @@
       "commandPalette": [
         {
           "command": "codetour.editTour",
-          "when": "codetour:inTour && !codetour:recording"
+          "when": "codetour:inTour && !codetour:recording && codetour:canEditTour"
         },
         {
           "command": "codetour.endTour",
@@ -208,7 +208,7 @@
         {
           "command": "codetour.editTour",
           "group": "inline@4",
-          "when": "commentController == codetour && !codetour:recording"
+          "when": "commentController == codetour && !codetour:recording && codetour:canEditTour"
         }
       ],
       "comments/commentThread/context": [

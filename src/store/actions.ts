@@ -21,6 +21,7 @@ import { EXTENSION_NAME } from "../constants";
 import { reaction } from "mobx";
 import { api } from "../git";
 
+const CAN_EDIT_TOUR_KEY = `${EXTENSION_NAME}:canEditTour`;
 const IN_TOUR_KEY = `${EXTENSION_NAME}:inTour`;
 
 const CONTROLLER_ID = "codetour";
@@ -151,7 +152,8 @@ export function startCodeTour(
   tour: CodeTour,
   stepNumber?: number,
   workspaceRoot?: Uri,
-  startInEditMode: boolean = false
+  startInEditMode: boolean = false,
+  canEditTour: boolean = true
 ) {
   if (controller) {
     controller.dispose();
@@ -182,6 +184,7 @@ export function startCodeTour(
   };
 
   commands.executeCommand("setContext", IN_TOUR_KEY, true);
+  commands.executeCommand("setContext", CAN_EDIT_TOUR_KEY, canEditTour);
 
   if (startInEditMode) {
     store.isRecording = true;

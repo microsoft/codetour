@@ -184,7 +184,7 @@ In addition to the available commands, the Code Tour extension also contributes 
 - `ctrl+right` (Windows/Linux), `cmd+right` (macOS) - Move to the next step in the tour
 - `ctrl+left` (Windows/Linux) `cmd+left` (macOS) - Move to the previous step in the tour
 
-## Extension API
+## Extension API (Experimental)
 
 In order to enable other extensions to contribute/manage their own code tours, the CodeTour extension exposes an API with the following methods:
 

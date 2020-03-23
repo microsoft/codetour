@@ -1,8 +1,11 @@
-## v0.0.12 (03/23/2020)
+## v0.0.13 (03/23/202)
+
+- Exposed an experimental API for other extensions to record/playback tours. For an example, see the [GistPad](https://aka.ms/gistpad) extension, which now allows you to create tours associated with interactive web playgrounds
+
+## v0.0.12 (03/21/2020)
 
 - Added a new `Edit Step` command to the `CodeTour` tree, which allows you to start editing a tour at a specific step
 - Updated the `CodeTour` tree to only show the move step up/down commands while you're actively recording that step
-- Exposed an experimental API for other extensions to record/playback tours. For an example, see the [GistPad](https://aka.ms/gistpad) extension, which now allows you to create tours associated with interactive web playgrounds
 
 ## v0.0.11 (03/16/2020)
 

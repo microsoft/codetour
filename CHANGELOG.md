@@ -1,3 +1,8 @@
+## v0.0.13 (?)
+
+- Update the API
+-
+
 ## v0.0.12 (03/16/2020)
 
 - Added a new `Edit Step` command to the `CodeTour` tree, which allows you to start editing a tour at a specific step

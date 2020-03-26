@@ -13,8 +13,9 @@ export interface CodeTourStep {
   description: string;
   file?: string;
   uri?: string;
-  line: number;
+  line?: number;
   selection?: { start: CodeTourStepPosition; end: CodeTourStepPosition };
+  contents?: string;
 }
 
 export interface CodeTour {

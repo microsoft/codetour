@@ -7,6 +7,7 @@ import { discoverTours } from "./store/provider";
 import { registerTreeProvider } from "./tree";
 import { initializeGitApi } from "./git";
 import { startCodeTour, endCurrentCodeTour } from "./store/actions";
+import { registerFileSystemProvider } from "./fileSystem";
 
 async function promptForTour(
   workspaceRoot: string,
@@ -28,18 +29,20 @@ async function promptForTour(
 }
 
 export async function activate(context: vscode.ExtensionContext) {
+  registerCommands();
+
   if (vscode.workspace.workspaceFolders) {
     const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.toString();
     await discoverTours(workspaceRoot);
 
-    registerCommands();
     registerTreeProvider(context.extensionPath);
-    registerStatusBar();
-
     promptForTour(workspaceRoot, context.globalState);
 
     initializeGitApi();
   }
+
+  registerFileSystemProvider();
+  registerStatusBar();
 
   return {
     startTour: startCodeTour,

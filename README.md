@@ -23,6 +23,10 @@ Otherwise, you can manually start a tour via any of the following methods:
 
 If the current workspace only has a single code tour, then any of the above actions will automatically start that tour. Otherwise, you'll be presented with a list of tours to select from.
 
+### Opening a tour
+
+In addition to taking tours that are part of the currently open workspace, you can also open a tour file that someone else sent you and/or you created yourself. Simply run the `CodeTour: Open Tour File...` command and/or click the folder icon in the title bar of the `CodeTour` tree view.
+
 ## Navigating a tour
 
 Once you've started a tour, the comment UI will guide you, and includes navigation actions that allow you to perform the following:
@@ -126,6 +130,12 @@ Behind the scenes, the tour will be written as a JSON file to the `.vscode/tours
 - `tour.json`
 - `.vscode/codetour.json`
 - `.vscode/tour.json`
+
+### Exporting Tours
+
+By default, when you record a tour, it is written to the currently open workspace. This makes it easy to check-in the tour and share it with the rest of the team. However, there may be times where you want to record a tour for yourself, or a tour to help explain a one-off to someone, and in those situations, you might not want to check the tour into the repo.
+
+So support this, after you finish recording a tour, you can right-click it in the `CodeTour` tree and select `Export Tour`. This will allow you to save the tour to a new location, and then you can delete the tour file from your repo. Furthermore, when you export a tour, the tour file itself will embed the contents of all files needed by the tour, which ensures that someone can play it back, regardless if the have the respective code available locally. This enables a powerful form of collaboration.
 
 ### Tour Schema
 

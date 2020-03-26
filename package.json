@@ -80,6 +80,10 @@
         "icon": "$(debug-stop)"
       },
       {
+        "command": "codetour.exportTour",
+        "title": "Export Tour..."
+      },
+      {
         "command": "codetour.moveTourStepBack",
         "title": "Move Up",
         "icon": "$(arrow-up)"
@@ -93,6 +97,12 @@
         "command": "codetour.nextTourStep",
         "title": "Next",
         "icon": "$(arrow-right)"
+      },
+      {
+        "command": "codetour.openTourFile",
+        "title": "Open Tour File...",
+        "icon": "$(folder-opened)",
+        "category": "CodeTour"
       },
       {
         "command": "codetour.previousTourStep",
@@ -177,6 +187,10 @@
           "when": "false"
         },
         {
+          "command": "codetour.exportTour",
+          "when": "false"
+        },
+        {
           "command": "codetour.nextTourStep",
           "when": "false"
         },
@@ -249,9 +263,14 @@
       ],
       "view/title": [
         {
+          "command": "codetour.openTourFile",
+          "when": "view == codetour.tours",
+          "group": "navigation@1"
+        },
+        {
           "command": "codetour.recordTour",
           "when": "view == codetour.tours",
-          "group": "navigation"
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [
@@ -304,6 +323,11 @@
           "command": "codetour.deleteTour",
           "when": "viewItem =~ /^codetour.tour(.recording)?(.active)?$/",
           "group": "edit@2"
+        },
+        {
+          "command": "codetour.exportTour",
+          "when": "viewItem =~ /^codetour.tour(.active)?$/",
+          "group": "export@1"
         },
         {
           "command": "codetour.moveTourStepBack",

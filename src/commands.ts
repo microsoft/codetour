@@ -14,6 +14,8 @@ import { CodeTourNode, CodeTourStepNode } from "./tree/nodes";
 import { runInAction, comparer } from "mobx";
 import { api, RefType } from "./git";
 import * as path from "path";
+import { getStepFileUri } from "./utils";
+import { workspace } from "vscode";
 interface CodeTourQuickPickItem extends vscode.QuickPickItem {
   tour: CodeTour;
 }
@@ -565,4 +567,85 @@ export function registerCommands() {
       return response.ref;
     }
   }
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.openTourFile`,
+    async () => {
+      const uri = await vscode.window.showOpenDialog({
+        filters: {
+          Tours: ["json"]
+        },
+        canSelectFolders: false,
+        canSelectMany: false,
+        openLabel: "Open Tour"
+      });
+
+      if (!uri) {
+        return;
+      }
+
+      try {
+        const contents = await vscode.workspace.fs.readFile(uri[0]);
+        const tour = JSON.parse(contents.toString());
+        tour.id = uri[0].toString();
+        startCodeTour(tour);
+      } catch {
+        vscode.window.showErrorMessage(
+          "This file doesn't appear to be a valid tour. Please inspect its contents and try again."
+        );
+      }
+    }
+  );
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.exportTour`,
+    async (node: CodeTourNode) => {
+      const uri = await vscode.window.showSaveDialog({
+        filters: {
+          Tours: ["json"]
+        },
+        saveLabel: "Export Tour"
+      });
+
+      if (!uri) {
+        return;
+      }
+
+      const tour = node.tour;
+      const newTour = {
+        ...tour
+      };
+
+      newTour.steps = await Promise.all(
+        newTour.steps.map(async step => {
+          if (step.contents && step.uri) {
+            return step;
+          }
+
+          const workspaceRoot = workspace.workspaceFolders
+            ? workspace.workspaceFolders[0].uri.toString()
+            : "";
+
+          const stepFileUri = await getStepFileUri(
+            step,
+            workspaceRoot,
+            node.tour.ref
+          );
+
+          const stepFileContents = await vscode.workspace.fs.readFile(
+            stepFileUri
+          );
+
+          step.contents = stepFileContents.toString();
+          return step;
+        })
+      );
+
+      delete newTour.id;
+      delete newTour.ref;
+
+      const contents = JSON.stringify(newTour, null, 2);
+      vscode.workspace.fs.writeFile(uri, new Buffer(contents));
+    }
+  );
 }

@@ -1,4 +1,10 @@
-## v0.0.13 (03/23/202)
+## v0.0.14 (03/?/2020)
+
+- Added the `Export Tour` command to the `CodeTour` tree, which allows exporting a recorded tour that embeds the file contents needed to play it back
+- Added the ability to open a code tour file, either via the `CodeTour: Open Tour File...` command or by clicking the `Open Tour File...` button in the title bar of the `CodeTour` view
+- Added support for tour steps to omit a line number, which results in the step description being displayed at the bottom of the associated file
+
+## v0.0.13 (03/23/2020)
 
 - Exposed an experimental API for other extensions to record/playback tours. For an example, see the [GistPad](https://aka.ms/gistpad) extension, which now allows you to create tours associated with interactive web playgrounds
 

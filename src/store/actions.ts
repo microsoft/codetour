@@ -17,9 +17,9 @@ import {
   Selection
 } from "vscode";
 import { CodeTour, store } from ".";
-import { EXTENSION_NAME } from "../constants";
+import { EXTENSION_NAME, FS_SCHEME } from "../constants";
 import { reaction } from "mobx";
-import { api } from "../git";
+import { getStepFileUri } from "../utils";
 
 const CAN_EDIT_TOUR_KEY = `${EXTENSION_NAME}:canEditTour`;
 const IN_TOUR_KEY = `${EXTENSION_NAME}:inTour`;
@@ -81,7 +81,7 @@ async function renderCurrentStep() {
 
   // Adjust the line number, to allow the user to specify
   // them in 1-based format, not 0-based
-  const line = step.line - 1;
+  const line = step.line ? step.line - 1 : 2000;
   const range = new Range(line, 0, line, 0);
   let label = `Step #${currentStep + 1} of ${currentTour!.steps.length}`;
 
@@ -90,28 +90,12 @@ async function renderCurrentStep() {
   }
 
   const workspaceRoot = store.activeTour!.workspaceRoot
-    ? store.activeTour!.workspaceRoot
+    ? store.activeTour!.workspaceRoot.toString()
     : workspace.workspaceFolders
     ? workspace.workspaceFolders[0].uri.toString()
     : "";
 
-  let uri = step.uri
-    ? Uri.parse(step.uri)
-    : Uri.parse(`${workspaceRoot}/${step.file}`);
-
-  if (currentTour.ref && currentTour.ref !== "HEAD") {
-    const repo = api.getRepository(uri);
-
-    if (
-      repo &&
-      repo.state.HEAD &&
-      repo.state.HEAD.name !== currentTour.ref &&
-      repo.state.HEAD.commit !== currentTour.ref
-    ) {
-      uri = await api.toGitUri(uri, currentTour.ref);
-    }
-  }
-
+  const uri = await getStepFileUri(step, workspaceRoot, currentTour.ref);
   store.activeTour!.thread = controller.createCommentThread(uri, range, []);
   store.activeTour!.thread.comments = [
     new CodeTourComment(step.description, label, store.activeTour!.thread!)
@@ -209,6 +193,12 @@ export async function endCurrentCodeTour() {
 
   store.activeTour = null;
   commands.executeCommand("setContext", IN_TOUR_KEY, false);
+
+  window.visibleTextEditors.forEach(editor => {
+    if (editor.document.uri.scheme === FS_SCHEME) {
+      editor.hide();
+    }
+  });
 }
 
 export function moveCurrentCodeTourBackward() {

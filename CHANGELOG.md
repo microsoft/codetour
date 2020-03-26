@@ -1,4 +1,4 @@
-## v0.0.14 (03/?/2020)
+## v0.0.14 (03/26/2020)
 
 - Added the `Export Tour` command to the `CodeTour` tree, which allows exporting a recorded tour that embeds the file contents needed to play it back
 - Added the ability to open a code tour file, either via the `CodeTour: Open Tour File...` command or by clicking the `Open Tour File...` button in the title bar of the `CodeTour` view

@@ -137,6 +137,8 @@ By default, when you record a tour, it is written to the currently open workspac
 
 So support this, after you finish recording a tour, you can right-click it in the `CodeTour` tree and select `Export Tour`. This will allow you to save the tour to a new location, and then you can delete the tour file from your repo. Furthermore, when you export a tour, the tour file itself will embed the contents of all files needed by the tour, which ensures that someone can play it back, regardless if the have the respective code available locally. This enables a powerful form of collaboration.
 
+<img width="700px" src="https://user-images.githubusercontent.com/116461/77705325-9682be00-6f7c-11ea-9532-6975b19b8fcb.gif" />
+
 ### Tour Schema
 
 Within the tour file, you need to specify the following required properties:

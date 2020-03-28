@@ -52,6 +52,15 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
           return new CodeTourNode(tour, this.extensionPath);
         });
 
+        if (
+          store.activeTour &&
+          !store.tours.find(tour => tour.id === store.activeTour?.tour.id)
+        ) {
+          tours.unshift(
+            new CodeTourNode(store.activeTour.tour, this.extensionPath)
+          );
+        }
+
         return tours;
       }
     } else if (element instanceof CodeTourNode) {

@@ -1,3 +1,7 @@
+## v0.0.15 (03/28/2020)
+
+- Updated the `CodeTour` tree to display the currently active tour, regardless how it was started
+  
 ## v0.0.14 (03/26/2020)
 
 - Added the `Export Tour` command to the `CodeTour` tree, which allows exporting a recorded tour that embeds the file contents needed to play it back

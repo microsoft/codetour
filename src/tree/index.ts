@@ -45,7 +45,7 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
 
   async getChildren(element?: TreeItem): Promise<TreeItem[] | undefined> {
     if (!element) {
-      if (!store.hasTours) {
+      if (!store.hasTours && !store.activeTour) {
         return [new RecordTourNode()];
       } else {
         const tours = store.tours.map(tour => {

@@ -164,7 +164,7 @@ export function registerCommands() {
 
       if (
         await vscode.window.showInformationMessage(
-          "Code tour recording started. Start creating steps by clicking the + button to the left of each line of code.",
+          "CodeTour recording started! Begin creating steps by opening files, clicking the + button to the left of a line of code, and then adding the appropriate comments.",
           "Cancel"
         )
       ) {

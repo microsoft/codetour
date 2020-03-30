@@ -1,3 +1,7 @@
+## v0.0.16 (03/30/2020)
+
+- Fixed some bugs with the `CodeTour` tree
+  
 ## v0.0.15 (03/29/2020)
 
 - Updated the `CodeTour` tree to only display if the currently open workspace has any tours, or if the user is currently taking a tour. That way, it isn't obtrusive to users that aren't currently using it.

@@ -23,10 +23,14 @@ interface CodeTourQuickPickItem extends vscode.QuickPickItem {
 export function registerCommands() {
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.startTour`,
-    async (tour?: CodeTour | CodeTourNode, stepNumber?: number) => {
+    async (
+      tour?: CodeTour | CodeTourNode,
+      stepNumber?: number,
+      workspaceRoot?: vscode.Uri
+    ) => {
       if (tour) {
         const targetTour = tour instanceof CodeTourNode ? tour.tour : tour;
-        return startCodeTour(targetTour, stepNumber);
+        return startCodeTour(targetTour, stepNumber, workspaceRoot);
       }
 
       let items: CodeTourQuickPickItem[] = store.tours.map(tour => ({

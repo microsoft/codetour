@@ -1,11 +1,8 @@
-## v0.0.16 (03/28/2020)
+## v0.0.15 (03/29/2020)
 
 - Updated the `CodeTour` tree to only display if the currently open workspace has any tours, or if the user is currently taking a tour. That way, it isn't obtrusive to users that aren't currently using it.
 - Updated the `CodeTour: Refresh Tours` command to only show up when the currently opened workspace has any tours.
-
-## v0.0.15 (03/28/2020)
-
-- Updated the `CodeTour` tree to display the currently active tour, regardless how it was started
+- Updated the `CodeTour` tree to display the currently active tour, regardless how it was started.
 
 ## v0.0.14 (03/26/2020)
 

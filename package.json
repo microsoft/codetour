@@ -52,18 +52,12 @@
         "title": "Change Title"
       },
       {
-        "command": "codetour.deleteTour",
-        "title": "Delete Tour"
-      },
-      {
         "command": "codetour.deleteTourStep",
         "title": "Delete Step"
       },
       {
-        "command": "codetour.editTour",
-        "title": "Edit Tour",
-        "category": "CodeTour",
-        "icon": "$(edit)"
+        "command": "codetour.deleteTour",
+        "title": "Delete Tour"
       },
       {
         "command": "codetour.editTourAtStep",
@@ -72,6 +66,12 @@
       {
         "command": "codetour.editTourStep",
         "title": "Edit Step"
+      },
+      {
+        "command": "codetour.editTour",
+        "title": "Edit Tour",
+        "category": "CodeTour",
+        "icon": "$(edit)"
       },
       {
         "command": "codetour.endTour",
@@ -84,14 +84,14 @@
         "title": "Export Tour..."
       },
       {
-        "command": "codetour.moveTourStepBack",
-        "title": "Move Up",
-        "icon": "$(arrow-up)"
-      },
-      {
         "command": "codetour.moveTourStepForward",
         "title": "Move Down",
         "icon": "$(arrow-down)"
+      },
+      {
+        "command": "codetour.moveTourStepBack",
+        "title": "Move Up",
+        "icon": "$(arrow-up)"
       },
       {
         "command": "codetour.nextTourStep",

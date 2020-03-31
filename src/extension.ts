@@ -1,46 +1,35 @@
 import * as vscode from "vscode";
 import { registerCommands } from "./commands";
-import { EXTENSION_NAME } from "./constants";
+import { registerFileSystemProvider } from "./fileSystem";
+import { initializeGitApi } from "./git";
 import { registerStatusBar } from "./status";
-import { store } from "./store";
+import {
+  endCurrentCodeTour,
+  promptForTour,
+  startCodeTour
+} from "./store/actions";
 import { discoverTours } from "./store/provider";
 import { registerTreeProvider } from "./tree";
-import { initializeGitApi } from "./git";
-import { startCodeTour, endCurrentCodeTour } from "./store/actions";
-import { registerFileSystemProvider } from "./fileSystem";
-
-async function promptForTour(
-  workspaceRoot: string,
-  globalState: vscode.Memento
-) {
-  const key = `${EXTENSION_NAME}:${workspaceRoot}`;
-  if (store.hasTours && !globalState.get(key)) {
-    globalState.update(key, true);
-
-    if (
-      await vscode.window.showInformationMessage(
-        "This workspace has guided tours you can take to get familiar with the codebase.",
-        "Start CodeTour"
-      )
-    ) {
-      vscode.commands.executeCommand(`${EXTENSION_NAME}.startTour`);
-    }
-  }
-}
 
 export async function activate(context: vscode.ExtensionContext) {
   registerCommands();
 
+  // If the user has a workspace open, then attempt to discover
+  // the tours contained within it and optionally prompt the user.
   if (vscode.workspace.workspaceFolders) {
     const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.toString();
     await discoverTours(workspaceRoot);
 
-    registerTreeProvider(context.extensionPath);
     promptForTour(workspaceRoot, context.globalState);
 
     initializeGitApi();
   }
 
+  // Regardless if the user has a workspace open,
+  // we still need to register the following items
+  // in order to support opening tour files and/or
+  // enabling other extensions to start a tour.
+  registerTreeProvider(context.extensionPath);
   registerFileSystemProvider();
   registerStatusBar();
 

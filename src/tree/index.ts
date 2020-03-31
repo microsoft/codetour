@@ -7,9 +7,9 @@ import {
   TreeItem,
   window
 } from "vscode";
+import { EXTENSION_NAME } from "../constants";
 import { store } from "../store";
 import { CodeTourNode, CodeTourStepNode, RecordTourNode } from "./nodes";
-import { EXTENSION_NAME } from "../constants";
 
 class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
   private _disposables: Disposable[] = [];
@@ -48,9 +48,9 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
       if (!store.hasTours && !store.activeTour) {
         return [new RecordTourNode()];
       } else {
-        const tours = store.tours.map(tour => {
-          return new CodeTourNode(tour, this.extensionPath);
-        });
+        const tours = store.tours.map(
+          tour => new CodeTourNode(tour, this.extensionPath)
+        );
 
         if (
           store.activeTour &&
@@ -107,10 +107,7 @@ export function registerTreeProvider(extensionPath: string) {
     () => {
       if (store.activeTour) {
         treeView.reveal(
-          new CodeTourStepNode(store.activeTour.tour, store.activeTour!.step),
-          {
-            focus: true
-          }
+          new CodeTourStepNode(store.activeTour.tour, store.activeTour!.step)
         );
       } else {
         // TODO: Once VS Code supports it, we want

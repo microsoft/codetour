@@ -1,10 +1,8 @@
+import { comparer, runInAction, set } from "mobx";
 import * as vscode from "vscode";
-import { CodeTour } from ".";
-import { store } from ".";
-import { VSCODE_DIRECTORY, EXTENSION_NAME } from "../constants";
+import { CodeTour, store } from ".";
+import { EXTENSION_NAME, VSCODE_DIRECTORY } from "../constants";
 import { endCurrentCodeTour } from "./actions";
-import { set, runInAction } from "mobx";
-import { comparer } from "mobx";
 
 const MAIN_TOUR_FILES = [
   `${EXTENSION_NAME}.json`,
@@ -17,11 +15,11 @@ const SUB_TOUR_DIRECTORY = `${VSCODE_DIRECTORY}/tours`;
 const HAS_TOURS_KEY = `${EXTENSION_NAME}:hasTours`;
 
 export async function discoverTours(workspaceRoot: string): Promise<void> {
-  const mainTour = await discoverMainTour(workspaceRoot);
+  const mainTours = await discoverMainTours(workspaceRoot);
   const tours = await discoverSubTours(workspaceRoot);
 
-  if (mainTour) {
-    tours.push(mainTour);
+  if (mainTours) {
+    tours.push(...mainTours);
   }
 
   runInAction(() => {
@@ -39,7 +37,7 @@ export async function discoverTours(workspaceRoot: string): Promise<void> {
       } else {
         // The user deleted the tour
         // file that's associated with
-        // the active tour
+        // the active tour, so end it
         endCurrentCodeTour();
       }
     }
@@ -48,22 +46,22 @@ export async function discoverTours(workspaceRoot: string): Promise<void> {
   vscode.commands.executeCommand("setContext", HAS_TOURS_KEY, store.hasTours);
 }
 
-async function discoverMainTour(
-  workspaceRoot: string
-): Promise<CodeTour | null> {
-  for (const tourFile of MAIN_TOUR_FILES) {
-    try {
-      const uri = vscode.Uri.parse(`${workspaceRoot}/${tourFile}`);
-      const mainTourContent = (
-        await vscode.workspace.fs.readFile(uri)
-      ).toString();
-      const tour = JSON.parse(mainTourContent);
-      tour.id = uri.toString();
-      return tour;
-    } catch {}
-  }
+async function discoverMainTours(workspaceRoot: string): Promise<CodeTour[]> {
+  const tours = await Promise.all(
+    MAIN_TOUR_FILES.map(async tourFile => {
+      try {
+        const uri = vscode.Uri.parse(`${workspaceRoot}/${tourFile}`);
+        const mainTourContent = (
+          await vscode.workspace.fs.readFile(uri)
+        ).toString();
+        const tour = JSON.parse(mainTourContent);
+        tour.id = uri.toString();
+        return tour;
+      } catch {}
+    })
+  );
 
-  return null;
+  return tours.filter(tour => tour);
 }
 
 async function discoverSubTours(workspaceRoot: string): Promise<CodeTour[]> {
@@ -89,14 +87,14 @@ async function discoverSubTours(workspaceRoot: string): Promise<CodeTour[]> {
   }
 }
 
-const watcher = vscode.workspace.createFileSystemWatcher(
-  "**/.vscode/tours/*.json"
-);
-
 function updateTours() {
   const workspaceRoot = vscode.workspace.workspaceFolders![0].uri.toString();
   discoverTours(workspaceRoot);
 }
+
+const watcher = vscode.workspace.createFileSystemWatcher(
+  "**/.vscode/tours/*.json"
+);
 
 watcher.onDidChange(updateTours);
 watcher.onDidCreate(updateTours);

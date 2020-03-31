@@ -11,19 +11,15 @@ import {
   Uri,
   workspace
 } from "vscode";
-import { store, CodeTour, CodeTourStep } from "../store";
 import { FS_SCHEME } from "../constants";
+import { CodeTour, CodeTourStep, store } from "../store";
 
 export class CodeTourFileSystemProvider implements FileSystemProvider {
   private count = 0;
 
-  private _onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
-  public readonly onDidChangeFile: Event<FileChangeEvent[]> = this
-    ._onDidChangeFile.event;
-
   getCurrentTourStep(): [CodeTour, CodeTourStep] {
-    const tour = store.activeTour?.tour!;
-    return [tour, tour?.steps[store.activeTour!.step]!];
+    const tour = store.activeTour!.tour;
+    return [tour, tour.steps[store.activeTour!.step]];
   }
 
   updateTour(tour: CodeTour) {
@@ -72,13 +68,19 @@ export class CodeTourFileSystemProvider implements FileSystemProvider {
     this.updateTour(tour);
   }
 
+  // Unimplemented members
+
+  private _onDidChangeFile = new EventEmitter<FileChangeEvent[]>();
+  public readonly onDidChangeFile: Event<FileChangeEvent[]> = this
+    ._onDidChangeFile.event;
+
   async copy?(
     source: Uri,
     destination: Uri,
     options: { overwrite: boolean }
   ): Promise<void> {
     throw FileSystemError.NoPermissions(
-      "CodeTour doesn't support copying files"
+      "CodeTour doesn't support copying files."
     );
   }
 
@@ -90,9 +92,10 @@ export class CodeTourFileSystemProvider implements FileSystemProvider {
 
   async delete(uri: Uri, options: { recursive: boolean }): Promise<void> {
     throw FileSystemError.NoPermissions(
-      "CodeTour doesn't support deleting files"
+      "CodeTour doesn't support deleting files."
     );
   }
+
   async readDirectory(uri: Uri): Promise<[string, FileType][]> {
     throw FileSystemError.NoPermissions("CodeTour doesnt support directories.");
   }

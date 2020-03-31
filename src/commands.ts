@@ -5,9 +5,7 @@ import {
   endCurrentCodeTour,
   moveCurrentCodeTourBackward,
   moveCurrentCodeTourForward,
-  startCodeTour,
-  resumeCurrentCodeTour,
-  CodeTourComment
+  startCodeTour
 } from "./store/actions";
 import { discoverTours } from "./store/provider";
 import { CodeTourNode, CodeTourStepNode } from "./tree/nodes";
@@ -16,6 +14,7 @@ import { api, RefType } from "./git";
 import * as path from "path";
 import { getStepFileUri } from "./utils";
 import { workspace } from "vscode";
+import { focusPlayer, CodeTourComment } from "./player";
 interface CodeTourQuickPickItem extends vscode.QuickPickItem {
   tour: CodeTour;
 }
@@ -33,7 +32,7 @@ export function registerCommands() {
         return startCodeTour(targetTour, stepNumber, workspaceRoot);
       }
 
-      let items: CodeTourQuickPickItem[] = store.tours.map(tour => ({
+      const items: CodeTourQuickPickItem[] = store.tours.map(tour => ({
         label: tour.title!,
         tour: tour,
         detail: tour.description
@@ -78,10 +77,7 @@ export function registerCommands() {
     }
   );
 
-  vscode.commands.registerCommand(
-    `${EXTENSION_NAME}.resumeTour`,
-    resumeCurrentCodeTour
-  );
+  vscode.commands.registerCommand(`${EXTENSION_NAME}.resumeTour`, focusPlayer);
 
   function getTourFileUri(title: string) {
     const file = title
@@ -225,6 +221,7 @@ export function registerCommands() {
       }
     }
   }
+
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.addTourStep`,
     (reply: vscode.CommentReply) => {
@@ -460,10 +457,7 @@ export function registerCommands() {
           "Delete Tour"
         )
       ) {
-        if (
-          store.activeTour &&
-          node.tour.title === store.activeTour.tour.title
-        ) {
+        if (store.activeTour && node.tour.id === store.activeTour.tour.id) {
           await endCurrentCodeTour();
         }
 

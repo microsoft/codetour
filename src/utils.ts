@@ -16,7 +16,7 @@ export async function getStepFileUri(
       ? Uri.parse(step.uri)
       : Uri.parse(`${workspaceRoot}/${step.file}`);
 
-    if (ref && ref !== "HEAD") {
+    if (api && ref && ref !== "HEAD") {
       const repo = api.getRepository(uri);
 
       if (

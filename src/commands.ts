@@ -523,8 +523,17 @@ export function registerCommands() {
   }
 
   async function promptForTourRef(): Promise<string | undefined> {
+    // If for some reason the Git extension isn't available,
+    // then we won't be able to ask the user to select a git ref.
+    if (!api) {
+      return;
+    }
+
     const uri = vscode.workspace.workspaceFolders![0].uri;
     const repository = api.getRepository(uri);
+
+    // The opened project isn't a git repository, and
+    // so there's no commit/tag/branch to associate the tour with.
     if (!repository) {
       return;
     }

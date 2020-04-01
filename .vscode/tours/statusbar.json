@@ -24,7 +24,7 @@
     },
     {
       "file": "src/status.ts",
-      "line": 40,
+      "line": 35,
       "description": "### Waiting for user\nUsing MobX, we wait for the user to start and/or navigate a code tour."
     },
     {

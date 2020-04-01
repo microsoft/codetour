@@ -20,6 +20,18 @@ interface CodeTourQuickPickItem extends vscode.QuickPickItem {
 }
 
 export function registerCommands() {
+  // This is a "private" command that's used exclusively
+  // by the hover description for tour markers.
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}._startTourById`,
+    async (id: string, lineNumber: number) => {
+      const tour = store.tours.find(tour => tour.id === id);
+      if (tour) {
+        startCodeTour(tour, lineNumber);
+      }
+    }
+  );
+
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.startTour`,
     async (
@@ -645,5 +657,27 @@ export function registerCommands() {
       const contents = JSON.stringify(newTour, null, 2);
       vscode.workspace.fs.writeFile(uri, new Buffer(contents));
     }
+  );
+
+  function setShowMarkers(showMarkers: boolean) {
+    store.showMarkers = showMarkers;
+
+    vscode.workspace
+      .getConfiguration("codetour")
+      .update("showMarkers", showMarkers, vscode.ConfigurationTarget.Global);
+
+    vscode.commands.executeCommand(
+      "setContext",
+      "codetour:showingMarkers",
+      showMarkers
+    );
+  }
+
+  vscode.commands.registerCommand(`${EXTENSION_NAME}.hideMarkers`, () =>
+    setShowMarkers(false)
+  );
+
+  vscode.commands.registerCommand(`${EXTENSION_NAME}.showMarkers`, () =>
+    setShowMarkers(true)
   );
 }

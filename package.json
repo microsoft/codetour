@@ -3,7 +3,7 @@
   "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "repository": {
     "type": "git",
     "url": "https://github.com/vsls-contrib/codetour"
@@ -33,6 +33,17 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "CodeTour",
+      "properties": {
+        "codetour.showMarkers": {
+          "type": "boolean",
+          "default": true,
+          "description": "Specifies whether or not to show tour markers in the editor gutter."
+        }
+      }
+    },
     "commands": [
       {
         "command": "codetour.addTourStep",
@@ -84,6 +95,12 @@
         "title": "Export Tour..."
       },
       {
+        "command": "codetour.hideMarkers",
+        "title": "Hide Tour Markers",
+        "category": "CodeTour",
+        "icon": "$(eye-closed)"
+      },
+      {
         "command": "codetour.moveTourStepForward",
         "title": "Move Down",
         "icon": "$(arrow-down)"
@@ -130,6 +147,12 @@
         "title": "Save Step"
       },
       {
+        "command": "codetour.showMarkers",
+        "title": "Show Tour Markers",
+        "category": "CodeTour",
+        "icon": "$(eye)"
+      },
+      {
         "command": "codetour.startTour",
         "title": "Start Tour",
         "category": "CodeTour",
@@ -147,12 +170,20 @@
           "when": "codetour:inTour"
         },
         {
+          "command": "codetour.hideMarkers",
+          "when": "codetour:hasTours && codetour:showingMarkers"
+        },
+        {
           "command": "codetour.refreshTours",
           "when": "codetour:hasTours"
         },
         {
           "command": "codetour.resumeTour",
           "when": "codetour:inTour"
+        },
+        {
+          "command": "codetour.showMarkers",
+          "when": "codetour:hasTours && !codetour:showingMarkers"
         },
         {
           "command": "codetour.startTour",
@@ -267,14 +298,24 @@
       ],
       "view/title": [
         {
+          "command": "codetour.hideMarkers",
+          "when": "view == codetour.tours && codetour:showingMarkers",
+          "group": "navigation@1"
+        },
+        {
+          "command": "codetour.showMarkers",
+          "when": "view == codetour.tours && !codetour:showingMarkers",
+          "group": "navigation@1"
+        },
+        {
           "command": "codetour.openTourFile",
           "when": "view == codetour.tours",
-          "group": "navigation@1"
+          "group": "navigation@2"
         },
         {
           "command": "codetour.recordTour",
           "when": "view == codetour.tours",
-          "group": "navigation@2"
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [

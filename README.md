@@ -29,6 +29,16 @@ In addition to taking tours that are part of the currently open workspace, you c
 
 > Note: The `CodeTour` tree view only appears if the currently opened workspace has any tours and/or you're currently taking a tour.
 
+### Tour markers
+
+As you explore a codebase, you might encounter a "tour marker", which displays the CodeTour icon in the file gutter. This indicates that a line of code participates in a tour for the open workspace, which makes it easier to discover tours that might be relevant to what you're currently working on. When you see a marker, simply hover over the line and click the `Start Tour` link in the hover tooltip. This will start the tour that's associated with this line of code, at the specific step.
+
+If you want to disable tour markers, you can perform one of the following actions:
+
+- Run the `CodeTour: Hide Tour Markers` command
+- Click the "eye icon" in the title bar of the `CodeTour` tree view
+- Set the `codetour.showMarkers` configuration setting to `false`. _Note that the above two actions do this for you automatically._
+
 ## Navigating a tour
 
 Once you've started a tour, the comment UI will guide you, and includes navigation actions that allow you to perform the following:
@@ -165,15 +175,15 @@ If the currently opened workspace has any code tours, or you're actively taking/
 
 Additionally, the tree view will display the tour currently being [recorded](#authoring-tours), which makes it easy to track your status while in the process of creating a new tour.
 
-> The tree view is automatically kept up to date, as you add/edit/delete tours within the current workspace. So feel free to [record](#authoring-tours) and/or edit tours, and then navigate them when done.
+> The tree view is automatically kept up-to-date, as you add/edit/delete tours within the current workspace. So feel free to [record](#authoring-tours) and/or edit tours, and then navigate them when done.
 
 ## Status Bar
 
-In addition to the `CodeTour` tree view, this extension also contributes a new status bar item called `Start CodeTour` to your status bar. It's only visible when the current workspace has one or more tours, and when clicked, it allows you to select a tour and then begin navigating it.
+In addition to the `CodeTour` tree view, the CodeTour extension also contributes a new status bar item called `Start CodeTour` to your status bar. It's only visible when the current workspace has one or more tours, and when clicked, it allows you to select a tour and then begin navigating it.
 
-While you're within a tour, the status bar will update to show the title and step of the current tour. When clicked, it will open the file/line of the current tour step, which allows you to open other files while taking a tour, and then resumse the tour when ready. Once you end the current tour, the status bar will transition back to displaying the `Start CodeTour` button.
+While you're within a tour, the status bar will update to show the title and step of the current tour. When clicked, it will open the file/line of the current tour step, which allows you to open other files while taking a tour, and then resume the tour when ready. Once you end the current tour, the status bar will transition back to displaying the `Start CodeTour` button.
 
-> If you don't want this status bar item, simply right-click it and select `Hide CodeTour (Extension)`.
+> If you don't want to display the status bar item, simply right-click it and select `Hide CodeTour (Extension)`.
 
 ## Contributed Commands
 
@@ -181,17 +191,27 @@ In addition to the `CodeTour` tree view and the status bar item, the CodeTour ex
 
 - `CodeTour: Open Tour File...` - Allows you to select a tour file that was previously [exported](#exporting-tours).
 
-- `CodeTour: Record Tour` - Starts the tour recorder, which allows you to create a new tour by creating a sequence of steps.
+- `CodeTour: Record Tour` - Starts the [tour recorder](#authoring-tours), which allows you to create a new tour by creating a sequence of steps.
 
-* `CodeTour: Start Tour` - Starts a tour for the currently opened workspace. This command is only visible if the current workspace actually has one or more code tours.
+* `CodeTour: Start Tour` - Starts a tour for the currently opened workspace. This command is only visible if the current workspace has one or more code tours.
 
-* `CodeTour: Refresh Tours` - Refreshes the `CodeTour` view, which can be handy if you'd created/modified/deleted tour files on disk. This command is only visible if the current workspace actually has one or more code tours.
+* `CodeTour: Refresh Tours` - Refreshes the [`CodeTour` view](#tree-view), which can be handy if you'd created/modified/deleted tour files on disk. This command is only visible if the current workspace has one or more code tours.
 
-* `CodeTour: Edit Tour` - Puts the currently active tour into edit more. This command is only visible while you're actively playing a tour, that you're not already editing.
+* `CodeTour: Hide Tour Markers` - Hides [tour markers](#tour-markers). This command is only visible if the current workspace has one or more code tours, and tour markers are currently visible.
 
-* `CodeTour: End Tour` - Ends the currently active tour. This command is only visible while you're actively recording/playing a tour.
-*
-* `CodeTour: Resume Current Tour` - Resumse the current tour by navigating to the file/line number that's associated with the current step. This command is only visible while you're actively recording/playing a tour.
+* `CodeTour: Show Tour Markers` - Shows [tour markers](#tour-markers). This command is only visible if the current workspace has one or more code tours, and tour markers are currently hidden.
+
+- `CodeTour: Edit Tour` - Puts the currently active tour into edit more. This command is only visible while you're actively playing a tour, that you're not already editing.
+
+- `CodeTour: End Tour` - Ends the currently active tour. This command is only visible while you're actively recording/playing a tour.
+
+- `CodeTour: Resume Current Tour` - Resumse the current tour by navigating to the file/line number that's associated with the current step. This command is only visible while you're actively recording/playing a tour.
+
+## Configuration Settings
+
+The `CodeTour` extension contributes the following settings:
+
+- `codetour.showMarkers` - Specifies whether or not to show [tour markers](#tour-markers). Defaults to `true`.
 
 ## Keybindings
 

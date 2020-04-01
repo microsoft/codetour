@@ -10,6 +10,8 @@ import {
 } from "./store/actions";
 import { discoverTours } from "./store/provider";
 import { registerTreeProvider } from "./tree";
+import { registerDecorators } from "./decorator";
+import { store } from "./store";
 
 export async function activate(context: vscode.ExtensionContext) {
   registerCommands();
@@ -21,6 +23,18 @@ export async function activate(context: vscode.ExtensionContext) {
     await discoverTours(workspaceRoot);
 
     promptForTour(workspaceRoot, context.globalState);
+
+    registerDecorators();
+
+    store.showMarkers = vscode.workspace
+      .getConfiguration("codetour")
+      .get("showMarkers", true);
+
+    vscode.commands.executeCommand(
+      "setContext",
+      "codetour:showingMarkers",
+      store.showMarkers
+    );
 
     initializeGitApi();
   }

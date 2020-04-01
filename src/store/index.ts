@@ -44,6 +44,7 @@ export interface Store {
   activeTour: ActiveTour | null;
   hasTours: boolean;
   isRecording: boolean;
+  showMarkers: boolean;
 }
 
 export const store: Store = observable({
@@ -52,5 +53,6 @@ export const store: Store = observable({
   isRecording: false,
   get hasTours() {
     return this.tours.length > 0;
-  }
+  },
+  showMarkers: false
 });

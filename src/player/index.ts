@@ -18,12 +18,10 @@ import {
 } from "vscode";
 import { store } from "../store";
 import { getStepFileUri } from "../utils";
+import { ICON_URL } from "../constants";
 
 const CONTROLLER_ID = "codetour";
 const CONTROLLER_LABEL = "CodeTour";
-const CONTROLLER_ICON = Uri.parse(
-  "https://cdn.jsdelivr.net/gh/vsls-contrib/code-tour/images/icon.png"
-);
 
 let id = 0;
 export class CodeTourComment implements Comment {
@@ -32,7 +30,7 @@ export class CodeTourComment implements Comment {
   public mode: CommentMode = CommentMode.Preview;
   public author: CommentAuthorInformation = {
     name: CONTROLLER_LABEL,
-    iconPath: CONTROLLER_ICON
+    iconPath: Uri.parse(ICON_URL)
   };
 
   constructor(

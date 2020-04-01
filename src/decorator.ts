@@ -69,10 +69,10 @@ function registerHoverProvider() {
         const args = encodeURIComponent(JSON.stringify([tour.id, stepNumber]));
         const command = `command:codetour._startTourById?${args}`;
         return `CodeTour: ${tour.title} (Step #${stepNumber +
-          1})&nbsp;&nbsp;&nbsp;[Start Tour](${command} "Start Tour")`;
+          1}) &nbsp;[Start Tour](${command} "Start Tour")\n`;
       });
 
-      const content = new vscode.MarkdownString(hovers.join("<br />"));
+      const content = new vscode.MarkdownString(hovers.join("\n"));
       content.isTrusted = true;
       return new vscode.Hover(content);
     }

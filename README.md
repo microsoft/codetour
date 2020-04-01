@@ -33,6 +33,8 @@ In addition to taking tours that are part of the currently open workspace, you c
 
 As you explore a codebase, you might encounter a "tour marker", which displays the CodeTour icon in the file gutter. This indicates that a line of code participates in a tour for the open workspace, which makes it easier to discover tours that might be relevant to what you're currently working on. When you see a marker, simply hover over the line and click the `Start Tour` link in the hover tooltip. This will start the tour that's associated with this line of code, at the specific step.
 
+<img width="800px" src="https://user-images.githubusercontent.com/116461/78101204-9aa74500-739b-11ea-8a1e-dea923910524.gif" />
+
 If you want to disable tour markers, you can perform one of the following actions:
 
 - Run the `CodeTour: Hide Tour Markers` command
@@ -52,7 +54,7 @@ Once you've started a tour, the comment UI will guide you, and includes navigati
 
 Additionally, you can use the `ctrl+right` / `ctrl+left` (Windows/Linux) and `cmd+right` / `cmd+left` (macOS) keyboard shortcuts to move forwards and backwards in the tour. The `CodeTour` tree view and status bar is also kept in sync with your current tour/step, to help the developer easily understand where they're at in the context of the broader tour.
 
-![Navigating](https://user-images.githubusercontent.com/116461/76807453-a1319c00-67a1-11ea-9b88-7e448072f33d.gif)
+<img width="800px" src="https://user-images.githubusercontent.com/116461/76807453-a1319c00-67a1-11ea-9b88-7e448072f33d.gif" />
 
 If you navigate away from the current step and need to resume, you can do that via any of the following actions:
 

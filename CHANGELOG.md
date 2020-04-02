@@ -1,3 +1,8 @@
+## v0.0.18 (04/02/2020)
+
+- Updated the VS Code version dependency to `1.40.0` (instead of `1.42.0`).
+- Removed the dependency on the built-in Git extension, to ensure that recording/playback is more reliable.
+
 ## v0.0.17 (03/31/2020)
 
 - Introduced "tour markers", which display a gutter icon next to lines of code which are associated with a step in a code tour.

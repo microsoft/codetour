@@ -88,6 +88,11 @@ export async function registerDecorators() {
     ],
     () => {
       const activeEditor = vscode.window.activeTextEditor;
+      if (activeEditor) {
+        activeEditor.setDecorations(TOUR_DECORATOR, []);
+        disposables.forEach(disposable => disposable.dispose());
+        disposables = [];
+      }
       if (store.showMarkers) {
         disposables.push(registerHoverProvider());
 
@@ -102,10 +107,6 @@ export async function registerDecorators() {
         if (activeEditor) {
           setDecorations(activeEditor);
         }
-      } else if (activeEditor) {
-        activeEditor.setDecorations(TOUR_DECORATOR, []);
-        disposables.forEach(disposable => disposable.dispose());
-        disposables = [];
       }
     }
   );

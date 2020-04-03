@@ -54,6 +54,7 @@ async function setDecorations(editor: vscode.TextEditor) {
   editor.setDecorations(TOUR_DECORATOR, ranges);
 }
 
+let hoverProviderDisposable: vscode.Disposable | undefined;
 function registerHoverProvider() {
   return vscode.languages.registerHoverProvider("*", {
     provideHover: async (
@@ -88,13 +89,12 @@ export async function registerDecorators() {
     ],
     () => {
       const activeEditor = vscode.window.activeTextEditor;
-      if (activeEditor) {
-        activeEditor.setDecorations(TOUR_DECORATOR, []);
-        disposables.forEach(disposable => disposable.dispose());
-        disposables = [];
-      }
+
       if (store.showMarkers) {
-        disposables.push(registerHoverProvider());
+        if (hoverProviderDisposable === undefined) {
+          hoverProviderDisposable = registerHoverProvider();
+          disposables.push(hoverProviderDisposable);
+        }
 
         disposables.push(
           vscode.window.onDidChangeActiveTextEditor(editor => {
@@ -107,6 +107,11 @@ export async function registerDecorators() {
         if (activeEditor) {
           setDecorations(activeEditor);
         }
+      } else if (activeEditor) {
+        activeEditor.setDecorations(TOUR_DECORATOR, []);
+        disposables.forEach(disposable => disposable.dispose());
+        hoverProviderDisposable = undefined;
+        disposables = [];
       }
     }
   );

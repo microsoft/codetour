@@ -22,8 +22,10 @@ export async function getStepFileUri(
       if (
         repo &&
         repo.state.HEAD &&
-        repo.state.HEAD.name !== ref &&
-        repo.state.HEAD.commit !== ref
+        repo.state.HEAD.name !== ref && // The tour refs the user's current branch
+        repo.state.HEAD.commit !== ref && // The tour refs the user's HEAD commit
+        repo.state.HEAD.commit !== // The tour refs a branch/tag that points at the user's HEAD commit
+          repo.state.refs.find(gitRef => gitRef.name === ref)?.commit
       ) {
         uri = await api.toGitUri(uri, ref);
       }

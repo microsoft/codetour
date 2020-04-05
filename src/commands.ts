@@ -249,12 +249,13 @@ export function registerCommands() {
         const thread = store.activeTour!.thread;
         const stepNumber = store.activeTour!.step;
 
-        const file = store.activeTour!.workspaceRoot
-          ? path.relative(
-              store.activeTour!.workspaceRoot.toString(),
-              thread!.uri.toString()
-            )
-          : vscode.workspace.asRelativePath(thread!.uri);
+        const root = store.activeTour!.workspaceRoot
+          ? store.activeTour!.workspaceRoot
+          : vscode.workspace.getWorkspaceFolder(
+              vscode.Uri.parse(store.activeTour!.tour.id)
+            )!.uri;
+
+        const file = path.relative(root.toString(), thread!.uri.toString());
 
         const step = {
           file,

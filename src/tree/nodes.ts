@@ -1,13 +1,8 @@
 import * as path from "path";
-import {
-  ThemeIcon,
-  TreeItem,
-  TreeItemCollapsibleState,
-  Uri,
-  workspace
-} from "vscode";
+import { ThemeIcon, TreeItem, TreeItemCollapsibleState, Uri } from "vscode";
 import { EXTENSION_NAME, FS_SCHEME } from "../constants";
 import { CodeTour, store } from "../store";
+import { getWorkspacePath } from "../utils";
 
 function isRecording(tour: CodeTour) {
   return (
@@ -78,14 +73,17 @@ export class CodeTourStepNode extends TreeItem {
 
     const step = tour.steps[stepNumber];
 
+    const workspaceRoot =
+      store.activeTour &&
+      store.activeTour.tour.id === tour.id &&
+      store.activeTour.workspaceRoot
+        ? store.activeTour.workspaceRoot
+        : undefined;
+
     this.command = {
       command: `${EXTENSION_NAME}.startTour`,
       title: "Start Tour",
-      arguments: [
-        tour,
-        stepNumber,
-        store.activeTour && store.activeTour.workspaceRoot
-      ]
+      arguments: [tour, stepNumber, workspaceRoot]
     };
 
     let resourceUri;
@@ -94,16 +92,11 @@ export class CodeTourStepNode extends TreeItem {
     } else if (step.contents) {
       resourceUri = Uri.parse(`${FS_SCHEME}://${step.file}`);
     } else {
-      const workspaceRoot =
-        store.activeTour &&
-        store.activeTour.tour.id === tour.id &&
-        store.activeTour.workspaceRoot
-          ? store.activeTour.workspaceRoot.toString()
-          : workspace.workspaceFolders
-          ? workspace.workspaceFolders[0].uri.toString()
-          : "";
+      const resourceRoot = workspaceRoot
+        ? workspaceRoot.toString()
+        : getWorkspacePath(tour);
 
-      resourceUri = Uri.parse(path.join(workspaceRoot, step.file!));
+      resourceUri = Uri.parse(path.join(resourceRoot, step.file!));
     }
 
     this.resourceUri = resourceUri;

@@ -14,19 +14,28 @@ const MAIN_TOUR_FILES = [
 const SUB_TOUR_DIRECTORY = `${VSCODE_DIRECTORY}/tours`;
 const HAS_TOURS_KEY = `${EXTENSION_NAME}:hasTours`;
 
-export async function discoverTours(workspaceRoot: string): Promise<void> {
-  const mainTours = await discoverMainTours(workspaceRoot);
-  const tours = await discoverSubTours(workspaceRoot);
+export async function discoverTours(): Promise<void> {
+  const tours = await Promise.all(
+    vscode.workspace.workspaceFolders!.map(async workspaceFolder => {
+      const workspaceRoot = workspaceFolder.uri.toString();
+      const mainTours = await discoverMainTours(workspaceRoot);
+      const tours = await discoverSubTours(workspaceRoot);
 
-  if (mainTours) {
-    tours.push(...mainTours);
-  }
+      if (mainTours) {
+        tours.push(...mainTours);
+      }
+
+      return tours;
+    })
+  );
 
   runInAction(() => {
-    store.tours = tours.sort((a, b) => a.title.localeCompare(b.title));
+    store.tours = tours.flat().sort((a, b) => a.title.localeCompare(b.title));
 
     if (store.activeTour) {
-      const tour = tours.find(tour => tour.id === store.activeTour!.tour.id);
+      const tour = store.tours.find(
+        tour => tour.id === store.activeTour!.tour.id
+      );
 
       if (tour) {
         if (!comparer.structural(store.activeTour.tour, tour)) {
@@ -87,15 +96,12 @@ async function discoverSubTours(workspaceRoot: string): Promise<CodeTour[]> {
   }
 }
 
-function updateTours() {
-  const workspaceRoot = vscode.workspace.workspaceFolders![0].uri.toString();
-  discoverTours(workspaceRoot);
-}
+vscode.workspace.onDidChangeWorkspaceFolders(discoverTours);
 
 const watcher = vscode.workspace.createFileSystemWatcher(
   "**/.vscode/tours/*.json"
 );
 
-watcher.onDidChange(updateTours);
-watcher.onDidCreate(updateTours);
-watcher.onDidDelete(updateTours);
+watcher.onDidChange(discoverTours);
+watcher.onDidCreate(discoverTours);
+watcher.onDidDelete(discoverTours);

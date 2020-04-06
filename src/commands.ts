@@ -1,5 +1,10 @@
+import { comparer, runInAction } from "mobx";
+import * as path from "path";
 import * as vscode from "vscode";
+import { workspace } from "vscode";
 import { EXTENSION_NAME } from "./constants";
+import { api, RefType } from "./git";
+import { CodeTourComment, focusPlayer } from "./player";
 import { CodeTour, store } from "./store";
 import {
   endCurrentCodeTour,
@@ -9,12 +14,7 @@ import {
 } from "./store/actions";
 import { discoverTours } from "./store/provider";
 import { CodeTourNode, CodeTourStepNode } from "./tree/nodes";
-import { runInAction, comparer } from "mobx";
-import { api, RefType } from "./git";
-import * as path from "path";
-import { getStepFileUri } from "./utils";
-import { workspace } from "vscode";
-import { focusPlayer, CodeTourComment } from "./player";
+import { getActiveWorkspacePath, getStepFileUri } from "./utils";
 interface CodeTourQuickPickItem extends vscode.QuickPickItem {
   tour: CodeTour;
 }
@@ -83,26 +83,24 @@ export function registerCommands() {
     `${EXTENSION_NAME}.refreshTours`,
     async () => {
       if (vscode.workspace.workspaceFolders) {
-        const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.toString();
-        await discoverTours(workspaceRoot);
+        await discoverTours();
       }
     }
   );
 
   vscode.commands.registerCommand(`${EXTENSION_NAME}.resumeTour`, focusPlayer);
 
-  function getTourFileUri(title: string) {
+  function getTourFileUri(workspaceRoot: vscode.Uri, title: string) {
     const file = title
       .toLocaleLowerCase()
       .replace(/\s/g, "-")
       .replace(/[^\w\d-_]/g, "");
 
-    const workspaceRoot = vscode.workspace.workspaceFolders![0].uri.toString();
     return vscode.Uri.parse(`${workspaceRoot}/.vscode/tours/${file}.json`);
   }
 
-  async function checkIfTourExists(title: string) {
-    const uri = getTourFileUri(title);
+  async function checkIfTourExists(workspaceRoot: vscode.Uri, title: string) {
+    const uri = getTourFileUri(workspaceRoot, title);
 
     try {
       const stat = await vscode.workspace.fs.stat(uri);
@@ -112,8 +110,12 @@ export function registerCommands() {
     }
   }
 
-  async function writeTourFile(title: string, ref?: string): Promise<CodeTour> {
-    const uri = getTourFileUri(title);
+  async function writeTourFile(
+    workspaceRoot: vscode.Uri,
+    title: string,
+    ref?: string
+  ): Promise<CodeTour> {
+    const uri = getTourFileUri(workspaceRoot, title);
 
     const tour = { title, steps: [] };
     if (ref && ref !== "HEAD") {
@@ -129,6 +131,10 @@ export function registerCommands() {
     return tour as CodeTour;
   }
 
+  interface WorkspaceQuickPickItem extends vscode.QuickPickItem {
+    uri: vscode.Uri;
+  }
+
   const REENTER_TITLE_RESPONSE = "Re-enter title";
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.recordTour`,
@@ -142,7 +148,27 @@ export function registerCommands() {
         return;
       }
 
-      const tourExists = await checkIfTourExists(title);
+      let workspaceRoot = workspace.workspaceFolders![0].uri;
+      if (workspace.workspaceFolders!.length > 1) {
+        const items: WorkspaceQuickPickItem[] = workspace.workspaceFolders!.map(
+          ({ name, uri }) => ({
+            label: name,
+            uri: uri
+          })
+        );
+
+        const response = await vscode.window.showQuickPick(items, {
+          placeHolder: "Select the workspace to save the tour to"
+        });
+
+        if (!response) {
+          return;
+        }
+
+        workspaceRoot = response.uri;
+      }
+
+      const tourExists = await checkIfTourExists(workspaceRoot, title);
       if (tourExists) {
         const response = await vscode.window.showErrorMessage(
           `This workspace already includes a tour with the title "${title}."`,
@@ -162,8 +188,8 @@ export function registerCommands() {
         }
       }
 
-      const ref = await promptForTourRef();
-      const tour = await writeTourFile(title, ref);
+      const ref = await promptForTourRef(workspaceRoot);
+      const tour = await writeTourFile(workspaceRoot, title, ref);
 
       startCodeTour(tour);
 
@@ -249,13 +275,8 @@ export function registerCommands() {
         const thread = store.activeTour!.thread;
         const stepNumber = store.activeTour!.step;
 
-        const root = store.activeTour!.workspaceRoot
-          ? store.activeTour!.workspaceRoot
-          : vscode.workspace.getWorkspaceFolder(
-              vscode.Uri.parse(store.activeTour!.tour.id)
-            )!.uri;
-
-        const file = path.relative(root.toString(), thread!.uri.toString());
+        const workspaceRoot = getActiveWorkspacePath();
+        const file = path.relative(workspaceRoot, thread!.uri.toString());
 
         const step = {
           file,
@@ -448,7 +469,20 @@ export function registerCommands() {
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.changeTourRef`,
     async (node: CodeTourNode) => {
-      const ref = await promptForTourRef();
+      const workspaceRoot =
+        store.activeTour &&
+        store.activeTour.tour.id === node.tour.id &&
+        store.activeTour.workspaceRoot
+          ? store.activeTour.workspaceRoot
+          : workspace.getWorkspaceFolder(vscode.Uri.parse(node.tour.id))?.uri;
+
+      if (!workspaceRoot) {
+        return vscode.window.showErrorMessage(
+          "You can't change the git ref of an embedded tour file."
+        );
+      }
+
+      const ref = await promptForTourRef(workspaceRoot);
       if (ref) {
         if (ref === "HEAD") {
           delete node.tour.ref;
@@ -523,15 +557,16 @@ export function registerCommands() {
     ref?: string;
   }
 
-  async function promptForTourRef(): Promise<string | undefined> {
+  async function promptForTourRef(
+    workspaceRoot: vscode.Uri
+  ): Promise<string | undefined> {
     // If for some reason the Git extension isn't available,
     // then we won't be able to ask the user to select a git ref.
     if (!api) {
       return;
     }
 
-    const uri = vscode.workspace.workspaceFolders![0].uri;
-    const repository = api.getRepository(uri);
+    const repository = api.getRepository(workspaceRoot);
 
     // The opened project isn't a git repository, and
     // so there's no commit/tag/branch to associate the tour with.

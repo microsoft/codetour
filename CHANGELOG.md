@@ -1,7 +1,11 @@
 ## v0.0.19 (04/?/2020)
 
+- Added support for recording and playing tours within a multi-root workspace
 - Added support for recording steps that reference files outside of the currently opened workspace. _Note: This should only be done if the file is outside of the workspace, but still within the same git repo. Otherwise, the tour wouldn't be "stable" for people who clone the repo and try to replay it._
-
+- The `CodeTour` tree now auto-refreshes when you add/remove folders to the current workspace.
+- Fixed an issue with "tour markers" being duplicated
+- Fixed an issue with replaying tours that were associated with a Git tag ref
+  
 ## v0.0.18 (04/02/2020)
 
 - Updated the VS Code version dependency to `1.40.0` (instead of `1.42.0`).

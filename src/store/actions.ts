@@ -2,6 +2,7 @@ import { commands, Memento, Uri, window } from "vscode";
 import { CodeTour, store } from ".";
 import { EXTENSION_NAME, FS_SCHEME } from "../constants";
 import { startPlayer, stopPlayer } from "../player";
+import { getWorkspaceKey, getWorkspaceUri } from "../utils";
 
 const CAN_EDIT_TOUR_KEY = `${EXTENSION_NAME}:canEditTour`;
 const IN_TOUR_KEY = `${EXTENSION_NAME}:inTour`;
@@ -14,6 +15,10 @@ export function startCodeTour(
   canEditTour: boolean = true
 ) {
   startPlayer();
+
+  if (!workspaceRoot) {
+    workspaceRoot = getWorkspaceUri(tour);
+  }
 
   store.activeTour = {
     tour,
@@ -57,11 +62,9 @@ export function moveCurrentCodeTourForward() {
   store.activeTour!.step++;
 }
 
-export async function promptForTour(
-  workspaceRoot: string,
-  globalState: Memento
-) {
-  const key = `${EXTENSION_NAME}:${workspaceRoot}`;
+export async function promptForTour(globalState: Memento) {
+  const workspaceKey = getWorkspaceKey();
+  const key = `${EXTENSION_NAME}:${workspaceKey}`;
   if (store.hasTours && !globalState.get(key)) {
     globalState.update(key, true);
 

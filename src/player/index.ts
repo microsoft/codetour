@@ -13,12 +13,11 @@ import {
   TextDocument,
   TextEditorRevealType,
   Uri,
-  window,
-  workspace
+  window
 } from "vscode";
-import { store } from "../store";
-import { getStepFileUri } from "../utils";
 import { ICON_URL } from "../constants";
+import { store } from "../store";
+import { getActiveWorkspacePath, getStepFileUri } from "../utils";
 
 const CONTROLLER_ID = "codetour";
 const CONTROLLER_LABEL = "CodeTour";
@@ -106,12 +105,7 @@ async function renderCurrentStep() {
     label += ` (${currentTour.title})`;
   }
 
-  const workspaceRoot = store.activeTour!.workspaceRoot
-    ? store.activeTour!.workspaceRoot.toString()
-    : workspace.workspaceFolders
-    ? workspace.workspaceFolders[0].uri.toString()
-    : "";
-
+  const workspaceRoot = getActiveWorkspacePath();
   const uri = await getStepFileUri(step, workspaceRoot, currentTour.ref);
   store.activeTour!.thread = controller!.createCommentThread(uri, range, []);
   store.activeTour!.thread.comments = [

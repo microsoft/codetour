@@ -1,8 +1,8 @@
-import * as vscode from "vscode";
-import { getStepFileUri } from "./utils";
-import { store, CodeTour, CodeTourStep } from "./store";
 import { reaction } from "mobx";
+import * as vscode from "vscode";
 import { ICON_URL } from "./constants";
+import { CodeTour, CodeTourStep, store } from "./store";
+import { getStepFileUri, getWorkspacePath } from "./utils";
 
 const TOUR_DECORATOR = vscode.window.createTextEditorDecorationType({
   gutterIconPath: vscode.Uri.parse(ICON_URL),
@@ -25,7 +25,7 @@ async function getTourSteps(
 
   const tourSteps = await Promise.all(
     steps.map(async ([tour, step, stepNumber]) => {
-      const workspaceRoot = vscode.workspace.workspaceFolders![0]!.uri.toString();
+      const workspaceRoot = getWorkspacePath(tour);
       const uri = await getStepFileUri(step, workspaceRoot);
 
       if (
@@ -69,8 +69,9 @@ function registerHoverProvider() {
       const hovers = tourSteps.map(([tour, _, stepNumber]) => {
         const args = encodeURIComponent(JSON.stringify([tour.id, stepNumber]));
         const command = `command:codetour._startTourById?${args}`;
-        return `CodeTour: ${tour.title} (Step #${stepNumber +
-          1}) &nbsp;[Start Tour](${command} "Start Tour")\n`;
+        return `CodeTour: ${tour.title} (Step #${
+          stepNumber + 1
+        }) &nbsp;[Start Tour](${command} "Start Tour")\n`;
       });
 
       const content = new vscode.MarkdownString(hovers.join("\n"));

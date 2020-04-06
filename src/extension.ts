@@ -19,10 +19,9 @@ export async function activate(context: vscode.ExtensionContext) {
   // If the user has a workspace open, then attempt to discover
   // the tours contained within it and optionally prompt the user.
   if (vscode.workspace.workspaceFolders) {
-    const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.toString();
-    await discoverTours(workspaceRoot);
+    await discoverTours();
 
-    promptForTour(workspaceRoot, context.globalState);
+    promptForTour(context.globalState);
 
     registerDecorators();
 

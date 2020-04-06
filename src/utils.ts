@@ -4,6 +4,21 @@ import { FS_SCHEME } from "./constants";
 import { api } from "./git";
 import { CodeTour, CodeTourStep, store } from "./store";
 
+export function getFileUri(workspaceRoot: string, file: string) {
+  let uri = Uri.parse(`${workspaceRoot}/${file}`);
+
+  if (file.startsWith("..")) {
+    // path.join/normalize will resolve relative paths (e.g. replacing
+    // ".." with the actual directories), but it also messes up
+    // non-file based schemes. So we parse the workspace root and
+    // then replace it's path with a "joined" version of _only_ the path.
+    uri = uri.with({
+      path: path.normalize(uri.path)
+    });
+  }
+  return uri;
+}
+
 export async function getStepFileUri(
   step: CodeTourStep,
   workspaceRoot: string,
@@ -15,7 +30,7 @@ export async function getStepFileUri(
   } else {
     uri = step.uri
       ? Uri.parse(step.uri)
-      : Uri.parse(path.join(workspaceRoot, step.file!));
+      : getFileUri(workspaceRoot, step.file!);
 
     if (api && ref && ref !== "HEAD") {
       const repo = api.getRepository(uri);

@@ -2,7 +2,7 @@ import * as path from "path";
 import { ThemeIcon, TreeItem, TreeItemCollapsibleState, Uri } from "vscode";
 import { EXTENSION_NAME, FS_SCHEME } from "../constants";
 import { CodeTour, store } from "../store";
-import { getWorkspacePath } from "../utils";
+import { getFileUri, getWorkspacePath } from "../utils";
 
 function isRecording(tour: CodeTour) {
   return (
@@ -96,7 +96,7 @@ export class CodeTourStepNode extends TreeItem {
         ? workspaceRoot.toString()
         : getWorkspacePath(tour);
 
-      resourceUri = Uri.parse(path.join(resourceRoot, step.file!));
+      resourceUri = getFileUri(resourceRoot, step.file!);
     }
 
     this.resourceUri = resourceUri;

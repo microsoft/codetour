@@ -80,6 +80,10 @@ If you need to edit or delete a step while recording, click the `...` menu next 
 
 <img width="500px" src="https://user-images.githubusercontent.com/116461/76168548-1f50cb80-612e-11ea-9aca-8598b9e1c730.png" />
 
+### Workspaces
+
+If you record a tour within a "multi-root workspace", you'll be asked to select the folder that you'd like to save the tour to. This is neccessary because tours are written as [files](#tour-files) to your workspace, and so we need to disamgiuate which folder the tour should be persisted to. That said, when you're recording a tour, you can add steps that span any of the folders within the workspace, which allows you to create tours for a specific folder and/or that demonstrate concepts across multiple folders within the workspace.
+
 ### Step titles
 
 By default, the `CodeTour` tree displays each tour step using the following display name format: `#<stepNumber> - <filePath>`. However, if you'd like to give the step a more friendly name, you can edit the step's description and add a markdown heading to the top of it, using whichever heading level you prefer (e.g. `#`, `##`, etc.). For example, if you add a step whose description starts with `### Activation`, the step and tree view would look like the following:

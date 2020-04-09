@@ -11,7 +11,8 @@ const MAIN_TOUR_FILES = [
   `${VSCODE_DIRECTORY}/tour.json`
 ];
 
-const SUB_TOUR_DIRECTORY = `${VSCODE_DIRECTORY}/tours`;
+const SUB_TOUR_DIRECTORIES = [`${VSCODE_DIRECTORY}/tours`, `.tours`];
+
 const HAS_TOURS_KEY = `${EXTENSION_NAME}:hasTours`;
 
 export async function discoverTours(): Promise<void> {
@@ -73,33 +74,55 @@ async function discoverMainTours(workspaceRoot: string): Promise<CodeTour[]> {
   return tours.filter(tour => tour);
 }
 
-async function discoverSubTours(workspaceRoot: string): Promise<CodeTour[]> {
+async function readTourDirectory(tourDirectory: string): Promise<CodeTour[]> {
   try {
-    const tourDirectory = `${workspaceRoot}/${SUB_TOUR_DIRECTORY}`;
     const uri = vscode.Uri.parse(tourDirectory);
     const tourFiles = await vscode.workspace.fs.readDirectory(uri);
-    return Promise.all(
-      tourFiles
-        .filter(([, type]) => type === vscode.FileType.File)
-        .map(async ([file]) => {
-          const tourUri = vscode.Uri.parse(`${tourDirectory}/${file}`);
-          const tourContent = (
-            await vscode.workspace.fs.readFile(tourUri)
-          ).toString();
-          const tour = JSON.parse(tourContent);
-          tour.id = tourUri.toString();
-          return tour;
-        })
+    const tours = await Promise.all(
+      tourFiles.map(async ([file, type]) => {
+        if (type === vscode.FileType.File) {
+          return readTourFile(tourDirectory, file);
+        } else {
+          return readTourDirectory(`${tourDirectory}/${file}`);
+        }
+      })
     );
+
+    return tours.flat().filter(tour => tour);
   } catch {
     return [];
   }
 }
 
+async function readTourFile(
+  directory: string,
+  file: string
+): Promise<CodeTour | undefined> {
+  try {
+    const tourUri = vscode.Uri.parse(`${directory}/${file}`);
+    const tourContent = (
+      await vscode.workspace.fs.readFile(tourUri)
+    ).toString();
+    const tour = JSON.parse(tourContent);
+    tour.id = tourUri.toString();
+    return tour;
+  } catch {}
+}
+
+async function discoverSubTours(workspaceRoot: string): Promise<CodeTour[]> {
+  const tours = await Promise.all(
+    SUB_TOUR_DIRECTORIES.map(directory =>
+      readTourDirectory(`${workspaceRoot}/${directory}`)
+    )
+  );
+
+  return tours.flat();
+}
+
 vscode.workspace.onDidChangeWorkspaceFolders(discoverTours);
 
 const watcher = vscode.workspace.createFileSystemWatcher(
-  "**/.vscode/tours/*.json"
+  "**/{.vscode/tours,.tours}/**/*.json"
 );
 
 watcher.onDidChange(discoverTours);

@@ -23,6 +23,10 @@ const CONTROLLER_ID = "codetour";
 const CONTROLLER_LABEL = "CodeTour";
 
 let id = 0;
+
+const SHELL_SCRIPT_PATTERN = /^>>\s+(.*)$/gm;
+const REVERSE_SHELL_SCRIPT_PATTERN = /^> \[([^\]]+)\]\(command:codetour\._sendTextToTerminal\?.*$/gm;
+
 export class CodeTourComment implements Comment {
   public id: string = (++id).toString();
   public contextValue: string = "";
@@ -31,12 +35,29 @@ export class CodeTourComment implements Comment {
     name: CONTROLLER_LABEL,
     iconPath: Uri.parse(ICON_URL)
   };
+  public body: MarkdownString;
 
   constructor(
-    public body: string | MarkdownString,
+    body: string,
     public label: string = "",
     public parent: CommentThread
-  ) {}
+  ) {
+    body = body.replace(SHELL_SCRIPT_PATTERN, (_, script) => {
+      const args = encodeURIComponent(JSON.stringify([script]));
+      return `> [${script}](command:codetour._sendTextToTerminal?${args} "Run \\"${script}\\" in a terminal")`;
+    });
+
+    this.body = new MarkdownString(body);
+    this.body.isTrusted = true;
+  }
+
+  decodeBody() {
+    const body = (this.body as MarkdownString).value.replace(
+      REVERSE_SHELL_SCRIPT_PATTERN,
+      (_, script) => `>> ${script}`
+    );
+    this.body = new MarkdownString(body);
+  }
 }
 
 let controller: CommentController | null;

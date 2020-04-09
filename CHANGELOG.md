@@ -1,4 +1,11 @@
-## v0.0.19 (04/?/2020)
+## v0.0.20 (04/08/2020)
+
+- Introduced support for embedding shell commands in a tour step (e.g. `>> npm run compile`), which allows you to add more interactivity to a tour.
+- Added support for including VS Code `command:` links within your tour step comments (e.g. `[Start Tour](command:codetour.startTour)`), in order to automate arbitrary workbench actions.
+- Tours can now be organized within sub-directories of the `.vscode/tours` drectory, and can now also be places withtin a root-level `.tours` folder.
+- Added the `exportTour` to the API that is exposed by this extension
+  
+## v0.0.19 (04/06/2020)
 
 - Added support for recording and playing tours within a multi-root workspace
 - Added support for recording steps that reference files outside of the currently opened workspace. _Note: This should only be done if the file is outside of the workspace, but still within the same git repo. Otherwise, the tour wouldn't be "stable" for people who clone the repo and try to replay it._

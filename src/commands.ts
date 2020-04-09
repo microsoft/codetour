@@ -1,4 +1,4 @@
-import { comparer, runInAction } from "mobx";
+import { comparer, runInAction, when } from "mobx";
 import * as path from "path";
 import * as vscode from "vscode";
 import { workspace } from "vscode";
@@ -10,15 +10,17 @@ import {
   endCurrentCodeTour,
   moveCurrentCodeTourBackward,
   moveCurrentCodeTourForward,
-  startCodeTour
+  startCodeTour,
+  exportTour
 } from "./store/actions";
 import { discoverTours } from "./store/provider";
 import { CodeTourNode, CodeTourStepNode } from "./tree/nodes";
-import { getActiveWorkspacePath, getStepFileUri } from "./utils";
+import { getActiveWorkspacePath } from "./utils";
 interface CodeTourQuickPickItem extends vscode.QuickPickItem {
   tour: CodeTour;
 }
 
+let terminal: vscode.Terminal | null;
 export function registerCommands() {
   // This is a "private" command that's used exclusively
   // by the hover description for tour markers.
@@ -29,6 +31,30 @@ export function registerCommands() {
       if (tour) {
         startCodeTour(tour, lineNumber);
       }
+    }
+  );
+
+  // This is a "private" command that powers the
+  // ">>" shell command syntax in step comments.
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}._sendTextToTerminal`,
+    async (text: string) => {
+      if (!terminal) {
+        terminal = vscode.window.createTerminal("CodeTour");
+        vscode.window.onDidCloseTerminal(term => {
+          if (term.name === "CodeTour") {
+            terminal = null;
+          }
+        });
+
+        when(
+          () => store.activeTour === null,
+          () => terminal?.dispose()
+        );
+      }
+
+      terminal.show();
+      terminal.sendText(text, true);
     }
   );
 
@@ -345,6 +371,7 @@ export function registerCommands() {
     `${EXTENSION_NAME}.editTourStep`,
     async (comment: CodeTourComment) => {
       comment.parent.comments = comment.parent.comments.map(comment => {
+        (comment as CodeTourComment).decodeBody();
         comment.mode = vscode.CommentMode.Editing;
         return comment;
       });
@@ -666,40 +693,7 @@ export function registerCommands() {
         return;
       }
 
-      const tour = node.tour;
-      const newTour = {
-        ...tour
-      };
-
-      newTour.steps = await Promise.all(
-        newTour.steps.map(async step => {
-          if (step.contents && step.uri) {
-            return step;
-          }
-
-          const workspaceRoot = workspace.workspaceFolders
-            ? workspace.workspaceFolders[0].uri.toString()
-            : "";
-
-          const stepFileUri = await getStepFileUri(
-            step,
-            workspaceRoot,
-            node.tour.ref
-          );
-
-          const stepFileContents = await vscode.workspace.fs.readFile(
-            stepFileUri
-          );
-
-          step.contents = stepFileContents.toString();
-          return step;
-        })
-      );
-
-      delete newTour.id;
-      delete newTour.ref;
-
-      const contents = JSON.stringify(newTour, null, 2);
+      const contents = await exportTour(node.tour);
       vscode.workspace.fs.writeFile(uri, new Buffer(contents));
     }
   );

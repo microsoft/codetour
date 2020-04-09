@@ -6,7 +6,8 @@ import { registerStatusBar } from "./status";
 import {
   endCurrentCodeTour,
   promptForTour,
-  startCodeTour
+  startCodeTour,
+  exportTour
 } from "./store/actions";
 import { discoverTours } from "./store/provider";
 import { registerTreeProvider } from "./tree";
@@ -48,6 +49,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   return {
     startTour: startCodeTour,
+    exportTour,
     endCurrentTour: endCurrentCodeTour
   };
 }

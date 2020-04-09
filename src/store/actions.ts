@@ -1,8 +1,8 @@
-import { commands, Memento, Uri, window } from "vscode";
+import { commands, Memento, Uri, window, workspace } from "vscode";
 import { CodeTour, store } from ".";
 import { EXTENSION_NAME, FS_SCHEME } from "../constants";
 import { startPlayer, stopPlayer } from "../player";
-import { getWorkspaceKey, getWorkspaceUri } from "../utils";
+import { getWorkspaceKey, getWorkspaceUri, getStepFileUri } from "../utils";
 
 const CAN_EDIT_TOUR_KEY = `${EXTENSION_NAME}:canEditTour`;
 const IN_TOUR_KEY = `${EXTENSION_NAME}:inTour`;
@@ -77,4 +77,36 @@ export async function promptForTour(globalState: Memento) {
       commands.executeCommand(`${EXTENSION_NAME}.startTour`);
     }
   }
+}
+
+export async function exportTour(tour: CodeTour) {
+  const newTour = {
+    ...tour
+  };
+
+  newTour.steps = await Promise.all(
+    newTour.steps.map(async step => {
+      if (step.contents && step.uri) {
+        return step;
+      }
+
+      const workspaceRoot = workspace.workspaceFolders
+        ? workspace.workspaceFolders[0].uri.toString()
+        : "";
+
+      const stepFileUri = await getStepFileUri(step, workspaceRoot, tour.ref);
+
+      const stepFileContents = await workspace.fs.readFile(stepFileUri);
+
+      return {
+        ...step,
+        contents: stepFileContents.toString()
+      };
+    })
+  );
+
+  delete newTour.id;
+  delete newTour.ref;
+
+  return JSON.stringify(newTour, null, 2);
 }

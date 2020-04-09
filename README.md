@@ -125,6 +125,12 @@ If you want to edit an existing tour, simply right-click the tour in the `CodeTo
 
 At any time, you can right-click a tour in the `CodeTour` tree and change it's title, description or git ref, by selecting the `Change Title`, `Change Description` or `Change Git Ref` menu items. Additionally, you can delete a tour by right-clicking it in the `CodeTour` tree and seelcting `Delete Tour`.
 
+### Shell Commands
+
+In order to add more interactivity to a tour, you can embed shell commands into a step (e.g. to perform a build, run tests, start an app), using the special `>>` synax, followed by the shell command you want to run (e.g. `>> npm run compile`). This will be converted into a hyperlink, that when clicked, will launch a new integrated terminal (called `CodeTour`) and will run the specified command.
+
+<img width="600px" src="https://user-images.githubusercontent.com/116461/78858896-91912600-79e2-11ea-8002-196c12273ebc.gif" />
+
 ### Versioning tours
 
 When you record a tour, you'll be asked which git "ref" to associate it with. This allows you to define how resilient you want the tour to be, as changes are made to the respective codebase.
@@ -142,12 +148,14 @@ At any time, you can edit the tour's ref by right-clicking it in the `CodeTour` 
 
 ### Tour Files
 
-Behind the scenes, the tour will be written as a JSON file to the `.vscode/tours` directory of the current workspace. This file is pretty simple and can be hand-edited if you'd like. Additionally, you can manually create tour files, by following the [tour schema](#tour-schema). You can then store these files to the `.vscode/tours` directory, or you can also create a tour at any of the following locations:
+Behind the scenes, the tour will be written as a JSON file to the `.vscode/tours` directory of the current workspace. This file is pretty simple and can be hand-edited if you'd like. Additionally, you can manually create tour files, by following the [tour schema](#tour-schema). You can then store these files to the `.vscode/tours` (or `.tours`) directory, or you can also create a tour at any of the following well-known locations:
 
 - `codetour.json`
 - `tour.json`
 - `.vscode/codetour.json`
 - `.vscode/tour.json`
+
+Within the `.vscode/tours` or `.tours` directory, you can organize your tour files into arbitrarily deep sub-directories, and the CodeTour player will properly discover them.
 
 ### Exporting Tours
 
@@ -233,3 +241,5 @@ In order to enable other extensions to contribute/manage their own code tours, t
 - `startTour(tour: CodeTour, stepNumber: number, workspaceRoot: Uri, startInEditMode: boolean = false, canEditTour: boolean): void` - Starts the specified tour, at a specific step, and using a specific workspace root to resolve relative file paths. Additionally, you can specify whether the tour should be started in edit/record mode or not, as well as whether the tour should be editable. Once the tour has been started, the end-user can use the status bar, command palette, key bindings and comment UI to navigate and edit the tour, just like a "normal" tour.
 
 - `endCurrentTour(): void` - Ends the currently running tour (if there is one). Note that this is simply a programatic way to end the tour, and the end-user can also choose to end the tour using either the command palette (running the `CodeTour: End Tour` command) or comment UI (clicking the red square, stop icon) as usual.
+
+- `exportTour(tour: CodeTour): Promise<string>` - Exports a `CodeTour` instance into a fully-embedded tour file, that can then be written to some persistent storage (e.g. a GitHub Gist).

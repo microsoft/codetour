@@ -1,10 +1,14 @@
+## v0.0.21 (04/10/2020)
+
+- Added the `CodeTour: Open Tour URL...` command, that allows opening a tour file by URL, in addition to the existing `CodeTour: Open Tour File...` command.
+
 ## v0.0.20 (04/08/2020)
 
 - Introduced support for embedding shell commands in a tour step (e.g. `>> npm run compile`), which allows you to add more interactivity to a tour.
 - Added support for including VS Code `command:` links within your tour step comments (e.g. `[Start Tour](command:codetour.startTour)`), in order to automate arbitrary workbench actions.
 - Tours can now be organized within sub-directories of the `.vscode/tours` drectory, and can now also be places withtin a root-level `.tours` folder.
 - Added the `exportTour` to the API that is exposed by this extension
-  
+
 ## v0.0.19 (04/06/2020)
 
 - Added support for recording and playing tours within a multi-root workspace
@@ -12,7 +16,7 @@
 - The `CodeTour` tree now auto-refreshes when you add/remove folders to the current workspace.
 - Fixed an issue with "tour markers" being duplicated
 - Fixed an issue with replaying tours that were associated with a Git tag ref
-  
+
 ## v0.0.18 (04/02/2020)
 
 - Updated the VS Code version dependency to `1.40.0` (instead of `1.42.0`).

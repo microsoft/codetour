@@ -679,6 +679,29 @@ export function registerCommands() {
     }
   );
 
+  vscode.commands.registerCommand(`${EXTENSION_NAME}.openTourUrl`, async () => {
+    const url = await vscode.window.showInputBox({
+      prompt: "Specify the URL of the tour file to open",
+      value: await vscode.env.clipboard.readText()
+    });
+
+    if (!url) {
+      return;
+    }
+
+    try {
+      const axios = require("axios").default;
+      const response = await axios.get(url);
+      const tour = response.data;
+      tour.id = url;
+      startCodeTour(tour);
+    } catch {
+      vscode.window.showErrorMessage(
+        "This file doesn't appear to be a valid tour. Please inspect its contents and try again."
+      );
+    }
+  });
+
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.exportTour`,
     async (node: CodeTourNode) => {

@@ -29,6 +29,8 @@ In addition to taking tours that are part of the currently open workspace, you c
 
 > Note: The `CodeTour` tree view only appears if the currently opened workspace has any tours and/or you're currently taking a tour.
 
+Additionally, if someone has [exported](#exporting-tours) a tour, and uploaded it to a publically accessible location, they can send you the URL, and you can open it by running the `CodeTour: Open Tour URL...` command.
+
 ### Tour markers
 
 As you explore a codebase, you might encounter a "tour marker", which displays the CodeTour icon in the file gutter. This indicates that a line of code participates in a tour for the open workspace, which makes it easier to discover tours that might be relevant to what you're currently working on. When you see a marker, simply hover over the line and click the `Start Tour` link in the hover tooltip. This will start the tour that's associated with this line of code, at the specific step.
@@ -161,9 +163,15 @@ Within the `.vscode/tours` or `.tours` directory, you can organize your tour fil
 
 By default, when you record a tour, it is written to the currently open workspace. This makes it easy to check-in the tour and share it with the rest of the team. However, there may be times where you want to record a tour for yourself, or a tour to help explain a one-off to someone, and in those situations, you might not want to check the tour into the repo.
 
-So support this, after you finish recording a tour, you can right-click it in the `CodeTour` tree and select `Export Tour`. This will allow you to save the tour to a new location, and then you can delete the tour file from your repo. Furthermore, when you export a tour, the tour file itself will embed the contents of all files needed by the tour, which ensures that someone can play it back, regardless if the have the respective code available locally. This enables a powerful form of collaboration.
+So support this, after you finish recording a tour, you can right-click it in the `CodeTour` tree and select `Export Tour...`. This will allow you to save the tour to a new location, and then you can delete the tour file from your repo. Furthermore, when you export a tour, the tour file itself will embed the contents of all files needed by the tour, which ensures that someone can play it back, regardless if the have the respective code available locally. This enables a powerful form of collaboration.
 
 <img width="700px" src="https://user-images.githubusercontent.com/116461/77705325-9682be00-6f7c-11ea-9532-6975b19b8fcb.gif" />
+
+#### GitHub Gists
+
+If you install the [GistPad](https://aka.ms/gistpad) extension, then you'll see an additional `Export Tour to Gist...` option added to the `CodeTour` tree. This lets you export the tour file to a new/existing gist, which allows you to easily create your own private tours and/or create tours that can be shared with others on your team. 
+
+Once a tour is exported as a gist, you can right-click the `tour.json` file in the `GistPad` tree, and select `Copy GitHub URL`. If you send that to someone, and they run the `CodeTour: Open Tour URL...` command, then they'll be able to take the exact same tour, regardless if they have the code locally available or not.
 
 ### Tour Schema
 

@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { CodeTour } from "../store";
 import { getStepFileUri, getWorkspacePath } from "../utils";
-import { EXTENSION_NAME, ICON_URL } from "../constants";
+import { EXTENSION_NAME, SMALL_ICON_URL } from "../constants";
 
 class CodeTourNotebookProvider implements vscode.NotebookProvider {
   async resolveNotebook(editor: vscode.NotebookEditor): Promise<void> {
@@ -39,7 +39,7 @@ class CodeTourNotebookProvider implements vscode.NotebookProvider {
     await editor.edit(editBuilder => {
       editBuilder.insert(
         0,
-        `## ![Icon](${ICON_URL}) CodeTour (${tour.title}) - ${steps.length} steps\n\n${tour.description}`,
+        `## ![Icon](${SMALL_ICON_URL}) CodeTour (${tour.title}) - ${steps.length} steps\n\n${tour.description}`,
         "markdown",
         vscode.CellKind.Markdown,
         [],

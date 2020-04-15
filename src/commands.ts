@@ -91,6 +91,14 @@ export function registerCommands() {
   );
 
   vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.viewNotebook`,
+    async (node: CodeTourNode) => {
+      const tourUri = vscode.Uri.parse(node.tour.id);
+      vscode.window.showTextDocument(tourUri);
+    }
+  );
+
+  vscode.commands.registerCommand(
     `${EXTENSION_NAME}.endTour`,
     endCurrentCodeTour
   );
@@ -122,7 +130,7 @@ export function registerCommands() {
       .replace(/\s/g, "-")
       .replace(/[^\w\d-_]/g, "");
 
-    return vscode.Uri.parse(`${workspaceRoot}/.vscode/tours/${file}.json`);
+    return vscode.Uri.parse(`${workspaceRoot}/.tours/${file}.tour`);
   }
 
   async function checkIfTourExists(workspaceRoot: vscode.Uri, title: string) {

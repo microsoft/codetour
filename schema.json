@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "CodeTour schema for the tour.json file",
+  "title": "Schema for CodeTour tour files",
   "type": "object",
   "required": ["title", "steps"],
   "properties": {

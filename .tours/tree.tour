@@ -1,6 +1,6 @@
 {
   "title": "Tree View",
-  "description": "Describes how the Code Tours view works",
+  "description": "This is a guided walkthrough of how the CodeTour tree view works",
   "steps": [
     {
       "file": "src/extension.ts",

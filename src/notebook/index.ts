@@ -1,0 +1,91 @@
+import * as vscode from "vscode";
+import { CodeTour } from "../store";
+import { getStepFileUri, getWorkspacePath } from "../utils";
+import { EXTENSION_NAME, ICON_URL } from "../constants";
+
+class CodeTourNotebookProvider implements vscode.NotebookProvider {
+  async resolveNotebook(editor: vscode.NotebookEditor): Promise<void> {
+    editor.document.metadata.editable = false;
+    editor.document.metadata.cellRunnable = false;
+    editor.document.metadata.cellEditable = false;
+
+    let contents = (
+      await vscode.workspace.fs.readFile(editor.document.uri)
+    ).toString();
+
+    let tour = <CodeTour>JSON.parse(contents);
+    tour.id = editor.document.uri.toString();
+
+    let steps: any[] = [];
+    const workspaceRoot = getWorkspacePath(tour);
+
+    for (let item of tour.steps) {
+      const uri = await getStepFileUri(item, workspaceRoot, tour.ref);
+      const document = await vscode.workspace.openTextDocument(uri);
+      const contents = document.getText(
+        new vscode.Range(
+          new vscode.Position(item.line! - 10, 0),
+          new vscode.Position(item.line! - 1, 10000)
+        )
+      );
+      steps.push({
+        contents,
+        language: document.languageId,
+        description: item.description,
+        uri
+      });
+    }
+
+    await editor.edit(editBuilder => {
+      editBuilder.insert(
+        0,
+        `## ![Icon](${ICON_URL}) CodeTour (${tour.title}) - ${steps.length} steps\n\n${tour.description}`,
+        "markdown",
+        vscode.CellKind.Markdown,
+        [],
+        { editable: false, runnable: false, executionOrder: 1 }
+      );
+
+      steps.forEach((step, index) => {
+        editBuilder.insert(
+          0,
+          step.contents,
+          step.language,
+          vscode.CellKind.Code,
+          [
+            {
+              outputKind: vscode.CellOutputKind.Rich,
+              data: {
+                "text/markdown": `_Step #${index + 1} of ${steps.length}:_ ${
+                  step.description
+                } ([View File](${step.uri}))`
+              }
+            }
+          ],
+          {
+            editable: false,
+            runnable: false,
+            executionOrder: index + 1
+          }
+        );
+      });
+    });
+  }
+
+  async executeCell(
+    document: vscode.NotebookDocument,
+    cell: vscode.NotebookCell | undefined,
+    token: vscode.CancellationToken
+  ): Promise<void> {}
+
+  async save(document: vscode.NotebookDocument): Promise<boolean> {
+    return true;
+  }
+}
+
+export function registerNotebookProvider() {
+  vscode.notebook.registerNotebookProvider(
+    EXTENSION_NAME,
+    new CodeTourNotebookProvider()
+  );
+}

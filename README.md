@@ -150,14 +150,9 @@ At any time, you can edit the tour's ref by right-clicking it in the `CodeTour` 
 
 ### Tour Files
 
-Behind the scenes, the tour will be written as a JSON file to the `.vscode/tours` directory of the current workspace. This file is pretty simple and can be hand-edited if you'd like. Additionally, you can manually create tour files, by following the [tour schema](#tour-schema). You can then store these files to the `.vscode/tours` (or `.tours`) directory, or you can also create a tour at any of the following well-known locations:
+Behind the scenes, the tour will be written as a JSON file to the `.tours` directory of the current workspace. This file is pretty simple and can be hand-edited if you'd like. Additionally, you can manually create tour files, by following the [tour schema](#tour-schema). You can then store these files to the `.tours` (or `.vscode/tours`) directory, or you can also create a tour at any of the following well-known locations: `.tour`, `main.tour`
 
-- `codetour.json`
-- `tour.json`
-- `.vscode/codetour.json`
-- `.vscode/tour.json`
-
-Within the `.vscode/tours` or `.tours` directory, you can organize your tour files into arbitrarily deep sub-directories, and the CodeTour player will properly discover them.
+Within the `.tours` (or `.vscode/tours`) directory, you can organize your tour files into arbitrarily deep sub-directories, and the CodeTour player will properly discover them.
 
 ### Exporting Tours
 
@@ -169,9 +164,9 @@ So support this, after you finish recording a tour, you can right-click it in th
 
 #### GitHub Gists
 
-If you install the [GistPad](https://aka.ms/gistpad) extension, then you'll see an additional `Export Tour to Gist...` option added to the `CodeTour` tree. This lets you export the tour file to a new/existing gist, which allows you to easily create your own private tours and/or create tours that can be shared with others on your team. 
+If you install the [GistPad](https://aka.ms/gistpad) extension, then you'll see an additional `Export Tour to Gist...` option added to the `CodeTour` tree. This lets you export the tour file to a new/existing gist, which allows you to easily create your own private tours and/or create tours that can be shared with others on your team.
 
-Once a tour is exported as a gist, you can right-click the `tour.json` file in the `GistPad` tree, and select `Copy GitHub URL`. If you send that to someone, and they run the `CodeTour: Open Tour URL...` command, then they'll be able to take the exact same tour, regardless if they have the code locally available or not.
+Once a tour is exported as a gist, you can right-click the `main.tour` file in the `GistPad` tree, and select `Copy GitHub URL`. If you send that to someone, and they run the `CodeTour: Open Tour URL...` command, then they'll be able to take the exact same tour, regardless if they have the code locally available or not.
 
 ### Tour Schema
 
@@ -187,7 +182,7 @@ Within the tour file, you need to specify the following required properties:
   - `title` - An optional title, which will be displayed as the step name in the `CodeTour` tree view.
   - `description` - The text which explains the current file/line number, and can include plain text and markdown syntax
 
-For an example, refer to the `.vscode/tour.json` file of this repository.
+For an example, refer to the `.tours/tree.tour` file of this repository.
 
 ## Tree View
 

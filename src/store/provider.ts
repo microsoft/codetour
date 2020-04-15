@@ -4,12 +4,7 @@ import { CodeTour, store } from ".";
 import { EXTENSION_NAME, VSCODE_DIRECTORY } from "../constants";
 import { endCurrentCodeTour } from "./actions";
 
-const MAIN_TOUR_FILES = [
-  `${EXTENSION_NAME}.json`,
-  "tour.json",
-  `${VSCODE_DIRECTORY}/${EXTENSION_NAME}.json`,
-  `${VSCODE_DIRECTORY}/tour.json`
-];
+const MAIN_TOUR_FILES = [".tour", `${VSCODE_DIRECTORY}/main.tour`];
 
 const SUB_TOUR_DIRECTORIES = [`${VSCODE_DIRECTORY}/tours`, `.tours`];
 
@@ -122,7 +117,7 @@ async function discoverSubTours(workspaceRoot: string): Promise<CodeTour[]> {
 vscode.workspace.onDidChangeWorkspaceFolders(discoverTours);
 
 const watcher = vscode.workspace.createFileSystemWatcher(
-  "**/{.vscode/tours,.tours}/**/*.json"
+  "**/{.vscode/tours,.tours}/**/*.{json,tour}"
 );
 
 watcher.onDidChange(discoverTours);

@@ -3,7 +3,7 @@
   "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "repository": {
     "type": "git",
     "url": "https://github.com/vsls-contrib/codetour"
@@ -29,7 +29,8 @@
     "ui"
   ],
   "activationEvents": [
-    "*"
+    "*",
+    "onNotebookEditor:codetour"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -162,6 +163,11 @@
         "title": "Start Tour",
         "category": "CodeTour",
         "icon": "$(debug-start)"
+      },
+      {
+        "command": "codetour.viewNotebook",
+        "title": "View Notebook",
+        "category": "CodeTour"
       }
     ],
     "menus": {
@@ -240,6 +246,10 @@
         },
         {
           "command": "codetour.saveTourStep",
+          "when": "false"
+        },
+        {
+          "command": "codetour.viewNotebook",
           "when": "false"
         }
       ],
@@ -350,6 +360,11 @@
           "group": "basic@1"
         },
         {
+          "command": "codetour.viewNotebook",
+          "when": "viewItem == codetour.tour",
+          "group": "basic@2"
+        },
+        {
           "command": "codetour.changeTourTitle",
           "when": "viewItem =~ /^codetour.tour(.recording)?(.active)?$/",
           "group": "change@1"
@@ -422,7 +437,7 @@
     },
     "jsonValidation": [
       {
-        "fileMatch": "(code)?tour.json",
+        "fileMatch": "*.tour",
         "url": "https://cdn.jsdelivr.net/gh/vsls-contrib/code-tour/schema.json"
       }
     ],
@@ -438,6 +453,28 @@
         "when": "codetour:inTour && !textInputFocus && !terminalFocus",
         "key": "ctrl+right",
         "mac": "cmd+right"
+      }
+    ],
+    "languages": [
+      {
+        "id": "json",
+        "extensions": [
+          ".tour"
+        ],
+        "aliases": [
+          "CodeTour"
+        ]
+      }
+    ],
+    "notebookProvider": [
+      {
+        "viewType": "codetour",
+        "displayName": "CodeTour Notebook",
+        "selector": [
+          {
+            "filenamePattern": "*.tour"
+          }
+        ]
       }
     ]
   },

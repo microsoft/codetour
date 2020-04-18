@@ -499,5 +499,8 @@
   "prettier": {
     "arrowParens": "avoid",
     "trailingComma": "none"
-  }
+  },
+  "extensionPack": [
+    "vsls-contrib.gitdoc"
+  ]
 }

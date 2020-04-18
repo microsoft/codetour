@@ -1,4 +1,4 @@
-## v0.0.22 (04/15/2020)
+## v0.0.22 (04/18/2020)
 
 - Added the `View Notebook` command to tour nodes in the `CodeTour` tree, which allows you to view a tour as a notebook
 - New tours are now written to the workspace's `.tours` folder, instead of the `.vscode/tours` folder. Both folders are still valid locations for tours, but the former sets up CodeTour to be more editor-agnostic (e.g. adding a Visual Studio client)

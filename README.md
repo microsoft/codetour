@@ -43,6 +43,10 @@ If you want to disable tour markers, you can perform one of the following action
 - Click the "eye icon" in the title bar of the `CodeTour` tree view
 - Set the `codetour.showMarkers` configuration setting to `false`. _Note that the above two actions do this for you automatically._
 
+### Notebook View
+
+In addition to taking a tour through a series of files, you can also view a tour as a "notebook", which displays the tour's steps within a single document. Simply right-click a tour in the `CodeTour` tree and select `View Notebook`.
+
 ## Navigating a tour
 
 Once you've started a tour, the comment UI will guide you, and includes navigation actions that allow you to perform the following:

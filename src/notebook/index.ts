@@ -39,7 +39,7 @@ class CodeTourNotebookProvider implements vscode.NotebookProvider {
     await editor.edit(editBuilder => {
       editBuilder.insert(
         0,
-        `## ![Icon](${SMALL_ICON_URL}) CodeTour (${tour.title}) - ${steps.length} steps\n\n${tour.description}`,
+        `## ![Icon](${SMALL_ICON_URL})&nbsp;&nbsp; CodeTour (${tour.title}) - ${steps.length} steps\n\n${tour.description}`,
         "markdown",
         vscode.CellKind.Markdown,
         [],

@@ -47,6 +47,8 @@ If you want to disable tour markers, you can perform one of the following action
 
 In addition to taking a tour through a series of files, you can also view a tour as a "notebook", which displays the tour's steps within a single document. Simply right-click a tour in the `CodeTour` tree and select `View Notebook`.
 
+<img width="700px" src="https://user-images.githubusercontent.com/116461/79699658-bd63a580-8245-11ea-81cc-6208e2784acf.gif" />
+
 ## Navigating a tour
 
 Once you've started a tour, the comment UI will guide you, and includes navigation actions that allow you to perform the following:

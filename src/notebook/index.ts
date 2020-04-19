@@ -5,9 +5,11 @@ import { EXTENSION_NAME, SMALL_ICON_URL } from "../constants";
 
 class CodeTourNotebookProvider implements vscode.NotebookProvider {
   async resolveNotebook(editor: vscode.NotebookEditor): Promise<void> {
-    editor.document.metadata.editable = false;
-    editor.document.metadata.cellRunnable = false;
-    editor.document.metadata.cellEditable = false;
+    editor.document.metadata = {
+      editable: false,
+      cellRunnable: false,
+      cellEditable: false
+    };
 
     let contents = (
       await vscode.workspace.fs.readFile(editor.document.uri)

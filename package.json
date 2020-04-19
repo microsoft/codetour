@@ -3,7 +3,7 @@
   "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "repository": {
     "type": "git",
     "url": "https://github.com/vsls-contrib/codetour"
@@ -499,8 +499,5 @@
   "prettier": {
     "arrowParens": "avoid",
     "trailingComma": "none"
-  },
-  "extensionPack": [
-    "vsls-contrib.gitdoc"
-  ]
+  }
 }

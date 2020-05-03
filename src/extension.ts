@@ -13,7 +13,6 @@ import { discoverTours } from "./store/provider";
 import { registerTreeProvider } from "./tree";
 import { registerDecorators } from "./decorator";
 import { store } from "./store";
-import { registerNotebookProvider } from "./notebook";
 
 export async function activate(context: vscode.ExtensionContext) {
   registerCommands();
@@ -47,7 +46,6 @@ export async function activate(context: vscode.ExtensionContext) {
   registerTreeProvider(context.extensionPath);
   registerFileSystemProvider();
   registerStatusBar();
-  registerNotebookProvider();
 
   return {
     startTour: startCodeTour,

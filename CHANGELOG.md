@@ -1,12 +1,17 @@
+## v0.0.24 (05/03/2020)
+
+- Explicitly marking the `CodeTour` extension as a "workspace extension", since it needs access to the workspace files and Git extension.
+- Temporarily removed the `View Notebook` command, since this isn't officially supported in VS Code.
+
 ## v0.0.23 (04/19/2020)
 
 - Added the `View Notebook` command to tour nodes in the `CodeTour` tree, which allows you to view a tour as a notebook
-- 
+
 ## v0.0.22 (04/18/2020)
 
 - New tours are now written to the workspace's `.tours` folder, instead of the `.vscode/tours` folder. Both folders are still valid locations for tours, but the former sets up CodeTour to be more editor-agnostic (e.g. adding a Visual Studio client)
 - New tours are now written using a `.tour` extension (instead of `.json`). Both formats are still supported, but `.tour` will be the new default.
-  
+
 ## v0.0.21 (04/10/2020)
 
 - Added the `CodeTour: Open Tour URL...` command, that allows opening a tour file by URL, in addition to the existing `CodeTour: Open Tour File...` command.

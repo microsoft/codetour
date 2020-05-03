@@ -3,7 +3,7 @@
   "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "repository": {
     "type": "git",
     "url": "https://github.com/vsls-contrib/codetour"
@@ -25,12 +25,10 @@
     "Sharing"
   ],
   "extensionKind": [
-    "workspace",
-    "ui"
+    "workspace"
   ],
   "activationEvents": [
-    "*",
-    "onNotebookEditor:codetour"
+    "*"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -360,11 +358,6 @@
           "group": "basic@1"
         },
         {
-          "command": "codetour.viewNotebook",
-          "when": "viewItem == codetour.tour",
-          "group": "basic@2"
-        },
-        {
           "command": "codetour.changeTourTitle",
           "when": "viewItem =~ /^codetour.tour(.recording)?(.active)?$/",
           "group": "change@1"
@@ -463,17 +456,6 @@
         ],
         "aliases": [
           "CodeTour"
-        ]
-      }
-    ],
-    "notebookProvider": [
-      {
-        "viewType": "codetour",
-        "displayName": "CodeTour Notebook",
-        "selector": [
-          {
-            "filenamePattern": "*.tour"
-          }
         ]
       }
     ]

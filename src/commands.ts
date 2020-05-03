@@ -597,7 +597,7 @@ export function registerCommands() {
   ): Promise<string | undefined> {
     // If for some reason the Git extension isn't available,
     // then we won't be able to ask the user to select a git ref.
-    if (!api) {
+    if (!api || !api.getRepository) {
       return;
     }
 

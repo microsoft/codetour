@@ -1,11 +1,12 @@
 import { commands, Memento, Uri, window, workspace } from "vscode";
 import { CodeTour, store } from ".";
-import { EXTENSION_NAME, FS_SCHEME } from "../constants";
+import { EXTENSION_NAME, FS_SCHEME, FS_SCHEME_CONTENT } from "../constants";
 import { startPlayer, stopPlayer } from "../player";
-import { getWorkspaceKey, getWorkspaceUri, getStepFileUri } from "../utils";
+import { getStepFileUri, getWorkspaceKey, getWorkspaceUri } from "../utils";
 
 const CAN_EDIT_TOUR_KEY = `${EXTENSION_NAME}:canEditTour`;
 const IN_TOUR_KEY = `${EXTENSION_NAME}:inTour`;
+const RECORDING_KEY = `${EXTENSION_NAME}:recording`;
 
 export function startCodeTour(
   tour: CodeTour,
@@ -32,14 +33,14 @@ export function startCodeTour(
 
   if (startInEditMode) {
     store.isRecording = true;
-    commands.executeCommand("setContext", "codetour:recording", true);
+    commands.executeCommand("setContext", RECORDING_KEY, true);
   }
 }
 
 export async function endCurrentCodeTour() {
   if (store.isRecording) {
     store.isRecording = false;
-    commands.executeCommand("setContext", "codetour:recording", false);
+    commands.executeCommand("setContext", RECORDING_KEY, false);
   }
 
   stopPlayer();
@@ -48,7 +49,10 @@ export async function endCurrentCodeTour() {
   commands.executeCommand("setContext", IN_TOUR_KEY, false);
 
   window.visibleTextEditors.forEach(editor => {
-    if (editor.document.uri.scheme === FS_SCHEME) {
+    if (
+      editor.document.uri.scheme === FS_SCHEME ||
+      editor.document.uri.scheme === FS_SCHEME_CONTENT
+    ) {
       editor.hide();
     }
   });

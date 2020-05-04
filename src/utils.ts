@@ -1,6 +1,6 @@
 import * as path from "path";
 import { Uri, workspace } from "vscode";
-import { FS_SCHEME } from "./constants";
+import { FS_SCHEME, CONTENT_URI } from "./constants";
 import { api } from "./git";
 import { CodeTour, CodeTourStep, store } from "./store";
 
@@ -27,7 +27,7 @@ export async function getStepFileUri(
   let uri;
   if (step.contents) {
     uri = Uri.parse(`${FS_SCHEME}://current/${step.file}`);
-  } else {
+  } else if (step.uri || step.file) {
     uri = step.uri
       ? Uri.parse(step.uri)
       : getFileUri(workspaceRoot, step.file!);
@@ -46,7 +46,10 @@ export async function getStepFileUri(
         uri = await api.toGitUri(uri, ref);
       }
     }
+  } else {
+    uri = CONTENT_URI;
   }
+
   return uri;
 }
 

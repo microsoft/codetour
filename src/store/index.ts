@@ -1,8 +1,6 @@
 import { observable } from "mobx";
 import { CommentThread, Uri } from "vscode";
 
-export const PENDING_TOUR_ID = "@@RECORDING";
-
 export interface CodeTourStepPosition {
   line: number;
   character: number;
@@ -12,6 +10,7 @@ export interface CodeTourStep {
   title?: string;
   description: string;
   file?: string;
+  directory?: string;
   uri?: string;
   line?: number;
   selection?: { start: CodeTourStepPosition; end: CodeTourStepPosition };

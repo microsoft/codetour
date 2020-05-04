@@ -18,17 +18,17 @@
       }
     },
     {
-      "file": "src/status.ts",
+      "file": "src/player/status.ts",
       "line": 35,
       "description": "### Registration\nIf the currently opened workspace has any code tours, then we register the `Start Code Tour` status bar item."
     },
     {
-      "file": "src/status.ts",
+      "file": "src/player/status.ts",
       "line": 35,
       "description": "### Waiting for user\nUsing MobX, we wait for the user to start and/or navigate a code tour."
     },
     {
-      "file": "src/status.ts",
+      "file": "src/player/status.ts",
       "line": 47,
       "description": "### Updating\nWhen a tour is activate and/or navigated, we update the status bar item to indicate the current step and title."
     }

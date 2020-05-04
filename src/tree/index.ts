@@ -65,7 +65,19 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
       }
     } else if (element instanceof CodeTourNode) {
       if (element.tour.steps.length === 0) {
-        return [new TreeItem("No steps recorded yet")];
+        let item;
+
+        if (store.isRecording && store.activeTour?.tour.id == element.tour.id) {
+          item = new TreeItem("Add tour step...");
+          item.command = {
+            command: "codetour.addContentStep",
+            title: "Add tour step..."
+          };
+        } else {
+          item = new TreeItem("No steps recorded");
+        }
+
+        return [item];
       } else {
         return element.tour.steps.map(
           (_, index) => new CodeTourStepNode(element.tour, index)
@@ -105,10 +117,14 @@ export function registerTreeProvider(extensionPath: string) {
         : null
     ],
     () => {
-      if (store.activeTour) {
-        treeView.reveal(
-          new CodeTourStepNode(store.activeTour.tour, store.activeTour!.step)
-        );
+      if (store.activeTour && store.activeTour.step >= 0) {
+        // Give the tree a little bit of time to render the new
+        // node before trying to reveal it.
+        setTimeout(() => {
+          treeView.reveal(
+            new CodeTourStepNode(store.activeTour!.tour, store.activeTour!.step)
+          );
+        }, 300);
       } else {
         // TODO: Once VS Code supports it, we want
         // to de-select the step node once the tour ends.

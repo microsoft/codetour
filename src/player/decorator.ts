@@ -1,8 +1,8 @@
 import { reaction } from "mobx";
 import * as vscode from "vscode";
-import { ICON_URL } from "./constants";
-import { CodeTour, CodeTourStep, store } from "./store";
-import { getStepFileUri, getWorkspacePath } from "./utils";
+import { ICON_URL, FS_SCHEME_CONTENT } from "../constants";
+import { CodeTour, CodeTourStep, store } from "../store";
+import { getStepFileUri, getWorkspacePath } from "../utils";
 
 const TOUR_DECORATOR = vscode.window.createTextEditorDecorationType({
   gutterIconPath: vscode.Uri.parse(ICON_URL),
@@ -42,6 +42,10 @@ async function getTourSteps(
 }
 
 async function setDecorations(editor: vscode.TextEditor) {
+  if (editor.document.uri.scheme === FS_SCHEME_CONTENT) {
+    return;
+  }
+
   const tourSteps = await getTourSteps(editor.document);
   if (tourSteps.length === 0) {
     return;

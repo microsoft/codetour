@@ -1,6 +1,6 @@
 import * as path from "path";
 import { ThemeIcon, TreeItem, TreeItemCollapsibleState, Uri } from "vscode";
-import { EXTENSION_NAME, FS_SCHEME } from "../constants";
+import { CONTENT_URI, EXTENSION_NAME, FS_SCHEME } from "../constants";
 import { CodeTour, store } from "../store";
 import { getFileUri, getWorkspacePath } from "../utils";
 
@@ -61,7 +61,9 @@ function getStepLabel(tour: CodeTour, stepNumber: number) {
   } else if (HEADING_PATTERN.test(step.description.trim())) {
     label = step.description.trim().match(HEADING_PATTERN)![1];
   } else {
-    label = step.uri ? step.uri! : decodeURIComponent(step.file!);
+    label = step.uri
+      ? step.uri!
+      : decodeURIComponent(step.directory || step.file!);
   }
 
   return `${prefix}${label}`;
@@ -90,17 +92,24 @@ export class CodeTourStepNode extends TreeItem {
     if (step.uri) {
       resourceUri = Uri.parse(step.uri);
     } else if (step.contents) {
-      resourceUri = Uri.parse(`${FS_SCHEME}://${step.file}`);
-    } else {
+      resourceUri = Uri.parse(`${FS_SCHEME}://current/${step.file}`);
+    } else if (step.file || step.directory) {
       const resourceRoot = workspaceRoot
         ? workspaceRoot.toString()
         : getWorkspacePath(tour);
 
-      resourceUri = getFileUri(resourceRoot, step.file!);
+      resourceUri = getFileUri(resourceRoot, step.directory || step.file!);
+    } else {
+      resourceUri = CONTENT_URI;
     }
 
     this.resourceUri = resourceUri;
-    this.iconPath = ThemeIcon.File;
+
+    if (step.directory) {
+      this.iconPath = ThemeIcon.Folder;
+    } else {
+      this.iconPath = ThemeIcon.File;
+    }
 
     const contextValues = ["codetour.tourStep"];
     if (stepNumber > 0) {

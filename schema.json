@@ -22,27 +22,64 @@
       "default": [],
       "items": {
         "type": "object",
-        "required": ["line", "description"],
+        "required": ["description"],
         "properties": {
           "file": {
             "type": "string",
-            "description": "Specifies the file path (relative to the workspace root) that is associated with the current step."
+            "description": "File path (relative to the workspace root) that the step is associated with."
           },
           "uri": {
             "type": "string",
-            "description": "Specifies an absolute URI that is associated with the current step."
+            "description": "Absolute URI that is associated with the step."
           },
           "line": {
             "type": "number",
-            "description": "Specifies the line number that is associated with the current step."
+            "description": "Line number that the step is associated with."
           },
           "title": {
             "type": "string",
-            "description": "Specifies an optional title for the step"
+            "description": "An optional title for the step."
           },
           "description": {
             "type": "string",
-            "description": "Specifies the description of the current step."
+            "description": "Description of the step."
+          },
+          "selection": {
+            "type": "object",
+            "required": ["start", "end"],
+            "description": "Text selection that's associated with the step.",
+            "properties": {
+              "start": {
+                "type": "object",
+                "required": ["line", "character"],
+                "description": "Starting position (line, column) of the text selection range.",
+                "properties": {
+                  "line": {
+                    "type": "number",
+                    "description": "Line number (1-based) that the text selection begins on."
+                  },
+                  "character": {
+                    "type": "number",
+                    "description": "Column number (1-based) that the text selection begins on."
+                  }
+                }
+              },
+              "end": {
+                "type": "object",
+                "required": ["line", "character"],
+                "description": "Ending position (line, column) of the text selection range.",
+                "properties": {
+                  "line": {
+                    "type": "number",
+                    "description": "Line number (1-based) that the text selection ends on."
+                  },
+                  "character": {
+                    "type": "number",
+                    "description": "Column number (1-based) that the text selection end on."
+                  }
+                }
+              }
+            }
           }
         }
       }

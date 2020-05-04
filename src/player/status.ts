@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { store } from "./store";
-import { EXTENSION_NAME } from "./constants";
+import { store } from "../store";
+import { EXTENSION_NAME } from "../constants";
 import { reaction } from "mobx";
 
 function createCurrentTourItem() {
@@ -57,8 +57,9 @@ export function registerStatusBar() {
         }
 
         const prefix = store.isRecording ? "Recording " : "";
-        currentTourItem.text = `${prefix}CodeTour: #${store.activeTour.step +
-          1} of ${store.activeTour.tour.steps.length} (${
+        currentTourItem.text = `${prefix}CodeTour: #${
+          store.activeTour.step + 1
+        } of ${store.activeTour.tour.steps.length} (${
           store.activeTour.tour.title
         })`;
 

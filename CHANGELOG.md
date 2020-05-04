@@ -1,4 +1,10 @@
-## v0.0.24 (05/03/2020)
+## v0.0.25 (05/03/2020)
+
+- Introduced the `Add CodeTour Step` context menu to directories in the `Explorer` tree, which allows you to add steps that point at directories, in addition to files.
+- Added the `CodeTour: Add Tour Step` command, which allows you to create a content-only step, that isn't associated with a file or directory.
+- Fixed a bug where new steps weren't properly focused in the `CodeTour` tree when recording a new tour.
+
+## v0.0.24 (05/02/2020)
 
 - Explicitly marking the `CodeTour` extension as a "workspace extension", since it needs access to the workspace files and Git extension.
 - Temporarily removed the `View Notebook` command, since this isn't officially supported in VS Code.

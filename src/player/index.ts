@@ -1,5 +1,6 @@
 import { reaction } from "mobx";
 import {
+  commands,
   Comment,
   CommentAuthorInformation,
   CommentController,
@@ -17,7 +18,7 @@ import {
 } from "vscode";
 import { ICON_URL } from "../constants";
 import { store } from "../store";
-import { getActiveWorkspacePath, getStepFileUri } from "../utils";
+import { getActiveWorkspacePath, getFileUri, getStepFileUri } from "../utils";
 
 const CONTROLLER_ID = "codetour";
 const CONTROLLER_LABEL = "CodeTour";
@@ -129,9 +130,22 @@ async function renderCurrentStep() {
   const workspaceRoot = getActiveWorkspacePath();
   const uri = await getStepFileUri(step, workspaceRoot, currentTour.ref);
   store.activeTour!.thread = controller!.createCommentThread(uri, range, []);
-  store.activeTour!.thread.comments = [
-    new CodeTourComment(step.description, label, store.activeTour!.thread!)
-  ];
+
+  const comment = new CodeTourComment(
+    step.description,
+    label,
+    store.activeTour!.thread!
+  );
+
+  // If we're currently recording, and the current
+  // step doesn't have a description than render
+  // it in editing mode under the assumption that
+  // this is a new content/directory step.
+  if (store.isRecording && !step.description) {
+    comment.mode = CommentMode.Editing;
+  }
+
+  store.activeTour!.thread.comments = [comment];
 
   const contextValues = [];
   if (currentStep > 0) {
@@ -161,7 +175,12 @@ async function renderCurrentStep() {
     selection = new Selection(range.start, range.end);
   }
 
-  showDocument(uri, range, selection);
+  await showDocument(uri, range, selection);
+
+  if (step.directory) {
+    const directoryUri = getFileUri(workspaceRoot, step.directory);
+    commands.executeCommand("revealInExplorer", directoryUri);
+  }
 }
 
 async function showDocument(uri: Uri, range: Range, selection?: Selection) {

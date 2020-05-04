@@ -1,17 +1,17 @@
-import { comparer, runInAction, when } from "mobx";
+import { action, comparer, runInAction, when } from "mobx";
 import * as path from "path";
 import * as vscode from "vscode";
 import { workspace } from "vscode";
-import { EXTENSION_NAME } from "./constants";
+import { EXTENSION_NAME, FS_SCHEME_CONTENT } from "./constants";
 import { api, RefType } from "./git";
 import { CodeTourComment, focusPlayer } from "./player";
 import { CodeTour, store } from "./store";
 import {
   endCurrentCodeTour,
+  exportTour,
   moveCurrentCodeTourBackward,
   moveCurrentCodeTourForward,
-  startCodeTour,
-  exportTour
+  startCodeTour
 } from "./store/actions";
 import { discoverTours } from "./store/provider";
 import { CodeTourNode, CodeTourStepNode } from "./tree/nodes";
@@ -295,53 +295,94 @@ export function registerCommands() {
   }
 
   vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.addContentStep`,
+    action(async () => {
+      const value = store.activeTour?.step === -1 ? "Introduction" : "";
+      const title = await vscode.window.showInputBox({
+        prompt: "Specify the title of the step",
+        value
+      });
+
+      if (!title) {
+        return;
+      }
+
+      const stepNumber = ++store.activeTour!.step;
+      const tour = store.activeTour!.tour;
+
+      tour.steps.splice(stepNumber, 0, {
+        title,
+        description: ""
+      });
+
+      saveTour(tour);
+    })
+  );
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.addDirectoryStep`,
+    action(async (uri: vscode.Uri) => {
+      const stepNumber = ++store.activeTour!.step;
+      const tour = store.activeTour!.tour;
+
+      const workspaceRoot = getActiveWorkspacePath();
+      const directory = path.relative(workspaceRoot, uri.toString());
+
+      tour.steps.splice(stepNumber, 0, {
+        directory,
+        description: ""
+      });
+
+      saveTour(tour);
+    })
+  );
+
+  vscode.commands.registerCommand(
     `${EXTENSION_NAME}.addTourStep`,
-    (reply: vscode.CommentReply) => {
+    action((reply: vscode.CommentReply) => {
       if (store.activeTour!.thread) {
         store.activeTour!.thread.dispose();
       }
 
-      runInAction(() => {
-        store.activeTour!.thread = reply.thread;
-        store.activeTour!.step++;
+      store.activeTour!.thread = reply.thread;
+      store.activeTour!.step++;
 
-        const tour = store.activeTour!.tour;
-        const thread = store.activeTour!.thread;
-        const stepNumber = store.activeTour!.step;
+      const tour = store.activeTour!.tour;
+      const thread = store.activeTour!.thread;
+      const stepNumber = store.activeTour!.step;
 
-        const workspaceRoot = getActiveWorkspacePath();
-        const file = path.relative(workspaceRoot, thread!.uri.toString());
+      const workspaceRoot = getActiveWorkspacePath();
+      const file = path.relative(workspaceRoot, thread!.uri.toString());
 
-        const step = {
-          file,
-          line: thread!.range.start.line + 1,
-          description: reply.text
-        };
+      const step = {
+        file,
+        line: thread!.range.start.line + 1,
+        description: reply.text
+      };
 
-        const selection = getStepSelection();
-        if (selection) {
-          (step as any).selection = selection;
-        }
+      const selection = getStepSelection();
+      if (selection) {
+        (step as any).selection = selection;
+      }
 
-        tour.steps.splice(stepNumber, 0, step);
+      tour.steps.splice(stepNumber, 0, step);
 
-        saveTour(tour);
+      saveTour(tour);
 
-        let label = `Step #${stepNumber + 1} of ${tour.steps.length}`;
+      let label = `Step #${stepNumber + 1} of ${tour.steps.length}`;
 
-        const contextValues = [];
-        if (tour.steps.length > 1) {
-          contextValues.push("hasPrevious");
-        }
+      const contextValues = [];
+      if (tour.steps.length > 1) {
+        contextValues.push("hasPrevious");
+      }
 
-        if (stepNumber < tour.steps.length - 1) {
-          contextValues.push("hasNext");
-        }
+      if (stepNumber < tour.steps.length - 1) {
+        contextValues.push("hasNext");
+      }
 
-        thread!.contextValue = contextValues.join(".");
-        thread!.comments = [new CodeTourComment(reply.text, label, thread!)];
-      });
-    }
+      thread!.contextValue = contextValues.join(".");
+      thread!.comments = [new CodeTourComment(reply.text, label, thread!)];
+    })
   );
 
   vscode.commands.registerCommand(
@@ -580,6 +621,17 @@ export function registerCommands() {
             (store.activeTour!.step > 0 || tour.steps.length === 0)
           ) {
             store.activeTour!.step--;
+          }
+
+          if (store.activeTour.step === step) {
+            // The only reason that a CodeTour content editor would be
+            // open is because it was associated with the current step.
+            // So detect if there are any, and if so, hide them.
+            vscode.window.visibleTextEditors.forEach(editor => {
+              if (editor.document.uri.scheme === FS_SCHEME_CONTENT) {
+                editor.hide();
+              }
+            });
           }
         }
 

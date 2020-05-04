@@ -1,18 +1,19 @@
 import * as vscode from "vscode";
 import { registerCommands } from "./commands";
 import { registerFileSystemProvider } from "./fileSystem";
+import { registerTextDocumentContentProvider } from "./fileSystem/documentProvider";
 import { initializeGitApi } from "./git";
-import { registerStatusBar } from "./status";
+import { registerDecorators } from "./player/decorator";
+import { registerStatusBar } from "./player/status";
+import { store } from "./store";
 import {
   endCurrentCodeTour,
+  exportTour,
   promptForTour,
-  startCodeTour,
-  exportTour
+  startCodeTour
 } from "./store/actions";
 import { discoverTours } from "./store/provider";
 import { registerTreeProvider } from "./tree";
-import { registerDecorators } from "./decorator";
-import { store } from "./store";
 
 export async function activate(context: vscode.ExtensionContext) {
   registerCommands();
@@ -45,6 +46,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // enabling other extensions to start a tour.
   registerTreeProvider(context.extensionPath);
   registerFileSystemProvider();
+  registerTextDocumentContentProvider();
   registerStatusBar();
 
   return {

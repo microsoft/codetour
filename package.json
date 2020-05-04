@@ -3,7 +3,7 @@
   "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
-  "version": "0.0.24",
+  "version": "0.0.25",
   "repository": {
     "type": "git",
     "url": "https://github.com/vsls-contrib/codetour"
@@ -44,6 +44,15 @@
       }
     },
     "commands": [
+      {
+        "command": "codetour.addContentStep",
+        "title": "Add Tour Step",
+        "category": "CodeTour"
+      },
+      {
+        "command": "codetour.addDirectoryStep",
+        "title": "Add CodeTour Step"
+      },
       {
         "command": "codetour.addTourStep",
         "title": "Add Step to Tour",
@@ -171,6 +180,10 @@
     "menus": {
       "commandPalette": [
         {
+          "command": "codetour.addContentStep",
+          "when": "codetour:inTour && codetour:recording && codetour:canEditTour"
+        },
+        {
           "command": "codetour.editTour",
           "when": "codetour:inTour && !codetour:recording && codetour:canEditTour"
         },
@@ -197,6 +210,10 @@
         {
           "command": "codetour.startTour",
           "when": "codetour:hasTours"
+        },
+        {
+          "command": "codetour.addDirectoryStep",
+          "when": "false"
         },
         {
           "command": "codetour.addTourStep",
@@ -416,6 +433,12 @@
           "command": "codetour.deleteTourStep",
           "when": "viewItem =~ /^codetour.tourStep/",
           "group": "manage@2"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "codetour.addDirectoryStep",
+          "when": "codetour:recording && explorerResourceIsFolder"
         }
       ]
     },

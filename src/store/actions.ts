@@ -1,3 +1,4 @@
+import * as path from "path";
 import { commands, Memento, Uri, window, workspace } from "vscode";
 import { CodeTour, store } from ".";
 import { EXTENSION_NAME, FS_SCHEME, FS_SCHEME_CONTENT } from "../constants";
@@ -113,4 +114,10 @@ export async function exportTour(tour: CodeTour) {
   delete newTour.ref;
 
   return JSON.stringify(newTour, null, 2);
+}
+
+export function startExampleTour(extensionPath: string) {
+  const folderUrl = Uri.file(path.join(extensionPath, "example"));
+  commands.executeCommand("vscode.openFolder", folderUrl, true);
+  commands.executeCommand(`${EXTENSION_NAME}.startTour`);
 }

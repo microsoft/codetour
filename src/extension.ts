@@ -10,7 +10,8 @@ import {
   endCurrentCodeTour,
   exportTour,
   promptForTour,
-  startCodeTour
+  startCodeTour,
+  startExampleTour
 } from "./store/actions";
 import { discoverTours } from "./store/provider";
 import { registerTreeProvider } from "./tree";
@@ -48,6 +49,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerFileSystemProvider();
   registerTextDocumentContentProvider();
   registerStatusBar();
+  startExampleTour(context.extensionPath);
 
   return {
     startTour: startCodeTour,

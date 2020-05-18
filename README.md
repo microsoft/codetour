@@ -146,6 +146,12 @@ If you want to edit an existing tour, simply right-click the tour in the `CodeTo
 
 At any time, you can right-click a tour in the `CodeTour` tree and change it's title, description or git ref, by selecting the `Change Title`, `Change Description` or `Change Git Ref` menu items. Additionally, you can delete a tour by right-clicking it in the `CodeTour` tree and seelcting `Delete Tour`.
 
+### Primary Tours
+
+A codebase can include one or more tours, but it might have a primary tour, that is intended for new developers to start with. This way, when they open the codebase for the first time, they can be immediately presented with this tour, as opposed to a list of all tours.
+
+In order to mark a specific tour as the primary tour, simply right-click it in the `CodeTour` tree, and select `Make Primary`. When you mark a tour as primary, any other tours that were marked as primary, will be updated to remove that annotation. Additionally, if you want to manually unmark a tour as being the primary tour, you can right-click it and select `Unmake Primary`.
+
 ### Shell Commands
 
 In order to add more interactivity to a tour, you can embed shell commands into a step (e.g. to perform a build, run tests, start an app), using the special `>>` synax, followed by the shell command you want to run (e.g. `>> npm run compile`). This will be converted into a hyperlink, that when clicked, will launch a new integrated terminal (called `CodeTour`) and will run the specified command.

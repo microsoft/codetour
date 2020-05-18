@@ -16,6 +16,10 @@
       "type": "string",
       "description": "Indicates the git ref (branch/commit/tag) that this tour associate with."
     },
+    "isPrimary": {
+      "type": "boolean",
+      "description": "Specifies whether the tour represents the primary tour for this codebase."
+    },
     "steps": {
       "type": "array",
       "description": "Specifies the list of steps that are included in the code tour.",

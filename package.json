@@ -3,7 +3,7 @@
   "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "repository": {
     "type": "git",
     "url": "https://github.com/vsls-contrib/codetour"
@@ -109,6 +109,10 @@
         "icon": "$(eye-closed)"
       },
       {
+        "command": "codetour.makeTourPrimary",
+        "title": "Make Primary"
+      },
+      {
         "command": "codetour.moveTourStepForward",
         "title": "Move Down",
         "icon": "$(arrow-down)"
@@ -176,6 +180,10 @@
         "title": "Start Tour",
         "category": "CodeTour",
         "icon": "$(debug-start)"
+      },
+      {
+        "command": "codetour.unmakeTourPrimary",
+        "title": "Unmake Primary"
       },
       {
         "command": "codetour.viewNotebook",
@@ -262,6 +270,10 @@
           "when": "false"
         },
         {
+          "command": "codetour.makeTourPrimary",
+          "when": "false"
+        },
+        {
           "command": "codetour.nextTourStep",
           "when": "false"
         },
@@ -275,6 +287,10 @@
         },
         {
           "command": "codetour.saveTourStep",
+          "when": "false"
+        },
+        {
+          "command": "codetour.unmakeTourPrimary",
           "when": "false"
         },
         {
@@ -365,62 +381,72 @@
       "view/item/context": [
         {
           "command": "codetour.endTour",
-          "when": "viewItem =~ /codetour.tour(.recording)?.active/",
+          "when": "viewItem =~ /^codetour.tour(.recording)?.active/",
           "group": "inline@1"
         },
         {
           "command": "codetour.startTour",
-          "when": "viewItem == codetour.tour",
-          "group": "inline@2"
+          "when": "viewItem =~ /^codetour.tour(.primary)?$/",
+          "group": "inline@1"
         },
         {
           "command": "codetour.resumeTour",
-          "when": "viewItem =~ /codetour.tour(.recording)?.active$/",
+          "when": "viewItem =~ /^codetour.tour(.primary)?(.recording)?.active$/",
           "group": "active@1"
         },
         {
           "command": "codetour.endTour",
-          "when": "viewItem =~ /codetour.tour(.recording)?.active$/",
+          "when": "viewItem =~ /^codetour.tour(.primary)?(.recording)?.active$/",
           "group": "active@2"
         },
         {
           "command": "codetour.startTour",
-          "when": "viewItem == codetour.tour",
+          "when": "viewItem =~ /^codetour.tour(.primary)?$/",
           "group": "basic@1"
         },
         {
-          "command": "codetour.changeTourTitle",
+          "command": "codetour.makeTourPrimary",
           "when": "viewItem =~ /^codetour.tour(.recording)?(.active)?$/",
+          "group": "basic@2"
+        },
+        {
+          "command": "codetour.unmakeTourPrimary",
+          "when": "viewItem =~ /^codetour.tour.primary(.recording)?(.active)?$/",
+          "group": "basic@3"
+        },
+        {
+          "command": "codetour.changeTourTitle",
+          "when": "viewItem =~ /^codetour.tour(.primary)?(.recording)?(.active)?$/",
           "group": "change@1"
         },
         {
           "command": "codetour.changeTourDescription",
-          "when": "viewItem =~ /^codetour.tour(.recording)?(.active)?$/",
+          "when": "viewItem =~ /^codetour.tour(.primary)?(.recording)?(.active)?$/",
           "group": "change@2"
         },
         {
           "command": "codetour.changeTourRef",
-          "when": "viewItem =~ /^codetour.tour(.recording)?(.active)?$/ && gitOpenRepositoryCount != 0",
+          "when": "viewItem =~ /^codetour.tour(.primary)?(.recording)?(.active)?$/ && gitOpenRepositoryCount != 0",
           "group": "change@3"
         },
         {
           "command": "codetour.editTour",
-          "when": "viewItem =~ /^codetour.tour(.active)?$/",
+          "when": "viewItem =~ /^codetour.tour(.primary)?(.active)?$/",
           "group": "edit@1"
         },
         {
           "command": "codetour.previewTour",
-          "when": "viewItem =~ /^codetour.tour(.recording)/",
+          "when": "viewItem =~ /^codetour.tour(.primary)?.recording/",
           "group": "edit@1"
         },
         {
           "command": "codetour.deleteTour",
-          "when": "viewItem =~ /^codetour.tour(.recording)?(.active)?$/",
+          "when": "viewItem =~ /^codetour.tour(.primary)?(.recording)?(.active)?$/",
           "group": "edit@2"
         },
         {
           "command": "codetour.exportTour",
-          "when": "viewItem =~ /^codetour.tour(.active)?$/",
+          "when": "viewItem =~ /^codetour.tour(.primary)?(.active)?$/",
           "group": "export@1"
         },
         {

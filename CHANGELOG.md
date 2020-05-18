@@ -1,5 +1,6 @@
-## v0.0.26 (05/15/2020)
+## v0.0.26 (05/17/2020)
 
+- Added support for a codebase to have a "primary" tour, which provides a little more prescription to folks that are onboarding
 - Added the `Change Title` command to step nodes in the `CodeTour` tree. This allows you to easily give steps a title without needing to add a markdown header to their description
 - Added support for multi-select deletes in the `CodeTour` tree, for both tour and step nodes
 - Added a `Preview Tour` command that allows putting the active tour into preview mode

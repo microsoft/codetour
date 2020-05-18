@@ -328,6 +328,31 @@ export function registerRecorderCommands() {
   );
 
   vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.makeTourPrimary`,
+    async (node: CodeTourNode) => {
+      const primaryTour = node.tour;
+      primaryTour.isPrimary = true;
+      saveTour(primaryTour);
+
+      store.tours
+        .filter(tour => tour.id !== primaryTour.id && tour.isPrimary)
+        .forEach(tour => {
+          delete tour.isPrimary;
+          saveTour(tour);
+        });
+    }
+  );
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.unmakeTourPrimary`,
+    async (node: CodeTourNode) => {
+      const primaryTour = node.tour;
+      delete primaryTour.isPrimary;
+      saveTour(primaryTour);
+    }
+  );
+
+  vscode.commands.registerCommand(
     `${EXTENSION_NAME}.saveTourStep`,
     async (comment: CodeTourComment) => {
       if (!comment.parent) {

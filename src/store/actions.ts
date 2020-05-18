@@ -78,7 +78,13 @@ export async function promptForTour(globalState: Memento) {
         "Start CodeTour"
       )
     ) {
-      commands.executeCommand(`${EXTENSION_NAME}.startTour`);
+      const primaryTour = store.tours.find(tour => tour.isPrimary);
+
+      if (primaryTour) {
+        startCodeTour(primaryTour);
+      } else {
+        commands.executeCommand(`${EXTENSION_NAME}.startTour`);
+      }
     }
   }
 }

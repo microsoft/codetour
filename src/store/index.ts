@@ -23,6 +23,7 @@ export interface CodeTour {
   description?: string;
   steps: CodeTourStep[];
   ref?: string;
+  isPrimary?: boolean;
 }
 
 export interface ActiveTour {

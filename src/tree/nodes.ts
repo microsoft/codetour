@@ -26,6 +26,12 @@ export class CodeTourNode extends TreeItem {
 
     const contextValues = ["codetour.tour"];
 
+    if (tour.isPrimary) {
+      contextValues.push("primary");
+
+      this.description += " (Primary)";
+    }
+
     if (isRecording(tour)) {
       contextValues.push("recording");
     }

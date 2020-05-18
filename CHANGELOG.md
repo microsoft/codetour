@@ -1,3 +1,12 @@
+## v0.0.26 (05/15/2020)
+
+- Added the `Change Title` command to step nodes in the `CodeTour` tree. This allows you to easily give steps a title without needing to add a markdown header to their description
+- Added support for multi-select deletes in the `CodeTour` tree, for both tour and step nodes
+- Added a `Preview Tour` command that allows putting the active tour into preview mode
+- Updated the tour recorder to automatically place steps into edit mode when you start recording
+- The `Save Step` button is now only enabled when recording a step, whose description isn't empty
+- Removed the `Start CodeTour` status bar item, which just added noise to the user's statur bar
+
 ## v0.0.25 (05/03/2020)
 
 - Introduced the `Add CodeTour Step` context menu to directories in the `Explorer` tree, which allows you to add steps that point at directories, in addition to files.

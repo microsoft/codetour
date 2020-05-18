@@ -26,12 +26,10 @@ const CONTROLLER_LABEL = "CodeTour";
 let id = 0;
 
 const SHELL_SCRIPT_PATTERN = /^>>\s+(.*)$/gm;
-const REVERSE_SHELL_SCRIPT_PATTERN = /^> \[([^\]]+)\]\(command:codetour\._sendTextToTerminal\?.*$/gm;
 
 export class CodeTourComment implements Comment {
   public id: string = (++id).toString();
   public contextValue: string = "";
-  public mode: CommentMode = CommentMode.Preview;
   public author: CommentAuthorInformation = {
     name: CONTROLLER_LABEL,
     iconPath: Uri.parse(ICON_URL)
@@ -39,25 +37,25 @@ export class CodeTourComment implements Comment {
   public body: MarkdownString;
 
   constructor(
-    body: string,
+    content: string,
     public label: string = "",
-    public parent: CommentThread
+    public parent: CommentThread,
+    public mode: CommentMode
   ) {
-    body = body.replace(SHELL_SCRIPT_PATTERN, (_, script) => {
-      const args = encodeURIComponent(JSON.stringify([script]));
-      return `> [${script}](command:codetour._sendTextToTerminal?${args} "Run \\"${script}\\" in a terminal")`;
-    });
+    const body =
+      mode === CommentMode.Preview
+        ? this.generatePreviewContent(content)
+        : content;
 
     this.body = new MarkdownString(body);
     this.body.isTrusted = true;
   }
 
-  decodeBody() {
-    const body = (this.body as MarkdownString).value.replace(
-      REVERSE_SHELL_SCRIPT_PATTERN,
-      (_, script) => `>> ${script}`
-    );
-    this.body = new MarkdownString(body);
+  private generatePreviewContent(content: string) {
+    return content.replace(SHELL_SCRIPT_PATTERN, (_, script) => {
+      const args = encodeURIComponent(JSON.stringify([script]));
+      return `> [${script}](command:codetour._sendTextToTerminal?${args} "Run \\"${script}\\" in a terminal")`;
+    });
   }
 }
 
@@ -131,19 +129,13 @@ async function renderCurrentStep() {
   const uri = await getStepFileUri(step, workspaceRoot, currentTour.ref);
   store.activeTour!.thread = controller!.createCommentThread(uri, range, []);
 
+  const mode = store.isRecording ? CommentMode.Editing : CommentMode.Preview;
   const comment = new CodeTourComment(
     step.description,
     label,
-    store.activeTour!.thread!
+    store.activeTour!.thread!,
+    mode
   );
-
-  // If we're currently recording, and the current
-  // step doesn't have a description than render
-  // it in editing mode under the assumption that
-  // this is a new content/directory step.
-  if (store.isRecording && !step.description) {
-    comment.mode = CommentMode.Editing;
-  }
 
   store.activeTour!.thread.comments = [comment];
 

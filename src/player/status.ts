@@ -1,7 +1,7 @@
-import * as vscode from "vscode";
-import { store } from "../store";
-import { EXTENSION_NAME } from "../constants";
 import { reaction } from "mobx";
+import * as vscode from "vscode";
+import { EXTENSION_NAME } from "../constants";
+import { store } from "../store";
 
 function createCurrentTourItem() {
   const currentTourItem = vscode.window.createStatusBarItem(
@@ -18,26 +18,8 @@ function createCurrentTourItem() {
   return currentTourItem;
 }
 
-function createStartTourItem() {
-  const startTourItem = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Left
-  );
-
-  startTourItem.text = "$(play) Start CodeTour";
-  startTourItem.command = `${EXTENSION_NAME}.startTour`;
-  startTourItem.show();
-
-  return startTourItem;
-}
-
 let currentTourItem: vscode.StatusBarItem | null = null;
-let startTourItem: vscode.StatusBarItem | null = null;
-
 export function registerStatusBar() {
-  if (store.hasTours) {
-    startTourItem = createStartTourItem();
-  }
-
   reaction(
     // @ts-ignore
     () => [
@@ -62,18 +44,10 @@ export function registerStatusBar() {
         } of ${store.activeTour.tour.steps.length} (${
           store.activeTour.tour.title
         })`;
-
-        if (store.activeTour.step === 0 && startTourItem) {
-          startTourItem.hide();
-        }
       } else {
         if (currentTourItem) {
           currentTourItem.dispose();
           currentTourItem = null;
-        }
-
-        if (startTourItem) {
-          startTourItem.show();
         }
       }
     }

@@ -1,8 +1,10 @@
 import { reaction } from "mobx";
 import * as vscode from "vscode";
-import { ICON_URL, FS_SCHEME_CONTENT } from "../constants";
+import { FS_SCHEME_CONTENT, ICON_URL } from "../constants";
 import { CodeTour, CodeTourStep, store } from "../store";
 import { getStepFileUri, getWorkspacePath } from "../utils";
+
+const DISABLED_SCHEMES = [FS_SCHEME_CONTENT, "comment"];
 
 const TOUR_DECORATOR = vscode.window.createTextEditorDecorationType({
   gutterIconPath: vscode.Uri.parse(ICON_URL),
@@ -42,7 +44,7 @@ async function getTourSteps(
 }
 
 async function setDecorations(editor: vscode.TextEditor) {
-  if (editor.document.uri.scheme === FS_SCHEME_CONTENT) {
+  if (DISABLED_SCHEMES.includes(editor.document.uri.scheme)) {
     return;
   }
 

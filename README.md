@@ -22,16 +22,15 @@ In order to start a tour, simply open up a codebase that has one or more tours. 
 
 Otherwise, you can manually start a tour via any of the following methods:
 
-1. Clicking the `> Start CodeTour` button in the [status bar](#status-bar)
-2. Selecting a tour (or specific step) in the [`CodeTour` view](#tree-view) in the `Explorer` activity tab
+1. Selecting a tour (or specific step) in the [`CodeTour` view](#tree-view) in the `Explorer` activity tab
 
    <img width="250px" src="https://user-images.githubusercontent.com/116461/76164362-8610bd80-610b-11ea-9621-4ba2d47a8a52.png" />
 
-3. Running the `CodeTour: Start Tour` [command](#contributed-commands), and selecting the tour you'd like to take
+1. Running the `CodeTour: Start Tour` [command](#contributed-commands), and selecting the tour you'd like to take
 
-<img width="800px" src="https://user-images.githubusercontent.com/116461/76151694-7b531b80-606c-11ea-96a6-0655eb6ab4e6.gif" />
+   <img width="800px" src="https://user-images.githubusercontent.com/116461/76151694-7b531b80-606c-11ea-96a6-0655eb6ab4e6.gif" />
 
-If the current workspace only has a single code tour, then any of the above actions will automatically start that tour. Otherwise, you'll be presented with a list of tours to select from.
+   If the current workspace only has a single code tour, then this command will automatically start that tour. Otherwise, you'll be presented with a list of tours to select from.
 
 ### Opening Tours
 
@@ -107,13 +106,12 @@ If you record a tour within a "multi-root workspace", you'll be asked to select 
 
 ### Step Titles
 
-By default, the `CodeTour` tree displays each tour step using the following display name format: `#<stepNumber> - <filePath>`. However, if you'd like to give the step a more friendly name, you can edit the step's description and add a markdown heading to the top of it, using whichever heading level you prefer (e.g. `#`, `##`, etc.). For example, if you add a step whose description starts with `### Activation`, the step and tree view would look like the following:
+By default, the `CodeTour` tree displays each tour step using the following display name format: `#<stepNumber> - <filePath>`. However, if you'd like to give the step a more friendly/recognizeable name, you can do so using one of the following methods:
 
-<img width="500px" src="https://user-images.githubusercontent.com/116461/76721235-91ac4780-66fc-11ea-80bf-f6de8bf4b02e.png" />
+1. Right-click the step in the `CodeTour` tree and select `Change Title`
+1. Edit the step's description and add a markdown heading to the top of it, using whichever heading level you prefer (e.g. `#`, `##`, etc.). For example, if you add a step whose description starts with `### Activation`, the step and tree view would look like the following:
 
-While you can any heading level for the step title, we'd recommend using `###` or "lower" (e.g. `####`), since that provides a nice look within the step's comment UI.
-
-> If you'd like to add step titles to a tour, but don't want to add markdown headings to their descriptions, you can manually set the `title` property for each step in the tour's underlying `JSON` file (which can be found in the `.vscode/tours` directory). See [tour schema](#tour-schema) for more detials.
+  <img width="500px" src="https://user-images.githubusercontent.com/116461/76721235-91ac4780-66fc-11ea-80bf-f6de8bf4b02e.png" />
 
 ### Text Selection
 
@@ -139,6 +137,8 @@ If you no longer need a specific step in a tour, you can delete it by means of o
 
 - Right-clicking the step in the `CodeTour` tree and selecting `Delete Step`
 - Navigating to the step in the replay/comment UI, selecting the `...` menu next to the comment description and selecting `Delete Step`
+
+If you need to delete multiple steps, the `CodeTour` tree supports multi-select, so you can `Cmd+click` (macOS) / `Ctrl+click` (Windows/Linux) multiple step nodes, and then right-click them and select `Delete Step`.
 
 ### Editing a tour
 
@@ -232,11 +232,7 @@ Additionally, the tree view will display the tour currently being [recorded](#au
 
 ### Status Bar
 
-In addition to the `CodeTour` tree view, the CodeTour extension also contributes a new status bar item called `Start CodeTour` to your status bar. It's only visible when the current workspace has one or more tours, and when clicked, it allows you to select a tour and then begin navigating it.
-
-While you're within a tour, the status bar will update to show the title and step of the current tour. When clicked, it will open the file/line of the current tour step, which allows you to open other files while taking a tour, and then resume the tour when ready. Once you end the current tour, the status bar will transition back to displaying the `Start CodeTour` button.
-
-> If you don't want to display the status bar item, simply right-click it and select `Hide CodeTour (Extension)`.
+In addition to the `CodeTour` tree view, the CodeTour extension also contributes a status bar item that indicates the title and step of the current tour you're actively taking or recording. When clicked, it will open the file/line of the current tour step, which allows you to open other files while taking a tour, and then resume the tour when ready. Once you end the current tour, the status bar will automatically hide itself.
 
 ### Contributed Commands
 

@@ -103,7 +103,8 @@ export function registerTreeProvider(extensionPath: string) {
   const treeDataProvider = new CodeTourTreeProvider(extensionPath);
   const treeView = window.createTreeView(`${EXTENSION_NAME}.tours`, {
     showCollapseAll: true,
-    treeDataProvider
+    treeDataProvider,
+    canSelectMany: true
   });
 
   reaction(

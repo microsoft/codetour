@@ -51,7 +51,6 @@ export function registerRecorderCommands() {
     // @ts-ignore
     return tour as CodeTour;
   }
-
   interface WorkspaceQuickPickItem extends vscode.QuickPickItem {
     uri: vscode.Uri;
   }
@@ -300,6 +299,13 @@ export function registerRecorderCommands() {
           store.activeTour.workspaceRoot
         );
       }
+    }
+  );
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.editTourAtStep`,
+    async (node: CodeTourStepNode) => {
+      startCodeTour(node.tour, node.stepNumber, undefined, true);
     }
   );
 

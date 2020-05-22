@@ -545,10 +545,12 @@
     "vsce": "^1.75.0",
     "vscode": "^1.1.25",
     "webpack": "^4.43.0",
-    "webpack-cli": "^3.3.11"
+    "webpack-cli": "^3.3.11",
+    "webpack-merge": "^4.2.2"
   },
   "scripts": {
     "build": "webpack --config webpack.config.js",
+    "build:web": "webpack --config webpack.web.js",
     "vscode:prepublish": "npm run build",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",

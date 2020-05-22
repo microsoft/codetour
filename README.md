@@ -152,9 +152,35 @@ A codebase can include one or more tours, but it might have a primary tour, that
 
 In order to mark a specific tour as the primary tour, simply right-click it in the `CodeTour` tree, and select `Make Primary`. When you mark a tour as primary, any other tours that were marked as primary, will be updated to remove that annotation. Additionally, if you want to manually unmark a tour as being the primary tour, you can right-click it and select `Unmake Primary`.
 
-### Shell Commands
+### Command Links
 
-In order to add more interactivity to a tour, you can embed shell commands into a step (e.g. to perform a build, run tests, start an app), using the special `>>` synax, followed by the shell command you want to run (e.g. `>> npm run compile`). This will be converted into a hyperlink, that when clicked, will launch a new integrated terminal (called `CodeTour`) and will run the specified command.
+In order to add more interactivity to a tour, you can include "command links" to a step's description. Command links are simply markdown links, that use the `command:` scheme (instead of `http:` / `https:`), and specify the name of a VS Code command, along with an optional query string that includes the needed command arguments. Using this syntax, you can call any command in VS Code, including both built-in commands (e.g. `vscode.open`), as well as commands that are contributed by extensions (e.g. `codetour.startTour`). For example, the following shows how to include commands with and without arguments.
+
+```markdown
+<!-- Call a command that doesn't require arguments-->
+
+[Open URL](command:codetour.startTour)
+
+<!-- Call a command that requires arguments-->
+
+[Open URL](command:vscode.open?["https://aka.ms/codetour"])
+```
+
+#### Well-Known Commands
+
+In order to make it simpler to call common commands, CodeTour will prompt you with a list of well-known commands as soon as you type `command:` in a step comment. If you select an option, it will generates the respective markdown code, and include placeholders for any neccessary arguments. The following list explaisn the set of currently supported well-known commands:
+
+- `Navigate to tour step...` - Allows you to specify a tour step, that when clicked, will navigate the end-user to that step in the current tour. This can be useful for giving the end-user the option to skip ahead in the tour, or quickly reference previous steps.
+
+- `Open URL...` - Allows you to specify a URL, that when clicked, will launch the end-users default browser, and navigate to it.
+
+- `Run terminal command...` - Allows you to specify a shell command (e.g. `npm run package`), that when clicked, will run the specified command in the integrated terminal.
+
+- `Start tour...` - Allows you to specify the title or another tour in the workspace, that when clicked, will automatically start that tour.
+
+#### Shell Command Sytnax
+
+To make it simpler to embed shell commands into a step (e.g. to perform a build, run tests, start an app), CodeTour supports a special `>>` synax, followed by the shell command you want to run (e.g. `>> npm run compile`). This will be converted into a hyperlink, that when clicked, will launch a new integrated terminal (called `CodeTour`) and will run the specified command.
 
 <img width="600px" src="https://user-images.githubusercontent.com/116461/78858896-91912600-79e2-11ea-8002-196c12273ebc.gif" />
 

@@ -5,6 +5,7 @@ import { registerTextDocumentContentProvider } from "./fileSystem/documentProvid
 import { initializeGitApi } from "./git";
 import { registerDecorators } from "./player/decorator";
 import { registerStatusBar } from "./player/status";
+import { registerCompletionProvider } from "./recorder/completionProvider";
 import { store } from "./store";
 import {
   endCurrentCodeTour,
@@ -48,6 +49,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerFileSystemProvider();
   registerTextDocumentContentProvider();
   registerStatusBar();
+  registerCompletionProvider();
 
   return {
     startTour: startCodeTour,

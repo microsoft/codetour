@@ -26,6 +26,7 @@ const CONTROLLER_LABEL = "CodeTour";
 let id = 0;
 
 const SHELL_SCRIPT_PATTERN = /^>>\s+(.*)$/gm;
+const COMMAND_PATTERN = /(\(command:\w+\.\w+\?)(\[[^\]]+\])/gm;
 
 export class CodeTourComment implements Comment {
   public id: string = (++id).toString();
@@ -52,10 +53,15 @@ export class CodeTourComment implements Comment {
   }
 
   private generatePreviewContent(content: string) {
-    return content.replace(SHELL_SCRIPT_PATTERN, (_, script) => {
-      const args = encodeURIComponent(JSON.stringify([script]));
-      return `> [${script}](command:codetour._sendTextToTerminal?${args} "Run \\"${script}\\" in a terminal")`;
-    });
+    return content
+      .replace(SHELL_SCRIPT_PATTERN, (_, script) => {
+        const args = encodeURIComponent(JSON.stringify([script]));
+        return `> [${script}](command:codetour.sendTextToTerminal?${args} "Run \\"${script}\\" in a terminal")`;
+      })
+      .replace(COMMAND_PATTERN, (_, commandPrefix, params) => {
+        const args = encodeURIComponent(JSON.stringify(JSON.parse(params)));
+        return `${commandPrefix}${args}`;
+      });
   }
 }
 

@@ -29,17 +29,29 @@ export function registerPlayerCommands() {
     }
   );
 
+  // Purpose: Command link
   vscode.commands.registerCommand(
-    `${EXTENSION_NAME}._navigateToStep`,
-    async (stepNumber: number) => {
-      startCodeTour(store.activeTour!.tour, stepNumber);
+    `${EXTENSION_NAME}.startTourByTitle`,
+    async (title: string) => {
+      console.log("CT Title: %o", title);
+      const tour = store.tours.find(tour => tour.title === title);
+      if (tour) {
+        startCodeTour(tour);
+      }
     }
   );
 
-  // This is a "private" command that powers the
-  // ">>" shell command syntax in step comments.
+  // Purpose: Command link
   vscode.commands.registerCommand(
-    `${EXTENSION_NAME}._sendTextToTerminal`,
+    `${EXTENSION_NAME}.navigateToStep`,
+    async (stepNumber: number) => {
+      startCodeTour(store.activeTour!.tour, --stepNumber);
+    }
+  );
+
+  // Purpose: Command link and the ">>" syntax
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.sendTextToTerminal`,
     async (text: string) => {
       if (!terminal) {
         terminal = vscode.window.createTerminal("CodeTour");

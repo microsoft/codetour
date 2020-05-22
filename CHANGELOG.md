@@ -1,5 +1,6 @@
 ## v0.0.27 (05/22/2020)
 
+- Added support for "command links" in your steps, including a completion provider for using well-known commands.
 - Improved extension activation perf by building it with Webpack
 - Fixed an issue with playing tours for virtual file systems (e.g. `gist://`).
 

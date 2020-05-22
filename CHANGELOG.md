@@ -1,3 +1,8 @@
+## v0.0.27 (05/22/2020)
+
+- Improved extension activation perf by building it with Webpack
+- Fixed an issue with playing tours for virtual file systems (e.g. `gist://`).
+
 ## v0.0.26 (05/17/2020)
 
 - Added support for a codebase to have a "primary" tour, which provides a little more prescription to folks that are onboarding

@@ -1,11 +1,15 @@
 import * as path from "path";
 import { Uri, workspace } from "vscode";
-import { FS_SCHEME, CONTENT_URI } from "./constants";
+import { CONTENT_URI, FS_SCHEME } from "./constants";
 import { api } from "./git";
 import { CodeTour, CodeTourStep, store } from "./store";
 
 export function getFileUri(workspaceRoot: string, file: string) {
-  let uri = Uri.parse(`${workspaceRoot}/${file}`);
+  const uriPrefix = workspaceRoot.endsWith("/")
+    ? workspaceRoot
+    : `${workspaceRoot}/`;
+
+  let uri = Uri.parse(`${uriPrefix}${file}`);
 
   if (file.startsWith("..")) {
     // path.join/normalize will resolve relative paths (e.g. replacing

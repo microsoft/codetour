@@ -16,7 +16,7 @@ import {
   Uri,
   window
 } from "vscode";
-import { ICON_URL } from "../constants";
+import { SMALL_ICON_URL } from "../constants";
 import { store } from "../store";
 import { getActiveWorkspacePath, getFileUri, getStepFileUri } from "../utils";
 
@@ -32,7 +32,7 @@ export class CodeTourComment implements Comment {
   public contextValue: string = "";
   public author: CommentAuthorInformation = {
     name: CONTROLLER_LABEL,
-    iconPath: Uri.parse(ICON_URL)
+    iconPath: Uri.parse(SMALL_ICON_URL)
   };
   public body: MarkdownString;
 

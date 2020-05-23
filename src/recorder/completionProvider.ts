@@ -16,6 +16,23 @@ const COMMANDS = [
       .appendText('"]')
   },
   {
+    label: "Run build task",
+    detail: "Runs the build task, as configured by the current workspace.",
+    insertText: new vscode.SnippetString("workbench.action.tasks.build")
+  },
+  {
+    label: "Run task",
+    detail: "Runs a task that's defined by the current workspace.",
+    insertText: new vscode.SnippetString('workbench.action.tasks.runTask?["')
+      .appendPlaceholder("taskName")
+      .appendText('"]')
+  },
+  {
+    label: "Run test task",
+    detail: "Runs the test task, as configured by the current workspace.",
+    insertText: new vscode.SnippetString("workbench.action.tasks.test")
+  },
+  {
     label: "Run terminal command",
     detail: "Executes a shell command in the end-user's integrated terminal.",
     insertText: new vscode.SnippetString('codetour.sendTextToTerminal?["')

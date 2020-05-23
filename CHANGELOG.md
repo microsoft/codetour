@@ -1,3 +1,8 @@
+## v0.0.28 (05/22/2020)
+
+- Added the following commands to the command link completion list: `Run build task`, `Run task` and `Run test task`.
+- Fixed a bug where command links didn't work, if the command included multiple "components" to the name (e.g. `workbench.action.tasks.build`).
+
 ## v0.0.27 (05/22/2020)
 
 - Added support for "command links" in your steps, including a completion provider for using well-known commands.

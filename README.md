@@ -170,9 +170,15 @@ In order to add more interactivity to a tour, you can include "command links" to
 
 In order to make it simpler to call common commands, CodeTour will prompt you with a list of well-known commands as soon as you type `command:` in a step comment. If you select an option, it will generates the respective markdown code, and include placeholders for any neccessary arguments. The following list explaisn the set of currently supported well-known commands:
 
-- `Navigate to tour step...` - Allows you to specify a tour step, that when clicked, will navigate the end-user to that step in the current tour. This can be useful for giving the end-user the option to skip ahead in the tour, or quickly reference previous steps.
+- `Navigate to tour step` - Allows you to specify a tour step, that when clicked, will navigate the end-user to that step in the current tour. This can be useful for giving the end-user the option to skip ahead in the tour, or quickly reference previous steps.
 
-- `Open URL...` - Allows you to specify a URL, that when clicked, will launch the end-users default browser, and navigate to it.
+- `Open URL` - Allows you to specify a URL, that when clicked, will launch the end-users default browser, and navigate to it.
+
+- `Run build task` - Allows you to run the build task, as defined by the current workspace's `task.json` file.
+
+* `Run task` - Allows you to specify a workspace task name, that when clicked, will run the specified task as defined by the current workspace's `task.json` file.
+
+- `Run test task` - Allows you to run the butestild task, as defined by the current workspace's `task.json` file.
 
 - `Run terminal command...` - Allows you to specify a shell command (e.g. `npm run package`), that when clicked, will run the specified command in the integrated terminal.
 

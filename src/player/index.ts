@@ -26,7 +26,7 @@ const CONTROLLER_LABEL = "CodeTour";
 let id = 0;
 
 const SHELL_SCRIPT_PATTERN = /^>>\s+(.*)$/gm;
-const COMMAND_PATTERN = /(\(command:\w+\.\w+\?)(\[[^\]]+\])/gm;
+const COMMAND_PATTERN = /(\(command:[\w+\.]+\?)(\[[^\]]+\])/gm;
 
 export class CodeTourComment implements Comment {
   public id: string = (++id).toString();

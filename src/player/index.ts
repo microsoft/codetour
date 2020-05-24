@@ -18,7 +18,7 @@ import {
 } from "vscode";
 import { SMALL_ICON_URL } from "../constants";
 import { store } from "../store";
-import { getActiveWorkspacePath, getFileUri, getStepFileUri } from "../utils";
+import { getFileUri, getStepFileUri } from "../utils";
 
 const CONTROLLER_ID = "codetour";
 const CONTROLLER_LABEL = "CodeTour";
@@ -131,7 +131,7 @@ async function renderCurrentStep() {
     label += ` (${currentTour.title})`;
   }
 
-  const workspaceRoot = getActiveWorkspacePath();
+  const workspaceRoot = store.activeTour?.workspaceRoot;
   const uri = await getStepFileUri(step, workspaceRoot, currentTour.ref);
   store.activeTour!.thread = controller!.createCommentThread(uri, range, []);
 
@@ -176,7 +176,7 @@ async function renderCurrentStep() {
   await showDocument(uri, range, selection);
 
   if (step.directory) {
-    const directoryUri = getFileUri(workspaceRoot, step.directory);
+    const directoryUri = getFileUri(step.directory, workspaceRoot);
     commands.executeCommand("revealInExplorer", directoryUri);
   }
 }

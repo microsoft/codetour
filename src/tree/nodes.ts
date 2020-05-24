@@ -2,7 +2,7 @@ import * as path from "path";
 import { ThemeIcon, TreeItem, TreeItemCollapsibleState, Uri } from "vscode";
 import { CONTENT_URI, EXTENSION_NAME, FS_SCHEME } from "../constants";
 import { CodeTour, store } from "../store";
-import { getFileUri, getWorkspacePath } from "../utils";
+import { getFileUri, getWorkspaceUri } from "../utils";
 
 function isRecording(tour: CodeTour) {
   return (
@@ -101,10 +101,10 @@ export class CodeTourStepNode extends TreeItem {
       resourceUri = Uri.parse(`${FS_SCHEME}://current/${step.file}`);
     } else if (step.file || step.directory) {
       const resourceRoot = workspaceRoot
-        ? workspaceRoot.toString()
-        : getWorkspacePath(tour);
+        ? workspaceRoot
+        : getWorkspaceUri(tour);
 
-      resourceUri = getFileUri(resourceRoot, step.directory || step.file!);
+      resourceUri = getFileUri(step.directory || step.file!, resourceRoot);
     } else {
       resourceUri = CONTENT_URI;
     }

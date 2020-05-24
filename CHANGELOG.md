@@ -2,6 +2,10 @@
 
 - Added the following commands to the command link completion list: `Run build task`, `Run task` and `Run test task`.
 - Fixed a bug where command links didn't work, if the command included multiple "components" to the name (e.g. `workbench.action.tasks.build`).
+- Fixed a bug where tours weren't being discovered for virtual file systems that include a query string in their workspace path.
+- Fixed a bug where tours that included content-only steps couldn't be exported.
+- Fixed the open/export tour commands to correctly look for `*.tour` files.
+- Fixed a bug where the `CodeTour: Record Tour` command was being displayed without having any workspaces open.
 
 ## v0.0.27 (05/22/2020)
 

@@ -9,12 +9,17 @@ export interface CodeTourStepPosition {
 export interface CodeTourStep {
   title?: string;
   description: string;
+
+  // If any of the following are set, then only
+  // one of them can be, since these properties
+  // indicate the "type" of step.
   file?: string;
   directory?: string;
+  contents?: string;
   uri?: string;
+
   line?: number;
   selection?: { start: CodeTourStepPosition; end: CodeTourStepPosition };
-  contents?: string;
 }
 
 export interface CodeTour {

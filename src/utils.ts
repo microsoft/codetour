@@ -4,28 +4,27 @@ import { CONTENT_URI, FS_SCHEME } from "./constants";
 import { api } from "./git";
 import { CodeTour, CodeTourStep, store } from "./store";
 
-export function getFileUri(workspaceRoot: string, file: string) {
-  const uriPrefix = workspaceRoot.endsWith("/")
-    ? workspaceRoot
-    : `${workspaceRoot}/`;
-
-  let uri = Uri.parse(`${uriPrefix}${file}`);
-
-  if (file.startsWith("..")) {
-    // path.join/normalize will resolve relative paths (e.g. replacing
-    // ".." with the actual directories), but it also messes up
-    // non-file based schemes. So we parse the workspace root and
-    // then replace it's path with a "joined" version of _only_ the path.
-    uri = uri.with({
-      path: path.normalize(uri.path)
-    });
+export function getFileUri(file: string, workspaceRoot?: Uri) {
+  if (!workspaceRoot) {
+    return Uri.parse(file);
   }
-  return uri;
+
+  const rootPath = workspaceRoot.path.endsWith("/")
+    ? workspaceRoot.path
+    : `${workspaceRoot.path}/`;
+
+  // path.join/normalize will resolve relative paths (e.g. replacing
+  // ".." with the actual directories), but it also messes up
+  // non-file based schemes. So we parse the workspace root and
+  // then replace it's path with a normalized version of _only_ the path.
+  return workspaceRoot.with({
+    path: path.normalize(`${rootPath}${file}`)
+  });
 }
 
 export async function getStepFileUri(
   step: CodeTourStep,
-  workspaceRoot: string,
+  workspaceRoot?: Uri,
   ref?: string
 ): Promise<Uri> {
   let uri;
@@ -34,7 +33,7 @@ export async function getStepFileUri(
   } else if (step.uri || step.file) {
     uri = step.uri
       ? Uri.parse(step.uri)
-      : getFileUri(workspaceRoot, step.file!);
+      : getFileUri(step.file!, workspaceRoot);
 
     if (api && ref && ref !== "HEAD") {
       const repo = api.getRepository(uri);
@@ -72,5 +71,6 @@ export function getWorkspacePath(tour: CodeTour) {
 }
 
 export function getWorkspaceUri(tour: CodeTour) {
-  return workspace.getWorkspaceFolder(Uri.parse(tour.id))?.uri;
+  const tourUri = Uri.parse(tour.id);
+  return workspace.getWorkspaceFolder(tourUri)?.uri;
 }

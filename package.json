@@ -155,11 +155,6 @@
         "icon": "$(add)"
       },
       {
-        "command": "codetour.refreshTours",
-        "title": "Refresh Tours",
-        "category": "CodeTour"
-      },
-      {
         "command": "codetour.resumeTour",
         "title": "Resume Tour",
         "category": "CodeTour"
@@ -214,8 +209,8 @@
           "when": "codetour:inTour && codetour:recording"
         },
         {
-          "command": "codetour.refreshTours",
-          "when": "codetour:hasTours"
+          "command": "codetour.recordTour",
+          "when": "workspaceFolderCount != 0"
         },
         {
           "command": "codetour.resumeTour",

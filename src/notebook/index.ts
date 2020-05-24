@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { CodeTour } from "../store";
-import { getStepFileUri, getWorkspacePath } from "../utils";
 import { EXTENSION_NAME, SMALL_ICON_URL } from "../constants";
+import { CodeTour } from "../store";
+import { getStepFileUri, getWorkspaceUri } from "../utils";
 
 class CodeTourNotebookProvider implements vscode.NotebookProvider {
   async resolveNotebook(editor: vscode.NotebookEditor): Promise<void> {
@@ -11,15 +11,15 @@ class CodeTourNotebookProvider implements vscode.NotebookProvider {
       cellEditable: false
     };
 
-    let contents = (
+    let contents = new TextDecoder().decode(
       await vscode.workspace.fs.readFile(editor.document.uri)
-    ).toString();
+    );
 
     let tour = <CodeTour>JSON.parse(contents);
     tour.id = editor.document.uri.toString();
 
     let steps: any[] = [];
-    const workspaceRoot = getWorkspacePath(tour);
+    const workspaceRoot = getWorkspaceUri(tour);
 
     for (let item of tour.steps) {
       const uri = await getStepFileUri(item, workspaceRoot, tour.ref);

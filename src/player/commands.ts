@@ -134,7 +134,7 @@ export function registerPlayerCommands() {
     async () => {
       const uri = await vscode.window.showOpenDialog({
         filters: {
-          Tours: ["json"]
+          Tours: ["tour"]
         },
         canSelectFolders: false,
         canSelectMany: false,
@@ -146,9 +146,13 @@ export function registerPlayerCommands() {
       }
 
       try {
-        const contents = await vscode.workspace.fs.readFile(uri[0]);
-        const tour = JSON.parse(contents.toString());
+        const contents = new TextDecoder().decode(
+          await vscode.workspace.fs.readFile(uri[0])
+        );
+
+        const tour = JSON.parse(contents);
         tour.id = uri[0].toString();
+
         startCodeTour(tour);
       } catch {
         vscode.window.showErrorMessage(
@@ -186,7 +190,7 @@ export function registerPlayerCommands() {
     async (node: CodeTourNode) => {
       const uri = await vscode.window.showSaveDialog({
         filters: {
-          Tours: ["json"]
+          Tours: ["tour"]
         },
         saveLabel: "Export Tour"
       });
@@ -196,7 +200,8 @@ export function registerPlayerCommands() {
       }
 
       const contents = await exportTour(node.tour);
-      vscode.workspace.fs.writeFile(uri, new Buffer(contents));
+      const bytes = new TextEncoder().encode(contents);
+      vscode.workspace.fs.writeFile(uri, bytes);
     }
   );
 

@@ -5,7 +5,6 @@ import { EXTENSION_NAME, VSCODE_DIRECTORY } from "../constants";
 import { endCurrentCodeTour } from "./actions";
 
 const MAIN_TOUR_FILES = [".tour", `${VSCODE_DIRECTORY}/main.tour`];
-
 const SUB_TOUR_DIRECTORIES = [`${VSCODE_DIRECTORY}/tours`, `.tours`];
 
 const HAS_TOURS_KEY = `${EXTENSION_NAME}:hasTours`;
@@ -13,9 +12,8 @@ const HAS_TOURS_KEY = `${EXTENSION_NAME}:hasTours`;
 export async function discoverTours(): Promise<void> {
   const tours = await Promise.all(
     vscode.workspace.workspaceFolders!.map(async workspaceFolder => {
-      const workspaceRoot = workspaceFolder.uri.toString();
-      const mainTours = await discoverMainTours(workspaceRoot);
-      const tours = await discoverSubTours(workspaceRoot);
+      const mainTours = await discoverMainTours(workspaceFolder.uri);
+      const tours = await discoverSubTours(workspaceFolder.uri);
 
       if (mainTours) {
         tours.push(...mainTours);
@@ -51,14 +49,19 @@ export async function discoverTours(): Promise<void> {
   vscode.commands.executeCommand("setContext", HAS_TOURS_KEY, store.hasTours);
 }
 
-async function discoverMainTours(workspaceRoot: string): Promise<CodeTour[]> {
+async function discoverMainTours(
+  workspaceUri: vscode.Uri
+): Promise<CodeTour[]> {
   const tours = await Promise.all(
     MAIN_TOUR_FILES.map(async tourFile => {
       try {
-        const uri = vscode.Uri.parse(`${workspaceRoot}/${tourFile}`);
-        const mainTourContent = (
+        const uri = workspaceUri.with({
+          path: `${workspaceUri.path}/${tourFile}`
+        });
+
+        const mainTourContent = new TextDecoder().decode(
           await vscode.workspace.fs.readFile(uri)
-        ).toString();
+        );
         const tour = JSON.parse(mainTourContent);
         tour.id = uri.toString();
         return tour;
@@ -69,20 +72,23 @@ async function discoverMainTours(workspaceRoot: string): Promise<CodeTour[]> {
   return tours.filter(tour => tour);
 }
 
-async function readTourDirectory(tourDirectory: string): Promise<CodeTour[]> {
+async function readTourDirectory(uri: vscode.Uri): Promise<CodeTour[]> {
   try {
-    const uri = vscode.Uri.parse(tourDirectory);
     const tourFiles = await vscode.workspace.fs.readDirectory(uri);
     const tours = await Promise.all(
       tourFiles.map(async ([file, type]) => {
+        const fileUri = uri.with({
+          path: `${uri.path}/${file}`
+        });
         if (type === vscode.FileType.File) {
-          return readTourFile(tourDirectory, file);
+          return readTourFile(fileUri);
         } else {
-          return readTourDirectory(`${tourDirectory}/${file}`);
+          return readTourDirectory(fileUri);
         }
       })
     );
 
+    // @ts-ignore
     return tours.flat().filter(tour => tour);
   } catch {
     return [];
@@ -90,25 +96,27 @@ async function readTourDirectory(tourDirectory: string): Promise<CodeTour[]> {
 }
 
 async function readTourFile(
-  directory: string,
-  file: string
+  tourUri: vscode.Uri
 ): Promise<CodeTour | undefined> {
   try {
-    const tourUri = vscode.Uri.parse(`${directory}/${file}`);
-    const tourContent = (
+    const tourContent = new TextDecoder().decode(
       await vscode.workspace.fs.readFile(tourUri)
-    ).toString();
+    );
     const tour = JSON.parse(tourContent);
     tour.id = tourUri.toString();
     return tour;
   } catch {}
 }
 
-async function discoverSubTours(workspaceRoot: string): Promise<CodeTour[]> {
+async function discoverSubTours(workspaceUri: vscode.Uri): Promise<CodeTour[]> {
   const tours = await Promise.all(
-    SUB_TOUR_DIRECTORIES.map(directory =>
-      readTourDirectory(`${workspaceRoot}/${directory}`)
-    )
+    SUB_TOUR_DIRECTORIES.map(directory => {
+      const uri = workspaceUri.with({
+        path: `${workspaceUri.path}/${directory}`
+      });
+
+      return readTourDirectory(uri);
+    })
   );
 
   return tours.flat();

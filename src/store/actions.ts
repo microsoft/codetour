@@ -96,14 +96,11 @@ export async function exportTour(tour: CodeTour) {
 
   newTour.steps = await Promise.all(
     newTour.steps.map(async step => {
-      if (step.contents && step.uri) {
+      if (step.contents || step.uri || !step.file) {
         return step;
       }
 
-      const workspaceRoot = workspace.workspaceFolders
-        ? workspace.workspaceFolders[0].uri.toString()
-        : "";
-
+      const workspaceRoot = getWorkspaceUri(tour);
       const stepFileUri = await getStepFileUri(step, workspaceRoot, tour.ref);
 
       const stepFileContents = await workspace.fs.readFile(stepFileUri);

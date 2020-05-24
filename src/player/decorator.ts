@@ -2,7 +2,7 @@ import { reaction } from "mobx";
 import * as vscode from "vscode";
 import { FS_SCHEME_CONTENT, ICON_URL } from "../constants";
 import { CodeTour, CodeTourStep, store } from "../store";
-import { getStepFileUri, getWorkspacePath } from "../utils";
+import { getStepFileUri, getWorkspaceUri } from "../utils";
 
 const DISABLED_SCHEMES = [FS_SCHEME_CONTENT, "comment"];
 
@@ -27,7 +27,7 @@ async function getTourSteps(
 
   const tourSteps = await Promise.all(
     steps.map(async ([tour, step, stepNumber]) => {
-      const workspaceRoot = getWorkspacePath(tour);
+      const workspaceRoot = getWorkspaceUri(tour);
       const uri = await getStepFileUri(step, workspaceRoot);
 
       if (

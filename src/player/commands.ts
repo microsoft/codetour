@@ -11,6 +11,7 @@ import {
   startCodeTour
 } from "../store/actions";
 import { CodeTourNode } from "../tree/nodes";
+import { readUriContents } from "../utils";
 interface CodeTourQuickPickItem extends vscode.QuickPickItem {
   tour: CodeTour;
 }
@@ -146,9 +147,7 @@ export function registerPlayerCommands() {
       }
 
       try {
-        const contents = new TextDecoder().decode(
-          await vscode.workspace.fs.readFile(uri[0])
-        );
+        const contents = await readUriContents(uri[0]);
 
         const tour = JSON.parse(contents);
         tour.id = uri[0].toString();

@@ -31,12 +31,13 @@ export class CodeTourFileSystemProvider implements FileSystemProvider {
     delete newTour.id;
 
     const contents = JSON.stringify(newTour, null, 2);
-    workspace.fs.writeFile(tourUri, new Buffer(contents));
+    const bytes = new TextEncoder().encode(contents);
+    workspace.fs.writeFile(tourUri, bytes);
   }
 
   async readFile(uri: Uri): Promise<Uint8Array> {
     const [, { contents }] = this.getCurrentTourStep();
-    return new Buffer(contents!);
+    return new TextEncoder().encode(contents);
   }
 
   async writeFile(

@@ -4,6 +4,17 @@ import { CONTENT_URI, FS_SCHEME } from "./constants";
 import { api } from "./git";
 import { CodeTour, CodeTourStep, store } from "./store";
 
+export function appendUriPath(uri: Uri, pathSuffix: string) {
+  return uri.with({
+    path: path.join(uri.path, pathSuffix)
+  });
+}
+
+export async function readUriContents(uri: Uri) {
+  const bytes = await workspace.fs.readFile(uri);
+  return new TextDecoder().decode(bytes);
+}
+
 export function getFileUri(file: string, workspaceRoot?: Uri) {
   if (!workspaceRoot) {
     return Uri.parse(file);

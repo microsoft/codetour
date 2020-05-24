@@ -44,7 +44,8 @@ export function registerRecorderCommands() {
     }
 
     const tourContent = JSON.stringify(tour, null, 2);
-    await vscode.workspace.fs.writeFile(uri, new Buffer(tourContent));
+    const bytes = new TextEncoder().encode(tourContent);
+    await vscode.workspace.fs.writeFile(uri, bytes);
 
     (tour as any).id = uri.toString();
 
@@ -392,7 +393,8 @@ export function registerRecorderCommands() {
     delete newTour.id;
     const tourContent = JSON.stringify(newTour, null, 2);
 
-    return vscode.workspace.fs.writeFile(uri, new Buffer(tourContent));
+    const bytes = new TextEncoder().encode(tourContent);
+    return vscode.workspace.fs.writeFile(uri, bytes);
   }
 
   async function updateTourProperty(tour: CodeTour, property: string) {

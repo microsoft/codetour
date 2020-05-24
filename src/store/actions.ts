@@ -1,8 +1,13 @@
-import { commands, Memento, Uri, window, workspace } from "vscode";
+import { commands, Memento, Uri, window } from "vscode";
 import { CodeTour, store } from ".";
 import { EXTENSION_NAME, FS_SCHEME, FS_SCHEME_CONTENT } from "../constants";
 import { startPlayer, stopPlayer } from "../player";
-import { getStepFileUri, getWorkspaceKey, getWorkspaceUri } from "../utils";
+import {
+  getStepFileUri,
+  getWorkspaceKey,
+  getWorkspaceUri,
+  readUriContents
+} from "../utils";
 
 const CAN_EDIT_TOUR_KEY = `${EXTENSION_NAME}:canEditTour`;
 const IN_TOUR_KEY = `${EXTENSION_NAME}:inTour`;
@@ -102,12 +107,11 @@ export async function exportTour(tour: CodeTour) {
 
       const workspaceRoot = getWorkspaceUri(tour);
       const stepFileUri = await getStepFileUri(step, workspaceRoot, tour.ref);
-
-      const stepFileContents = await workspace.fs.readFile(stepFileUri);
+      const contents = await readUriContents(stepFileUri);
 
       return {
         ...step,
-        contents: stepFileContents.toString()
+        contents
       };
     })
   );

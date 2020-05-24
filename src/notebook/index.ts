@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { EXTENSION_NAME, SMALL_ICON_URL } from "../constants";
 import { CodeTour } from "../store";
-import { getStepFileUri, getWorkspaceUri } from "../utils";
+import { getStepFileUri, getWorkspaceUri, readUriContents } from "../utils";
 
 class CodeTourNotebookProvider implements vscode.NotebookProvider {
   async resolveNotebook(editor: vscode.NotebookEditor): Promise<void> {
@@ -11,9 +11,7 @@ class CodeTourNotebookProvider implements vscode.NotebookProvider {
       cellEditable: false
     };
 
-    let contents = new TextDecoder().decode(
-      await vscode.workspace.fs.readFile(editor.document.uri)
-    );
+    let contents = await readUriContents(editor.document.uri);
 
     let tour = <CodeTour>JSON.parse(contents);
     tour.id = editor.document.uri.toString();

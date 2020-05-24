@@ -83,5 +83,8 @@ export function getWorkspacePath(tour: CodeTour) {
 
 export function getWorkspaceUri(tour: CodeTour) {
   const tourUri = Uri.parse(tour.id);
-  return workspace.getWorkspaceFolder(tourUri)?.uri;
+  return (
+    workspace.getWorkspaceFolder(tourUri)?.uri ||
+    workspace.workspaceFolders![0].uri
+  );
 }

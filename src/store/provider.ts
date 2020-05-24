@@ -85,8 +85,7 @@ async function readTourDirectory(uri: vscode.Uri): Promise<CodeTour[]> {
 
     // @ts-ignore
     return tours.flat().filter(tour => tour);
-  } catch (e) {
-    console.log("CT Reading directory failed: %o", e);
+  } catch {
     return [];
   }
 }

@@ -34,7 +34,6 @@ export function registerPlayerCommands() {
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.startTourByTitle`,
     async (title: string) => {
-      console.log("CT Title: %o", title);
       const tour = store.tours.find(tour => tour.title === title);
       if (tour) {
         startCodeTour(tour);

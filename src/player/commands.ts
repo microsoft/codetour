@@ -105,6 +105,27 @@ export function registerPlayerCommands() {
   );
 
   vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.setBreakpoint`,
+    async (lineNumber: number) => {
+      const currentThread = store.activeTour!.thread!;
+
+      vscode.debug.addBreakpoints([
+        new vscode.SourceBreakpoint(
+          new vscode.Location(
+            vscode.Uri.file(
+              vscode.window.activeTextEditor!.document.uri.fsPath
+            ),
+            lineNumber
+              ? new vscode.Position(lineNumber - 1, 0)
+              : currentThread.range
+          ),
+          true
+        )
+      ]);
+    }
+  );
+
+  vscode.commands.registerCommand(
     `${EXTENSION_NAME}.viewNotebook`,
     async (node: CodeTourNode) => {
       const tourUri = vscode.Uri.parse(node.tour.id);

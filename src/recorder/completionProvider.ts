@@ -28,6 +28,13 @@ const COMMANDS = [
     insertText: new vscode.SnippetString('codetour.startTourByTitle?["')
       .appendPlaceholder("tourTitle")
       .appendText('"]')
+  },
+  {
+    label: "Set breakpoint",
+    detail: "Sets a breakpoint",
+    insertText: new vscode.SnippetString(
+      "codetour.setBreakpoint?"
+    ).appendPlaceholder("lineNumber")
   }
 ];
 

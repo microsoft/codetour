@@ -33,10 +33,10 @@ export function registerPlayerCommands() {
   // Purpose: Command link
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.startTourByTitle`,
-    async (title: string) => {
+    async (title: string, stepNumber?: number) => {
       const tour = store.tours.find(tour => tour.title === title);
       if (tour) {
-        startCodeTour(tour);
+        startCodeTour(tour, stepNumber && --stepNumber);
       }
     }
   );

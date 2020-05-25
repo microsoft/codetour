@@ -27,6 +27,7 @@ let id = 0;
 
 const SHELL_SCRIPT_PATTERN = /^>>\s+(.*)$/gm;
 const COMMAND_PATTERN = /(\(command:[\w+\.]+\?)(\[[^\]]+\])/gm;
+const TOUR_REFERENCE_PATTERN = /(?:\[([^\]]+)\])?\[([^\]#]+)?(?:#(\d+))?\](?!\()/gm;
 
 export class CodeTourComment implements Comment {
   public id: string = (++id).toString();
@@ -61,7 +62,30 @@ export class CodeTourComment implements Comment {
       .replace(COMMAND_PATTERN, (_, commandPrefix, params) => {
         const args = encodeURIComponent(JSON.stringify(JSON.parse(params)));
         return `${commandPrefix}${args}`;
-      });
+      })
+      .replace(
+        TOUR_REFERENCE_PATTERN,
+        (_, linkTitle, tourTitle, stepNumber) => {
+          if (!tourTitle) {
+            const title = linkTitle || `#${stepNumber}`;
+            return `[${title}](command:codetour.navigateToStep?${stepNumber} "Navigate to step #${stepNumber}")`;
+          }
+
+          const tour = store.tours.find(tour => tour.title === tourTitle);
+          if (tour) {
+            const args = [tourTitle];
+
+            if (stepNumber) {
+              args.push(Number(stepNumber));
+            }
+            const argsContent = encodeURIComponent(JSON.stringify(args));
+            const title = linkTitle || tourTitle;
+            return `[${title}](command:codetour.startTourByTitle?${argsContent} "Start \\"#${tourTitle}\\" tour")`;
+          }
+
+          return _;
+        }
+      );
   }
 }
 

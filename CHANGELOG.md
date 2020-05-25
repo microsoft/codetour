@@ -1,5 +1,6 @@
 ## v0.0.28 (05/22/2020)
 
+- Introduced support for the step/tour reference syntax.
 - Added the following commands to the command link completion list: `Run build task`, `Run task` and `Run test task`.
 - Fixed a bug where command links didn't work, if the command included multiple "components" to the name (e.g. `workbench.action.tasks.build`).
 - Fixed a bug where tours weren't being discovered for virtual file systems that include a query string in their workspace path.

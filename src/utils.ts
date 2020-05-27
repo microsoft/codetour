@@ -4,9 +4,10 @@ import { CONTENT_URI, FS_SCHEME } from "./constants";
 import { api } from "./git";
 import { CodeTour, CodeTourStep, store } from "./store";
 
+// TODO: Replace this with vscode.Uri.joinPath
 export function appendUriPath(uri: Uri, pathSuffix: string) {
   return uri.with({
-    path: path.join(uri.path, pathSuffix)
+    path: path.join(uri.fsPath, pathSuffix)
   });
 }
 
@@ -21,8 +22,8 @@ export function getFileUri(file: string, workspaceRoot?: Uri) {
   }
 
   const rootPath = workspaceRoot.path.endsWith("/")
-    ? workspaceRoot.path
-    : `${workspaceRoot.path}/`;
+    ? workspaceRoot.fsPath
+    : `${workspaceRoot.fsPath}/`;
 
   // path.join/normalize will resolve relative paths (e.g. replacing
   // ".." with the actual directories), but it also messes up

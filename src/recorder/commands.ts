@@ -17,7 +17,9 @@ export function registerRecorderCommands() {
       .replace(/\s/g, "-")
       .replace(/[^\w\d-_]/g, "");
 
-    return vscode.Uri.parse(`${workspaceRoot}/.tours/${file}.tour`);
+    return workspaceRoot.with({
+      path: path.join(workspaceRoot.fsPath, ".tours", `${file}.tour`)
+    });
   }
 
   async function checkIfTourExists(workspaceRoot: vscode.Uri, title: string) {

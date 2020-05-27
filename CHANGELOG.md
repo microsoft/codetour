@@ -1,3 +1,7 @@
+## v0.0.29 (05/27/2020)
+
+- Fixed an issue with URI handling on Windows
+
 ## v0.0.28 (05/22/2020)
 
 - Introduced support for the step/tour reference syntax.

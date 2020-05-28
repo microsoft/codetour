@@ -6,8 +6,11 @@ import { CodeTour, CodeTourStep, store } from "./store";
 
 // TODO: Replace this with vscode.Uri.joinPath
 export function appendUriPath(uri: Uri, pathSuffix: string) {
+  // It's possible for a Uri to not inclue a path,
+  // and so we need to ensure that we include at least
+  // a leading "/" when adding the file to the Uri.
   return uri.with({
-    path: path.join(uri.fsPath, pathSuffix)
+    path: path.join(uri.fsPath || "/", pathSuffix)
   });
 }
 

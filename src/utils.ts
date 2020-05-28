@@ -21,17 +21,7 @@ export function getFileUri(file: string, workspaceRoot?: Uri) {
     return Uri.parse(file);
   }
 
-  const rootPath = workspaceRoot.path.endsWith("/")
-    ? workspaceRoot.fsPath
-    : `${workspaceRoot.fsPath}/`;
-
-  // path.join/normalize will resolve relative paths (e.g. replacing
-  // ".." with the actual directories), but it also messes up
-  // non-file based schemes. So we parse the workspace root and
-  // then replace it's path with a normalized version of _only_ the path.
-  return workspaceRoot.with({
-    path: path.normalize(`${rootPath}${file}`)
-  });
+  return appendUriPath(workspaceRoot, file);
 }
 
 export async function getStepFileUri(
@@ -69,7 +59,7 @@ export async function getStepFileUri(
 }
 
 export function getActiveWorkspacePath() {
-  return store.activeTour!.workspaceRoot?.toString() || "";
+  return store.activeTour!.workspaceRoot?.fsPath || "";
 }
 
 export function getWorkspaceKey() {

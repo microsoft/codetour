@@ -215,7 +215,7 @@ export function registerRecorderCommands() {
       const tour = store.activeTour!.tour;
 
       const workspaceRoot = getActiveWorkspacePath();
-      const directory = path.relative(workspaceRoot, uri.toString());
+      const directory = path.relative(workspaceRoot, uri.fsPath);
 
       tour.steps.splice(stepNumber, 0, {
         directory,
@@ -241,7 +241,7 @@ export function registerRecorderCommands() {
       const stepNumber = store.activeTour!.step;
 
       const workspaceRoot = getActiveWorkspacePath();
-      const file = path.relative(workspaceRoot, thread!.uri.toString());
+      const file = path.relative(workspaceRoot, thread!.uri.fsPath);
 
       const step = {
         file,

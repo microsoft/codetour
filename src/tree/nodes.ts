@@ -129,14 +129,3 @@ export class CodeTourStepNode extends TreeItem {
     this.contextValue = contextValues.join(".");
   }
 }
-
-export class RecordTourNode extends TreeItem {
-  constructor() {
-    super("Record new tour...");
-
-    this.command = {
-      command: `${EXTENSION_NAME}.recordTour`,
-      title: "Record Tour"
-    };
-  }
-}

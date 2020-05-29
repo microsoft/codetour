@@ -1,3 +1,7 @@
+## v0.0.30 (05/28/2020)
+
+- Changed the `CodeTour` tree to be always visible by default, as long as you have one or more workspaces opened.
+
 ## v0.0.29 (05/27/2020)
 
 - Fixed an issue with URI handling on Windows

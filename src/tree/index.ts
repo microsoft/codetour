@@ -9,7 +9,7 @@ import {
 } from "vscode";
 import { EXTENSION_NAME } from "../constants";
 import { store } from "../store";
-import { CodeTourNode, CodeTourStepNode, RecordTourNode } from "./nodes";
+import { CodeTourNode, CodeTourStepNode } from "./nodes";
 
 class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
   private _disposables: Disposable[] = [];
@@ -46,7 +46,7 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
   async getChildren(element?: TreeItem): Promise<TreeItem[] | undefined> {
     if (!element) {
       if (!store.hasTours && !store.activeTour) {
-        return [new RecordTourNode()];
+        return undefined;
       } else {
         const tours = store.tours.map(
           tour => new CodeTourNode(tour, this.extensionPath)

@@ -492,10 +492,16 @@
         {
           "id": "codetour.tours",
           "name": "CodeTour",
-          "when": "codetour:hasTours || codetour:inTour"
+          "when": "workspaceFolderCount != 0"
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "codetour.tours",
+        "contents": "In order to create a guided walkthrough, you can begin recording a tour for the currently opened workspace ([Learn More](https://github.com/vsls-contrib/codetour#recording-tours)).\n\n[Record Tour](command:codetour.recordTour)\n\nYou can also open tours that were shared with you by others ([Learn More](https://github.com/vsls-contrib/codetour#opening-tours)).\n\n[Open Tour File](command:codetour.openTourFile)\n\n[Open Tour URL](command:codetour.openTourUrl)"
+      }
+    ],
     "jsonValidation": [
       {
         "fileMatch": "*.tour",

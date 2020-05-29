@@ -1,16 +1,26 @@
+import * as os from "os";
 import * as path from "path";
 import { Uri, workspace } from "vscode";
 import { CONTENT_URI, FS_SCHEME } from "./constants";
 import { api } from "./git";
 import { CodeTour, CodeTourStep, store } from "./store";
 
-// TODO: Replace this with vscode.Uri.joinPath
+export function getRelativePath(root: string, filePath: string) {
+  let relativePath = path.relative(root, filePath);
+
+  if (os.platform() === "win32") {
+    relativePath = relativePath.replace(/\\/g, "/");
+  }
+
+  return relativePath;
+}
+
 export function appendUriPath(uri: Uri, pathSuffix: string) {
-  // It's possible for a Uri to not inclue a path,
-  // and so we need to ensure that we include at least
-  // a leading "/" when adding the file to the Uri.
+  const pathPrefix = uri.path.endsWith("/") ? uri.path : `${uri.path}/`;
+  let filePath = `${pathPrefix}${pathSuffix}`;
+
   return uri.with({
-    path: path.join(uri.fsPath || "/", pathSuffix)
+    path: filePath
   });
 }
 
@@ -62,7 +72,7 @@ export async function getStepFileUri(
 }
 
 export function getActiveWorkspacePath() {
-  return store.activeTour!.workspaceRoot?.fsPath || "";
+  return store.activeTour!.workspaceRoot?.path || "";
 }
 
 export function getWorkspaceKey() {

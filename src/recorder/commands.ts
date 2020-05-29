@@ -1,5 +1,4 @@
 import { action, comparer, runInAction } from "mobx";
-import * as path from "path";
 import * as vscode from "vscode";
 import { workspace } from "vscode";
 import { EXTENSION_NAME, FS_SCHEME_CONTENT } from "../constants";
@@ -8,7 +7,7 @@ import { CodeTourComment } from "../player";
 import { CodeTour, store } from "../store";
 import { endCurrentCodeTour, startCodeTour } from "../store/actions";
 import { CodeTourNode, CodeTourStepNode } from "../tree/nodes";
-import { getActiveWorkspacePath } from "../utils";
+import { getActiveWorkspacePath, getRelativePath } from "../utils";
 
 export function registerRecorderCommands() {
   function getTourFileUri(workspaceRoot: vscode.Uri, title: string) {
@@ -18,7 +17,7 @@ export function registerRecorderCommands() {
       .replace(/[^\w\d-_]/g, "");
 
     return workspaceRoot.with({
-      path: path.join(workspaceRoot.fsPath, ".tours", `${file}.tour`)
+      path: `${workspaceRoot.path}/.tours/${file}.tour`
     });
   }
 
@@ -49,7 +48,7 @@ export function registerRecorderCommands() {
     const bytes = new TextEncoder().encode(tourContent);
     await vscode.workspace.fs.writeFile(uri, bytes);
 
-    (tour as any).id = uri.toString();
+    (tour as any).id = decodeURIComponent(uri.toString());
 
     // @ts-ignore
     return tour as CodeTour;
@@ -215,7 +214,7 @@ export function registerRecorderCommands() {
       const tour = store.activeTour!.tour;
 
       const workspaceRoot = getActiveWorkspacePath();
-      const directory = path.relative(workspaceRoot, uri.fsPath);
+      const directory = getRelativePath(workspaceRoot, uri.path);
 
       tour.steps.splice(stepNumber, 0, {
         directory,
@@ -241,7 +240,7 @@ export function registerRecorderCommands() {
       const stepNumber = store.activeTour!.step;
 
       const workspaceRoot = getActiveWorkspacePath();
-      const file = path.relative(workspaceRoot, thread!.uri.fsPath);
+      const file = getRelativePath(workspaceRoot, thread!.uri.path);
 
       const step = {
         file,

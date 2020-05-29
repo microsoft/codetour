@@ -60,7 +60,7 @@ async function discoverMainTours(
 
         const mainTourContent = await readUriContents(uri);
         const tour = JSON.parse(mainTourContent);
-        tour.id = uri.toString();
+        tour.id = decodeURIComponent(uri.toString());
         return tour;
       } catch {}
     })
@@ -96,7 +96,7 @@ async function readTourFile(
   try {
     const tourContent = await readUriContents(tourUri);
     const tour = JSON.parse(tourContent);
-    tour.id = tourUri.toString();
+    tour.id = decodeURIComponent(tourUri.toString());
     return tour;
   } catch {}
 }

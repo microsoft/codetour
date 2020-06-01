@@ -1,3 +1,7 @@
+## v0.0.32 (06/01/2020)
+
+- Added a list of well-known views to the step `view` property (e.g. `scm`, `extensions:disabled`) to simpify the authoring process for view steps.
+
 ## v0.0.31 (05/31/2020)
 
 - Exposed the `Add Tour Step` as a context menu to tour nodes in the `CodeTour` tree.

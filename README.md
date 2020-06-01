@@ -226,7 +226,8 @@ At any time, you can edit the tour's ref by right-clicking it in the `CodeTour` 
 Code tours are primarily meant to describe code, however, when you're recording a tour, it may help to provide some intro explaination about the tour itself. To do this, you can create a "content step", which is a tour step that includes a title and markdown content, but isn't associated with a directory or file. To create a content step, perform one of the following actions:
 
 1. Click the `Add tour step...` node in the `CodeTour` tree, underneath the node that represents your currently recording tour. _Note: This option is only available when the tour doesn't have any steps._
-2. Run the `CodeTour: Add Tour Step` command.
+1. Right-click a tour node in the `CodeTour` tree and select `Add Tour Step`. _Note: This option is only available while recording the tour._
+1. Run the `CodeTour: Add Tour Step` command.
 
 When you create a content step, you'll be asked for a title of the step (e.g. `Introduction`), and then a "virtual" file will be created with an associated comment that you can edit. This allows the viewer to navigate between steps in a consistent fashion, regardless if the step is associated with a file or not.
 

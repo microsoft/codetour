@@ -17,9 +17,16 @@ export interface CodeTourStep {
   directory?: string;
   contents?: string;
   uri?: string;
+  view?: string;
 
+  // A line number and selection is only relevant for file-based
+  // steps. And even then, they're optional. If a file-based step
+  // doesn't have a line number, then the description is attached
+  // to the last line in the file, assuming it's describing the file itself
   line?: number;
   selection?: { start: CodeTourStepPosition; end: CodeTourStepPosition };
+
+  commands?: string[];
 }
 
 export interface CodeTour {

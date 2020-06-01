@@ -202,6 +202,36 @@ async function renderCurrentStep() {
   if (step.directory) {
     const directoryUri = getFileUri(step.directory, workspaceRoot);
     commands.executeCommand("revealInExplorer", directoryUri);
+  } else if (step.view) {
+    const commandName = `${step.view}.focus`;
+
+    try {
+      await commands.executeCommand(commandName);
+    } catch {
+      window.showErrorMessage(
+        `The current tour step is attempting to focus a view which isn't available: ${step.view}. Please check the tour and try again.`
+      );
+    }
+  }
+
+  if (step.commands) {
+    step.commands.forEach(async command => {
+      let name = command,
+        args: any[] = [];
+
+      if (command.includes("?")) {
+        const parts = command.split("?");
+        name = parts[0];
+        args = JSON.parse(parts[1]);
+      }
+
+      try {
+        await commands.executeCommand(name, ...args);
+      } catch {
+        // Silently fail, since it's unclear if the
+        // command was critical to the step or not.
+      }
+    });
   }
 }
 
@@ -232,7 +262,9 @@ reaction(
           store.activeTour.tour.steps.map(step => [
             step.title,
             step.description,
-            step.line
+            step.line,
+            step.directory,
+            step.view
           ])
         ]
       : null

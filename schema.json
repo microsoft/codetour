@@ -32,6 +32,14 @@
             "type": "string",
             "description": "File path (relative to the workspace root) that the step is associated with."
           },
+          "directory": {
+            "type": "string",
+            "description": "Directory path (relative to the workspace root) that the step is associated with."
+          },
+          "view": {
+            "type": "string",
+            "description": "The ID (e.g. gistpad.gists) that this step is associated with."
+          },
           "uri": {
             "type": "string",
             "description": "Absolute URI that is associated with the step."
@@ -83,6 +91,14 @@
                   }
                 }
               }
+            }
+          },
+          "commmands": {
+            "type": "array",
+            "description": "Specifies an array of command URIs that will be executed when this step is navigated to.",
+            "default": [],
+            "items": {
+              "type": "string"
             }
           }
         }

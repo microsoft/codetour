@@ -107,6 +107,22 @@ export function registerTreeProvider(extensionPath: string) {
     canSelectMany: true
   });
 
+  let isRevealPending = false;
+  treeView.onDidChangeVisibility(e => {
+    if (e.visible && isRevealPending) {
+      isRevealPending = false;
+      revealCurrentStepNode();
+    }
+  });
+
+  function revealCurrentStepNode() {
+    setTimeout(() => {
+      treeView.reveal(
+        new CodeTourStepNode(store.activeTour!.tour, store.activeTour!.step)
+      );
+    }, 300);
+  }
+
   reaction(
     () => [
       store.activeTour
@@ -119,13 +135,15 @@ export function registerTreeProvider(extensionPath: string) {
     ],
     () => {
       if (store.activeTour && store.activeTour.step >= 0) {
-        // Give the tree a little bit of time to render the new
-        // node before trying to reveal it.
-        setTimeout(() => {
-          treeView.reveal(
-            new CodeTourStepNode(store.activeTour!.tour, store.activeTour!.step)
-          );
-        }, 300);
+        if (
+          !treeView.visible ||
+          store.activeTour.tour.steps[store.activeTour.step].view
+        ) {
+          isRevealPending = true;
+          return;
+        }
+
+        revealCurrentStepNode();
       } else {
         // TODO: Once VS Code supports it, we want
         // to de-select the step node once the tour ends.

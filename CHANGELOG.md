@@ -1,3 +1,10 @@
+## v0.0.31 (05/31/2020)
+
+- Exposed the `Add Tour Step` as a context menu to tour nodes in the `CodeTour` tree.
+- Update the `CodeTour` tree, so that it doesn't "steal" focus while navigating a tour, if the end-user doesn't have it visible already
+- **Experimental** Added the concept of a "view step", which allows you to add a step that automatically focuses a VS Code view and describes it
+- **Experimental** Added step commands, which allows a step to include one or more commands that should be executed when the step is navigated to
+
 ## v0.0.30 (05/28/2020)
 
 - Changed the `CodeTour` tree to be always visible by default, as long as you have one or more workspaces opened.

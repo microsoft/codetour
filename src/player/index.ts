@@ -131,6 +131,20 @@ export async function stopPlayer() {
   }
 }
 
+const VIEW_COMMANDS = new Map([
+  ["debug", "workbench.view.debug"],
+  ["debug:breakpoints", "workbench.debug.action.focusBreakpointsView"],
+  ["debug:callstack", "workbench.debug.action.focusCallStackView"],
+  ["debug:variables", "workbench.debug.action.focusVariablesView"],
+  ["debug:watch", "workbench.debug.action.focusWatchView"],
+  ["explorer", "workbench.view.explorer"],
+  ["extensions", "workbench.view.extensions"],
+  ["extensions:disabled", "extensions.disabledExtensionList.focus"],
+  ["extensions:enabled", "extensions.enabledExtensionList.focus"],
+  ["scm", "workbench.view.scm"],
+  ["search", "workbench.view.search"]
+]);
+
 async function renderCurrentStep() {
   if (store.activeTour!.thread) {
     store.activeTour!.thread.dispose();
@@ -203,7 +217,9 @@ async function renderCurrentStep() {
     const directoryUri = getFileUri(step.directory, workspaceRoot);
     commands.executeCommand("revealInExplorer", directoryUri);
   } else if (step.view) {
-    const commandName = `${step.view}.focus`;
+    const commandName = VIEW_COMMANDS.has(step.view)
+      ? VIEW_COMMANDS.get(step.view)!
+      : `${step.view}.focus`;
 
     try {
       await commands.executeCommand(commandName);

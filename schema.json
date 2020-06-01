@@ -38,6 +38,19 @@
           },
           "view": {
             "type": "string",
+            "enum": [
+              "debug",
+              "debug:breakpoints",
+              "debug:callstack",
+              "debug:variables",
+              "debug:watch",
+              "explorer",
+              "extensions",
+              "extensions:disabled",
+              "extensions:enabled",
+              "scm",
+              "search"
+            ],
             "description": "The ID (e.g. gistpad.gists) that this step is associated with."
           },
           "uri": {

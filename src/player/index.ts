@@ -132,6 +132,8 @@ export async function stopPlayer() {
 }
 
 const VIEW_COMMANDS = new Map([
+  ["comments", "workbench.panel.comments"],
+  ["console", "workbench.panel.console"],
   ["debug", "workbench.view.debug"],
   ["debug:breakpoints", "workbench.debug.action.focusBreakpointsView"],
   ["debug:callstack", "workbench.debug.action.focusCallStackView"],
@@ -141,8 +143,11 @@ const VIEW_COMMANDS = new Map([
   ["extensions", "workbench.view.extensions"],
   ["extensions:disabled", "extensions.disabledExtensionList.focus"],
   ["extensions:enabled", "extensions.enabledExtensionList.focus"],
+  ["output", "workbench.panel.output"],
+  ["problems", "workbench.panel.markers"],
   ["scm", "workbench.view.scm"],
-  ["search", "workbench.view.search"]
+  ["search", "workbench.view.search"],
+  ["terminal", "workbench.panel.terminal"]
 ]);
 
 async function renderCurrentStep() {

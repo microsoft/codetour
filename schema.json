@@ -48,8 +48,11 @@
               "extensions",
               "extensions:disabled",
               "extensions:enabled",
+              "output",
+              "problems",
               "scm",
-              "search"
+              "search",
+              "terminal"
             ],
             "description": "The ID (e.g. gistpad.gists) that this step is associated with."
           },

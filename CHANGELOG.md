@@ -1,3 +1,7 @@
+## v0.0.33 (06/18/2020)
+
+- Fixed an issue where CodeTour overrode the JSON language type
+
 ## v0.0.32 (06/01/2020)
 
 - Added a list of well-known views to the step `view` property (e.g. `scm`, `extensions:disabled`) to simpify the authoring process for view steps.

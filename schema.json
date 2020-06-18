@@ -54,7 +54,7 @@
               "search",
               "terminal"
             ],
-            "description": "The ID (e.g. gistpad.gists) that this step is associated with."
+            "description": "The view ID (e.g. gistpad.gists) that this step is associated with."
           },
           "uri": {
             "type": "string",

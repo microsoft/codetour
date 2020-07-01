@@ -81,17 +81,16 @@ export class CodeTourStepNode extends TreeItem {
 
     const step = tour.steps[stepNumber];
 
-    const workspaceRoot =
-      store.activeTour &&
-      store.activeTour.tour.id === tour.id &&
-      store.activeTour.workspaceRoot
-        ? store.activeTour.workspaceRoot
-        : undefined;
+    let workspaceRoot, tours;
+    if (store.activeTour && store.activeTour.tour.id === tour.id) {
+      workspaceRoot = store.activeTour.workspaceRoot;
+      tours = store.activeTour.tours;
+    }
 
     this.command = {
       command: `${EXTENSION_NAME}.startTour`,
       title: "Start Tour",
-      arguments: [tour, stepNumber, workspaceRoot]
+      arguments: [tour, stepNumber, workspaceRoot, tours]
     };
 
     let resourceUri;

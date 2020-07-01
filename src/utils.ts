@@ -76,19 +76,17 @@ export function getActiveWorkspacePath() {
 }
 
 export function getWorkspaceKey() {
-  return (
-    workspace.workspaceFile || workspace.workspaceFolders![0].uri.toString()
-  );
+  return workspace.workspaceFile || workspace.workspaceFolders![0].uri;
 }
 
 export function getWorkspacePath(tour: CodeTour) {
   return getWorkspaceUri(tour)?.toString() || "";
 }
 
-export function getWorkspaceUri(tour: CodeTour) {
+export function getWorkspaceUri(tour: CodeTour): Uri | undefined {
   const tourUri = Uri.parse(tour.id);
   return (
     workspace.getWorkspaceFolder(tourUri)?.uri ||
-    workspace.workspaceFolders![0].uri
+    (workspace.workspaceFolders && workspace.workspaceFolders[0].uri)
   );
 }

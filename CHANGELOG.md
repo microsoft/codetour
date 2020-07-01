@@ -1,3 +1,11 @@
+## v0.0.34 (06/27/2020)
+
+- Updated the tour recorder, to allow you to edit the line associated with a step
+- Updated the tour recorder, to allow you to add a tour step from an editor selection
+- Added the ability to record a new tour that is saved to an arbitrary location on disk, as opposed to the `.tours` directory of the opened workspace.
+- Added new extensibility APIs to record and playback tours for external workspaces (e.g. GistPad repo editing).
+- Updated the `CodeTour` tree to always show when you're taking a tour, even if you don't have a workspace open.
+
 ## v0.0.33 (06/18/2020)
 
 - Fixed an issue where CodeTour overrode the JSON language type
@@ -75,7 +83,7 @@
 
 - Introduced support for embedding shell commands in a tour step (e.g. `>> npm run compile`), which allows you to add more interactivity to a tour.
 - Added support for including VS Code `command:` links within your tour step comments (e.g. `[Start Tour](command:codetour.startTour)`), in order to automate arbitrary workbench actions.
-- Tours can now be organized within sub-directories of the `.vscode/tours` drectory, and can now also be places withtin a root-level `.tours` folder.
+- Tours can now be organized within sub-directories of the `.vscode/tours` directory, and can now also be places withtin a root-level `.tours` folder.
 - Added the `exportTour` to the API that is exposed by this extension
 
 ## v0.0.19 (04/06/2020)

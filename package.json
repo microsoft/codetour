@@ -54,6 +54,10 @@
         "title": "Add CodeTour Step"
       },
       {
+        "command": "codetour.addSelectionStep",
+        "title": "Add CodeTour Step"
+      },
+      {
         "command": "codetour.addTourStep",
         "title": "Add Step to Tour",
         "enablement": "!commentIsEmpty"
@@ -65,6 +69,10 @@
       {
         "command": "codetour.changeTourRef",
         "title": "Change Git Ref"
+      },
+      {
+        "command": "codetour.changeTourStepLine",
+        "title": "Change Line"
       },
       {
         "command": "codetour.changeTourStepTitle",
@@ -229,11 +237,19 @@
           "when": "false"
         },
         {
+          "command": "codetour.addSelectionStep",
+          "when": "false"
+        },
+        {
           "command": "codetour.addTourStep",
           "when": "false"
         },
         {
           "command": "codetour.changeTourRef",
+          "when": "false"
+        },
+        {
+          "command": "codetour.changeTourStepLine",
           "when": "false"
         },
         {
@@ -336,7 +352,12 @@
         {
           "command": "codetour.moveTourStepForward",
           "group": "move@2",
-          "when": "commentController == codetour && && codetour:canEditTour commentThread =~ /hasNext/"
+          "when": "commentController == codetour && codetour:canEditTour commentThread =~ /hasNext/"
+        },
+        {
+          "command": "codetour.changeTourStepLine",
+          "group": "mutate@1",
+          "when": "commentController == codetour && codetour:canEditTour"
         },
         {
           "command": "codetour.deleteTourStep",
@@ -490,6 +511,13 @@
           "command": "codetour.addDirectoryStep",
           "when": "codetour:recording && explorerResourceIsFolder"
         }
+      ],
+      "editor/context": [
+        {
+          "command": "codetour.addSelectionStep",
+          "when": "codetour:recording && editorHasSelection",
+          "group": "codetour@1"
+        }
       ]
     },
     "views": {
@@ -497,7 +525,7 @@
         {
           "id": "codetour.tours",
           "name": "CodeTour",
-          "when": "workspaceFolderCount != 0"
+          "when": "workspaceFolderCount != 0 || codetour:inTour"
         }
       ]
     },

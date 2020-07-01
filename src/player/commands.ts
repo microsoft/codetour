@@ -8,13 +8,11 @@ import {
   exportTour,
   moveCurrentCodeTourBackward,
   moveCurrentCodeTourForward,
+  selectTour,
   startCodeTour
 } from "../store/actions";
 import { CodeTourNode } from "../tree/nodes";
 import { readUriContents } from "../utils";
-interface CodeTourQuickPickItem extends vscode.QuickPickItem {
-  tour: CodeTour;
-}
 
 let terminal: vscode.Terminal | null;
 export function registerPlayerCommands() {
@@ -34,9 +32,17 @@ export function registerPlayerCommands() {
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.startTourByTitle`,
     async (title: string, stepNumber?: number) => {
-      const tour = store.tours.find(tour => tour.title === title);
+      const tours = store.activeTour?.tours || store.tours;
+      const tour = tours.find(tour => tour.title === title);
       if (tour) {
-        startCodeTour(tour, stepNumber && --stepNumber);
+        startCodeTour(
+          tour,
+          stepNumber && --stepNumber,
+          store.activeTour?.workspaceRoot,
+          undefined,
+          undefined,
+          store.activeTour?.tours
+        );
       }
     }
   );
@@ -45,7 +51,14 @@ export function registerPlayerCommands() {
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.navigateToStep`,
     async (stepNumber: number) => {
-      startCodeTour(store.activeTour!.tour, --stepNumber);
+      startCodeTour(
+        store.activeTour!.tour,
+        --stepNumber,
+        store.activeTour?.workspaceRoot,
+        undefined,
+        undefined,
+        store.activeTour?.tours
+      );
     }
   );
 
@@ -77,30 +90,22 @@ export function registerPlayerCommands() {
     async (
       tour?: CodeTour | CodeTourNode,
       stepNumber?: number,
-      workspaceRoot?: vscode.Uri
+      workspaceRoot?: vscode.Uri,
+      tours?: CodeTour[]
     ) => {
       if (tour) {
         const targetTour = tour instanceof CodeTourNode ? tour.tour : tour;
-        return startCodeTour(targetTour, stepNumber, workspaceRoot);
+        return startCodeTour(
+          targetTour,
+          stepNumber,
+          workspaceRoot,
+          undefined,
+          undefined,
+          tours
+        );
       }
 
-      const items: CodeTourQuickPickItem[] = store.tours.map(tour => ({
-        label: tour.title!,
-        tour: tour,
-        detail: tour.description
-      }));
-
-      if (items.length === 1) {
-        return startCodeTour(items[0].tour);
-      }
-
-      const response = await vscode.window.showQuickPick(items, {
-        placeHolder: "Select the tour to start..."
-      });
-
-      if (response) {
-        startCodeTour(response.tour);
-      }
+      selectTour(store.tours, workspaceRoot);
     }
   );
 

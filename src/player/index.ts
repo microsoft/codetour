@@ -71,7 +71,8 @@ export class CodeTourComment implements Comment {
             return `[${title}](command:codetour.navigateToStep?${stepNumber} "Navigate to step #${stepNumber}")`;
           }
 
-          const tour = store.tours.find(tour => tour.title === tourTitle);
+          const tours = store.activeTour?.tours || store.tours;
+          const tour = tours.find(tour => tour.title === tourTitle);
           if (tour) {
             const args = [tourTitle];
 
@@ -166,7 +167,12 @@ async function renderCurrentStep() {
 
   // Adjust the line number, to allow the user to specify
   // them in 1-based format, not 0-based
-  const line = step.line ? step.line - 1 : 2000;
+  const line = step.line
+    ? step.line - 1
+    : step.selection
+    ? step.selection.end.line - 1
+    : 2000;
+
   const range = new Range(line, 0, line, 0);
   let label = `Step #${currentStep + 1} of ${currentTour!.steps.length}`;
 

@@ -8,89 +8,15 @@ CodeTour is a Visual Studio Code extension, which allows you to record and playb
 
 In order to get started, install the [CodeTour extension](https://aka.ms/codetour), and then following one of the following guides, depending on whether you want to record or playback a tour:
 
-- [Starting Tours](#starting-tours)
-- [Navigating Tours](#navigating-tours)
 - [Recording Tours](#recording-tours)
 - [Exporting Tours](#exporting-tours)
+- [Starting Tours](#starting-tours)
+- [Navigating Tours](#navigating-tours)
 - [Reference](#reference)
-
-## Starting Tours
-
-In order to start a tour, simply open up a codebase that has one or more tours. If this is the first time you've ever opened this codebase, you'll be presented with a toast notification asking if you'd like to take a tour of it.
-
-<img width="400px" src="https://user-images.githubusercontent.com/116461/76691619-d0ada080-6609-11ea-81bf-c1f022dbff43.png" />
-
-Otherwise, you can manually start a tour via any of the following methods:
-
-1. Selecting a tour (or specific step) in the [`CodeTour` view](#tree-view) in the `Explorer` activity tab
-
-   <img width="250px" src="https://user-images.githubusercontent.com/116461/76164362-8610bd80-610b-11ea-9621-4ba2d47a8a52.png" />
-
-1. Running the `CodeTour: Start Tour` [command](#contributed-commands), and selecting the tour you'd like to take
-
-   <img width="800px" src="https://user-images.githubusercontent.com/116461/76151694-7b531b80-606c-11ea-96a6-0655eb6ab4e6.gif" />
-
-   If the current workspace only has a single code tour, then this command will automatically start that tour. Otherwise, you'll be presented with a list of tours to select from.
-
-### Opening Tours
-
-In addition to taking tours that are part of the currently open workspace, you can also open a tour file that someone else sent you and/or you created yourself. Simply run the `CodeTour: Open Tour File...` command and/or click the folder icon in the title bar of the `CodeTour` tree view.
-
-> Note: The `CodeTour` tree view only appears if the currently opened workspace has any tours and/or you're currently taking a tour.
-
-Additionally, if someone has [exported](#exporting-tours) a tour, and uploaded it to a publically accessible location, they can send you the URL, and you can open it by running the `CodeTour: Open Tour URL...` command.
-
-### Tour Markers
-
-As you explore a codebase, you might encounter a "tour marker", which displays the CodeTour icon in the file gutter. This indicates that a line of code participates in a tour for the open workspace, which makes it easier to discover tours that might be relevant to what you're currently working on. When you see a marker, simply hover over the line and click the `Start Tour` link in the hover tooltip. This will start the tour that's associated with this line of code, at the specific step.
-
-<img width="800px" src="https://user-images.githubusercontent.com/116461/78101204-9aa74500-739b-11ea-8a1e-dea923910524.gif" />
-
-If you want to disable tour markers, you can perform one of the following actions:
-
-- Run the `CodeTour: Hide Tour Markers` command
-- Click the "eye icon" in the title bar of the `CodeTour` tree view
-- Set the `codetour.showMarkers` configuration setting to `false`. _Note that the above two actions do this for you automatically._
-
-<!--
-### Notebook View
-
-In addition to taking a tour through a series of files, you can also view a tour as a "notebook", which displays the tour's steps within a single document. Simply right-click a tour in the `CodeTour` tree and select `View Notebook`.
-
-<img width="700px" src="https://user-images.githubusercontent.com/116461/79699658-bd63a580-8245-11ea-81cc-6208e2784acf.gif" />
-
--->
-
-## Navigating Tours
-
-Once you've started a tour, the comment UI will guide you, and includes navigation actions that allow you to perform the following:
-
-- `Move Previous` - Navigate to the previous step in the current tour. This command is visible for step #2 and later.
-- `Move Next` - Navigate to the next step in the current tour. This command is visible for all steps but the last one in a tour.
-- `Edit Tour` - Begin editing the current tour (see [authoring](#authoring-tours) for details). Note that not all tours are editable, so depending on how you started the tour, you may or may not see this action.
-- `End Tour` - End the current tour and remove the comment UI.
-
-<img width="500px" src="https://user-images.githubusercontent.com/116461/76151723-ca00b580-606c-11ea-9bd5-81c1d9352cef.png" />
-
-Additionally, you can use the `ctrl+right` / `ctrl+left` (Windows/Linux) and `cmd+right` / `cmd+left` (macOS) keyboard shortcuts to move forwards and backwards in the tour. The `CodeTour` tree view and status bar is also kept in sync with your current tour/step, to help the developer easily understand where they're at in the context of the broader tour.
-
-<img width="800px" src="https://user-images.githubusercontent.com/116461/76807453-a1319c00-67a1-11ea-9b88-7e448072f33d.gif" />
-
-If you navigate away from the current step and need to resume, you can do that via any of the following actions:
-
-- Right-clicking the active tour in the `CodeTour` tree and selecting `Resume Tour`
-- Clicking the `CodeTour` status bar item
-- Running the `CodeTour: Resume Tour` command in the command palette
-
-At any time, you can end the current code tour by means of one of the following actions:
-
-- Click the stop button (the red square) in the current step comment
-- Click the stop button next to the active tour in the `CodeTour` tree
-- Running the `CodeTour: End Tour` command in the command palette
 
 ## Recording Tours
 
-If you'd like to record a code tour for your codebase, you can simply click the `+` button in the `CodeTour` tree view (if it's visible) and/or run the `CodeTour: Record Tour` command. This will start the tour recorder, which allows you to begin opening files, clicking the "comment bar" for the line you want to annotate, and then adding the respective description (including markdown!). Add as many steps as you want, and then when done, simply click the stop tour action (the red square button). You can also create [directory steps](#directory-steps), or [content steps](#content-steps) to add an introductory or intermediate explainations to a tour.
+If you'd like to record a code tour for your codebase, you can simply click the `+` button in the `CodeTour` tree view (if it's visible) and/or run the `CodeTour: Record Tour` command. This will start the tour recorder, which allows you to begin opening files, clicking the "comment bar" for the line you want to annotate, and then adding the respective description (including markdown!). Add as many steps as you want, and then when done, simply click the stop tour action (the red square button). You can also create [directory steps](#directory-steps), [selection steps](#text-selection), or [content steps](#content-steps) in order to add an introductory or intermediate explanations to a tour.
 
 While you're recording, the `CodeTour` [tree view](#tree-view) will display the currently recorded tour, and it's current set of steps. You can tell which tour is being recorded because it will have a microphone icon to the left of its name.
 
@@ -119,7 +45,7 @@ By default, each step is associated with the line of code you created the commen
 
 <img width="800px" src="https://user-images.githubusercontent.com/116461/76705627-b96cc280-669e-11ea-982a-d754c4f001aa.gif" />
 
-If you need to tweak the selection that's associated with a step, simply edit the step, reset the selection and then save it.
+If you need to tweak the selection that's associated with a step, simply edit the step, reset the selection and then save it. Furthermore, if you want to create a step from a selection, simply highlight a span a code, right-click the editor and select `Add CodeTour Step`.
 
 ### Re-arranging steps
 
@@ -261,7 +187,7 @@ For an example, refer to the `.tours/tree.tour` file of this repository.
 
 By default, when you record a tour, it is written to the currently open workspace. This makes it easy to check-in the tour and share it with the rest of the team. However, there may be times where you want to record a tour for yourself, or a tour to help explain a one-off to someone, and in those situations, you might not want to check the tour into the repo.
 
-So support this, after you finish recording a tour, you can right-click it in the `CodeTour` tree and select `Export Tour...`. This will allow you to save the tour to a new location, and then you can delete the tour file from your repo. Furthermore, when you export a tour, the tour file itself will embed the contents of all files needed by the tour, which ensures that someone can play it back, regardless if the have the respective code available locally. This enables a powerful form of collaboration.
+To support this scenario, when you start recording a new tour, you can click the `Save tour as...` button in the upper-right side of the dialog that asks for the title of the tour. This wll allow you to select the file that the new tour will be written to, so that it isn't persisted to the workspace. Furthermore, you can record a tour as usual, and then when done, you can right-click it in the `CodeTour` tree and select `Export Tour...`. This will allow you to save the tour to a new location, and then you can delete the tour file from your repo. When you export a tour, the tour file itself will embed the contents of all files needed by the tour, which ensures that someone can play it back, regardless if the have the respective code available locally. This enables a powerful form of collaboration.
 
 <img width="700px" src="https://user-images.githubusercontent.com/116461/77705325-9682be00-6f7c-11ea-9532-6975b19b8fcb.gif" />
 
@@ -270,6 +196,80 @@ So support this, after you finish recording a tour, you can right-click it in th
 If you install the [GistPad](https://aka.ms/gistpad) extension, then you'll see an additional `Export Tour to Gist...` option added to the `CodeTour` tree. This lets you export the tour file to a new/existing gist, which allows you to easily create your own private tours and/or create tours that can be shared with others on your team.
 
 Once a tour is exported as a gist, you can right-click the `main.tour` file in the `GistPad` tree, and select `Copy GitHub URL`. If you send that to someone, and they run the `CodeTour: Open Tour URL...` command, then they'll be able to take the exact same tour, regardless if they have the code locally available or not.
+
+## Starting Tours
+
+In order to start a tour, simply open up a codebase that has one or more tours. If this is the first time you've ever opened this codebase, you'll be presented with a toast notification asking if you'd like to take a tour of it.
+
+<img width="400px" src="https://user-images.githubusercontent.com/116461/76691619-d0ada080-6609-11ea-81bf-c1f022dbff43.png" />
+
+Otherwise, you can manually start a tour via any of the following methods:
+
+1. Selecting a tour (or specific step) in the [`CodeTour` view](#tree-view) in the `Explorer` activity tab
+
+   <img width="250px" src="https://user-images.githubusercontent.com/116461/76164362-8610bd80-610b-11ea-9621-4ba2d47a8a52.png" />
+
+1. Running the `CodeTour: Start Tour` [command](#contributed-commands), and selecting the tour you'd like to take
+
+   <img width="800px" src="https://user-images.githubusercontent.com/116461/76151694-7b531b80-606c-11ea-96a6-0655eb6ab4e6.gif" />
+
+   If the current workspace only has a single code tour, then this command will automatically start that tour. Otherwise, you'll be presented with a list of tours to select from.
+
+### Opening Tours
+
+In addition to taking tours that are part of the currently open workspace, you can also open a tour file that someone else sent you and/or you created yourself. Simply run the `CodeTour: Open Tour File...` command and/or click the folder icon in the title bar of the `CodeTour` tree view.
+
+> Note: The `CodeTour` tree view only appears if the currently opened workspace has any tours and/or you're currently taking a tour.
+
+Additionally, if someone has [exported](#exporting-tours) a tour, and uploaded it to a publically accessible location, they can send you the URL, and you can open it by running the `CodeTour: Open Tour URL...` command.
+
+### Tour Markers
+
+As you explore a codebase, you might encounter a "tour marker", which displays the CodeTour icon in the file gutter. This indicates that a line of code participates in a tour for the open workspace, which makes it easier to discover tours that might be relevant to what you're currently working on. When you see a marker, simply hover over the line and click the `Start Tour` link in the hover tooltip. This will start the tour that's associated with this line of code, at the specific step.
+
+<img width="800px" src="https://user-images.githubusercontent.com/116461/78101204-9aa74500-739b-11ea-8a1e-dea923910524.gif" />
+
+If you want to disable tour markers, you can perform one of the following actions:
+
+- Run the `CodeTour: Hide Tour Markers` command
+- Click the "eye icon" in the title bar of the `CodeTour` tree view
+- Set the `codetour.showMarkers` configuration setting to `false`. _Note that the above two actions do this for you automatically._
+
+<!--
+### Notebook View
+
+In addition to taking a tour through a series of files, you can also view a tour as a "notebook", which displays the tour's steps within a single document. Simply right-click a tour in the `CodeTour` tree and select `View Notebook`.
+
+<img width="700px" src="https://user-images.githubusercontent.com/116461/79699658-bd63a580-8245-11ea-81cc-6208e2784acf.gif" />
+
+-->
+
+## Navigating Tours
+
+Once you've started a tour, the comment UI will guide you, and includes navigation actions that allow you to perform the following:
+
+- `Move Previous` - Navigate to the previous step in the current tour. This command is visible for step #2 and later.
+- `Move Next` - Navigate to the next step in the current tour. This command is visible for all steps but the last one in a tour.
+- `Edit Tour` - Begin editing the current tour (see [authoring](#authoring-tours) for details). Note that not all tours are editable, so depending on how you started the tour, you may or may not see this action.
+- `End Tour` - End the current tour and remove the comment UI.
+
+<img width="500px" src="https://user-images.githubusercontent.com/116461/76151723-ca00b580-606c-11ea-9bd5-81c1d9352cef.png" />
+
+Additionally, you can use the `ctrl+right` / `ctrl+left` (Windows/Linux) and `cmd+right` / `cmd+left` (macOS) keyboard shortcuts to move forwards and backwards in the tour. The `CodeTour` tree view and status bar is also kept in sync with your current tour/step, to help the developer easily understand where they're at in the context of the broader tour.
+
+<img width="800px" src="https://user-images.githubusercontent.com/116461/76807453-a1319c00-67a1-11ea-9b88-7e448072f33d.gif" />
+
+If you navigate away from the current step and need to resume, you can do that via any of the following actions:
+
+- Right-clicking the active tour in the `CodeTour` tree and selecting `Resume Tour`
+- Clicking the `CodeTour` status bar item
+- Running the `CodeTour: Resume Tour` command in the command palette
+
+At any time, you can end the current code tour by means of one of the following actions:
+
+- Click the stop button (the red square) in the current step comment
+- Click the stop button next to the active tour in the `CodeTour` tree
+- Running the `CodeTour: End Tour` command in the command palette
 
 ## Reference
 
@@ -330,8 +330,8 @@ In addition to the available commands, the Code Tour extension also contributes 
 
 In order to enable other extensions to contribute/manage their own code tours, the CodeTour extension exposes an API with the following methods:
 
-- `startTour(tour: CodeTour, stepNumber: number, workspaceRoot: Uri, startInEditMode: boolean = false, canEditTour: boolean): void` - Starts the specified tour, at a specific step, and using a specific workspace root to resolve relative file paths. Additionally, you can specify whether the tour should be started in edit/record mode or not, as well as whether the tour should be editable. Once the tour has been started, the end-user can use the status bar, command palette, key bindings and comment UI to navigate and edit the tour, just like a "normal" tour.
-
 - `endCurrentTour(): void` - Ends the currently running tour (if there is one). Note that this is simply a programatic way to end the tour, and the end-user can also choose to end the tour using either the command palette (running the `CodeTour: End Tour` command) or comment UI (clicking the red square, stop icon) as usual.
 
 - `exportTour(tour: CodeTour): Promise<string>` - Exports a `CodeTour` instance into a fully-embedded tour file, that can then be written to some persistent storage (e.g. a GitHub Gist).
+
+- `startTour(tour: CodeTour, stepNumber: number, workspaceRoot: Uri, startInEditMode: boolean = false, canEditTour: boolean): void` - Starts the specified tour, at a specific step, and using a specific workspace root to resolve relative file paths. Additionally, you can specify whether the tour should be started in edit/record mode or not, as well as whether the tour should be editable. Once the tour has been started, the end-user can use the status bar, command palette, key bindings and comment UI to navigate and edit the tour, just like a "normal" tour.

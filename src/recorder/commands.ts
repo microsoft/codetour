@@ -1,11 +1,17 @@
 import { action, comparer, runInAction } from "mobx";
+import * as path from "path";
 import * as vscode from "vscode";
 import { workspace } from "vscode";
 import { EXTENSION_NAME, FS_SCHEME_CONTENT } from "../constants";
 import { api, RefType } from "../git";
 import { CodeTourComment } from "../player";
 import { CodeTour, store } from "../store";
-import { endCurrentCodeTour, startCodeTour } from "../store/actions";
+import {
+  endCurrentCodeTour,
+  exportTour,
+  onDidEndTour,
+  startCodeTour
+} from "../store/actions";
 import { CodeTourNode, CodeTourStepNode } from "../tree/nodes";
 import { getActiveWorkspacePath, getRelativePath } from "../utils";
 
@@ -16,8 +22,12 @@ export function registerRecorderCommands() {
       .replace(/\s/g, "-")
       .replace(/[^\w\d-_]/g, "");
 
+    const prefix = workspaceRoot.path.endsWith("/")
+      ? workspaceRoot.path
+      : `${workspaceRoot.path}/`;
+
     return workspaceRoot.with({
-      path: `${workspaceRoot.path}/.tours/${file}.tour`
+      path: `${prefix}.tours/${file}.tour`
     });
   }
 
@@ -34,12 +44,18 @@ export function registerRecorderCommands() {
 
   async function writeTourFile(
     workspaceRoot: vscode.Uri,
-    title: string,
+    title: string | vscode.Uri,
     ref?: string
   ): Promise<CodeTour> {
-    const uri = getTourFileUri(workspaceRoot, title);
+    const uri =
+      typeof title === "string" ? getTourFileUri(workspaceRoot, title) : title;
 
-    const tour = { title, steps: [] };
+    const tourTitle =
+      typeof title === "string"
+        ? title
+        : path.basename(title.path).replace(".tour", "");
+
+    const tour = { title: tourTitle, steps: [] };
     if (ref && ref !== "HEAD") {
       (tour as any).ref = ref;
     }
@@ -53,24 +69,19 @@ export function registerRecorderCommands() {
     // @ts-ignore
     return tour as CodeTour;
   }
+
   interface WorkspaceQuickPickItem extends vscode.QuickPickItem {
     uri: vscode.Uri;
   }
 
   const REENTER_TITLE_RESPONSE = "Re-enter title";
-  vscode.commands.registerCommand(
-    `${EXTENSION_NAME}.recordTour`,
-    async (placeHolderTitle?: string) => {
-      const title = await vscode.window.showInputBox({
-        prompt: "Specify the title of the tour",
-        value: placeHolderTitle
-      });
+  async function recordTourInternal(
+    tourTitle: string | vscode.Uri,
+    workspaceRoot?: vscode.Uri
+  ) {
+    if (!workspaceRoot) {
+      workspaceRoot = workspace.workspaceFolders![0].uri;
 
-      if (!title) {
-        return;
-      }
-
-      let workspaceRoot = workspace.workspaceFolders![0].uri;
       if (workspace.workspaceFolders!.length > 1) {
         const items: WorkspaceQuickPickItem[] = workspace.workspaceFolders!.map(
           ({ name, uri }) => ({
@@ -89,11 +100,14 @@ export function registerRecorderCommands() {
 
         workspaceRoot = response.uri;
       }
+    }
 
-      const tourExists = await checkIfTourExists(workspaceRoot, title);
+    if (typeof tourTitle === "string") {
+      const tourExists = await checkIfTourExists(workspaceRoot, tourTitle);
+
       if (tourExists) {
         const response = await vscode.window.showErrorMessage(
-          `This workspace already includes a tour with the title "${title}."`,
+          `This workspace already includes a tour with the title "${tourTitle}."`,
           REENTER_TITLE_RESPONSE,
           "Overwrite existing tour"
         );
@@ -101,7 +115,8 @@ export function registerRecorderCommands() {
         if (response === REENTER_TITLE_RESPONSE) {
           return vscode.commands.executeCommand(
             `${EXTENSION_NAME}.recordTour`,
-            title
+            workspaceRoot,
+            tourTitle
           );
         } else if (!response) {
           // If the end-user closes the error
@@ -109,36 +124,76 @@ export function registerRecorderCommands() {
           return;
         }
       }
+    }
 
-      const ref = await promptForTourRef(workspaceRoot);
-      const tour = await writeTourFile(workspaceRoot, title, ref);
+    const ref = await promptForTourRef(workspaceRoot);
+    const tour = await writeTourFile(workspaceRoot, tourTitle, ref);
 
-      startCodeTour(tour);
+    startCodeTour(tour, 0, workspaceRoot, true);
 
-      store.isRecording = true;
-      await vscode.commands.executeCommand(
-        "setContext",
-        "codetour:recording",
-        true
-      );
+    vscode.window.showInformationMessage(
+      "CodeTour recording started! Begin creating steps by opening a file, clicking the + button to the left of a line of code, and then adding the appropriate comments."
+    );
+  }
 
-      if (
-        await vscode.window.showInformationMessage(
-          "CodeTour recording started! Begin creating steps by opening a file, clicking the + button to the left of a line of code, and then adding the appropriate comments.",
-          "Cancel"
-        )
-      ) {
-        const uri = vscode.Uri.parse(tour.id);
-        vscode.workspace.fs.delete(uri);
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.recordTour`,
+    async (workspaceRoot?: vscode.Uri, placeHolderTitle?: string) => {
+      const inputBox = vscode.window.createInputBox();
+      inputBox.title =
+        "Specify the title of the tour, or save it to a specific location";
+      inputBox.placeholder = placeHolderTitle;
+      inputBox.buttons = [
+        {
+          iconPath: new vscode.ThemeIcon("save-as"),
+          tooltip: "Save tour as..."
+        }
+      ];
 
-        endCurrentCodeTour();
-        store.isRecording = false;
-        vscode.commands.executeCommand(
-          "setContext",
-          "codetour:recording",
-          false
-        );
-      }
+      inputBox.onDidAccept(async () => {
+        inputBox.hide();
+
+        if (!inputBox.value) {
+          return;
+        }
+
+        recordTourInternal(inputBox.value, workspaceRoot);
+      });
+
+      inputBox.onDidTriggerButton(async button => {
+        inputBox.hide();
+
+        const uri = await vscode.window.showSaveDialog({
+          filters: {
+            Tours: ["tour"]
+          },
+          saveLabel: "Save Tour"
+        });
+
+        if (!uri) {
+          return;
+        }
+
+        const disposeEndTourHandler = onDidEndTour(async tour => {
+          if (tour.id === decodeURIComponent(uri.toString())) {
+            disposeEndTourHandler.dispose();
+
+            if (
+              await vscode.window.showInformationMessage(
+                "Would you like to export this tour?",
+                "Export Tour"
+              )
+            ) {
+              const content = await exportTour(tour);
+              vscode.workspace.fs.writeFile(uri, Buffer.from(content));
+            }
+          }
+        });
+
+        recordTourInternal(uri, workspaceRoot);
+      });
+
+      inputBox.show();
     }
   );
 
@@ -218,6 +273,25 @@ export function registerRecorderCommands() {
 
       tour.steps.splice(stepNumber, 0, {
         directory,
+        description: ""
+      });
+
+      saveTour(tour);
+    })
+  );
+
+  vscode.commands.registerTextEditorCommand(
+    `${EXTENSION_NAME}.addSelectionStep`,
+    action(async (editor: vscode.TextEditor) => {
+      const stepNumber = ++store.activeTour!.step;
+      const tour = store.activeTour!.tour;
+
+      const workspaceRoot = getActiveWorkspacePath();
+      const file = getRelativePath(workspaceRoot, editor.document.uri.path);
+
+      tour.steps.splice(stepNumber, 0, {
+        file,
+        selection: getStepSelection(),
         description: ""
       });
 
@@ -478,6 +552,25 @@ export function registerRecorderCommands() {
       });
 
       saveTour(node.tour);
+    }
+  );
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.changeTourStepLine`,
+    async (comment: CodeTourComment) => {
+      const step = store.activeTour!.tour.steps[store.activeTour!.step];
+      const response = await vscode.window.showInputBox({
+        prompt: `Enter the new line # for this tour step (Leave blank to use the selection/document end)`,
+        value: step.line?.toString() || ""
+      });
+
+      if (response) {
+        step.line = Number(response);
+      } else {
+        delete step.line;
+      }
+
+      saveTour(store.activeTour!.tour);
     }
   );
 

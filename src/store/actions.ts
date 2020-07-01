@@ -1,4 +1,4 @@
-import { commands, Memento, Uri, window } from "vscode";
+import { commands, EventEmitter, Memento, Uri, window } from "vscode";
 import { CodeTour, store } from ".";
 import { EXTENSION_NAME, FS_SCHEME, FS_SCHEME_CONTENT } from "../constants";
 import { startPlayer, stopPlayer } from "../player";
@@ -13,12 +13,16 @@ const CAN_EDIT_TOUR_KEY = `${EXTENSION_NAME}:canEditTour`;
 const IN_TOUR_KEY = `${EXTENSION_NAME}:inTour`;
 const RECORDING_KEY = `${EXTENSION_NAME}:recording`;
 
+const _onDidEndTour = new EventEmitter<CodeTour>();
+export const onDidEndTour = _onDidEndTour.event;
+
 export function startCodeTour(
   tour: CodeTour,
   stepNumber?: number,
   workspaceRoot?: Uri,
   startInEditMode: boolean = false,
-  canEditTour: boolean = true
+  canEditTour: boolean = true,
+  tours?: CodeTour[]
 ) {
   startPlayer();
 
@@ -30,7 +34,8 @@ export function startCodeTour(
     tour,
     step: stepNumber ? stepNumber : tour.steps.length ? 0 : -1,
     workspaceRoot,
-    thread: null
+    thread: null,
+    tours
   };
 
   commands.executeCommand("setContext", IN_TOUR_KEY, true);
@@ -42,7 +47,36 @@ export function startCodeTour(
   }
 }
 
+export async function selectTour(
+  tours: CodeTour[],
+  workspaceRoot?: Uri
+): Promise<boolean> {
+  const items: any[] = tours.map(tour => ({
+    label: tour.title!,
+    tour: tour,
+    detail: tour.description
+  }));
+
+  if (items.length === 1) {
+    startCodeTour(items[0].tour, 0, workspaceRoot, false, true, tours);
+    return true;
+  }
+
+  const response = await window.showQuickPick(items, {
+    placeHolder: "Select the tour to start..."
+  });
+
+  if (response) {
+    startCodeTour(response.tour, 0, workspaceRoot, false, true, tours);
+    return true;
+  }
+
+  return false;
+}
+
 export async function endCurrentCodeTour() {
+  _onDidEndTour.fire(store.activeTour!.tour);
+
   if (store.isRecording) {
     store.isRecording = false;
     commands.executeCommand("setContext", RECORDING_KEY, false);
@@ -71,10 +105,13 @@ export function moveCurrentCodeTourForward() {
   store.activeTour!.step++;
 }
 
-export async function promptForTour(globalState: Memento) {
-  const workspaceKey = getWorkspaceKey();
-  const key = `${EXTENSION_NAME}:${workspaceKey}`;
-  if (store.hasTours && !globalState.get(key)) {
+export async function promptForTour(
+  globalState: Memento,
+  workspaceRoot: Uri = getWorkspaceKey(),
+  tours: CodeTour[] = store.tours
+): Promise<boolean> {
+  const key = `${EXTENSION_NAME}:${workspaceRoot}`;
+  if (tours.length > 0 && !globalState.get(key)) {
     globalState.update(key, true);
 
     if (
@@ -83,15 +120,18 @@ export async function promptForTour(globalState: Memento) {
         "Start CodeTour"
       )
     ) {
-      const primaryTour = store.tours.find(tour => tour.isPrimary);
+      const primaryTour = tours.find(tour => tour.isPrimary);
 
       if (primaryTour) {
-        startCodeTour(primaryTour);
+        startCodeTour(primaryTour, 0, workspaceRoot, false, undefined, tours);
+        return true;
       } else {
-        commands.executeCommand(`${EXTENSION_NAME}.startTour`);
+        return selectTour(tours, workspaceRoot);
       }
     }
   }
+
+  return false;
 }
 
 export async function exportTour(tour: CodeTour) {
@@ -120,4 +160,8 @@ export async function exportTour(tour: CodeTour) {
   delete newTour.ref;
 
   return JSON.stringify(newTour, null, 2);
+}
+
+export async function recordTour(workspaceRoot: Uri) {
+  commands.executeCommand(`${EXTENSION_NAME}.recordTour`, workspaceRoot);
 }

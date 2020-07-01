@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { initializeApi } from "./api";
 import { registerCommands } from "./commands";
 import { registerFileSystemProvider } from "./fileSystem";
 import { registerTextDocumentContentProvider } from "./fileSystem/documentProvider";
@@ -7,12 +8,7 @@ import { registerDecorators } from "./player/decorator";
 import { registerStatusBar } from "./player/status";
 import { registerCompletionProvider } from "./recorder/completionProvider";
 import { store } from "./store";
-import {
-  endCurrentCodeTour,
-  exportTour,
-  promptForTour,
-  startCodeTour
-} from "./store/actions";
+import { promptForTour } from "./store/actions";
 import { discoverTours } from "./store/provider";
 import { registerTreeProvider } from "./tree";
 
@@ -51,9 +47,5 @@ export async function activate(context: vscode.ExtensionContext) {
   registerStatusBar();
   registerCompletionProvider();
 
-  return {
-    startTour: startCodeTour,
-    exportTour,
-    endCurrentTour: endCurrentCodeTour
-  };
+  return initializeApi(context);
 }

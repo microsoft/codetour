@@ -4,6 +4,7 @@ import { registerCommands } from "./commands";
 import { registerFileSystemProvider } from "./fileSystem";
 import { registerTextDocumentContentProvider } from "./fileSystem/documentProvider";
 import { initializeGitApi } from "./git";
+import { registerLiveShareModule } from "./liveShare";
 import { registerDecorators } from "./player/decorator";
 import { registerStatusBar } from "./player/status";
 import { registerCompletionProvider } from "./recorder/completionProvider";
@@ -35,6 +36,8 @@ export async function activate(context: vscode.ExtensionContext) {
     );
 
     initializeGitApi();
+
+    registerLiveShareModule();
   }
 
   // Regardless if the user has a workspace open,

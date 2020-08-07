@@ -16,6 +16,9 @@ const RECORDING_KEY = `${EXTENSION_NAME}:recording`;
 const _onDidEndTour = new EventEmitter<CodeTour>();
 export const onDidEndTour = _onDidEndTour.event;
 
+const _onDidStartTour = new EventEmitter<[CodeTour, number]>();
+export const onDidStartTour = _onDidStartTour.event;
+
 export function startCodeTour(
   tour: CodeTour,
   stepNumber?: number,
@@ -30,9 +33,10 @@ export function startCodeTour(
     workspaceRoot = getWorkspaceUri(tour);
   }
 
+  const step = stepNumber ? stepNumber : tour.steps.length ? 0 : -1;
   store.activeTour = {
     tour,
-    step: stepNumber ? stepNumber : tour.steps.length ? 0 : -1,
+    step,
     workspaceRoot,
     thread: null,
     tours
@@ -44,6 +48,8 @@ export function startCodeTour(
   if (startInEditMode) {
     store.isRecording = true;
     commands.executeCommand("setContext", RECORDING_KEY, true);
+  } else {
+    _onDidStartTour.fire([tour, step]);
   }
 }
 
@@ -74,8 +80,10 @@ export async function selectTour(
   return false;
 }
 
-export async function endCurrentCodeTour() {
-  _onDidEndTour.fire(store.activeTour!.tour);
+export async function endCurrentCodeTour(fireEvent: boolean = true) {
+  if (fireEvent) {
+    _onDidEndTour.fire(store.activeTour!.tour);
+  }
 
   if (store.isRecording) {
     store.isRecording = false;
@@ -99,10 +107,21 @@ export async function endCurrentCodeTour() {
 
 export function moveCurrentCodeTourBackward() {
   --store.activeTour!.step;
+
+  _onDidStartTour.fire([store.activeTour!.tour, store.activeTour!.step]);
 }
 
 export function moveCurrentCodeTourForward() {
   store.activeTour!.step++;
+
+  _onDidStartTour.fire([store.activeTour!.tour, store.activeTour!.step]);
+}
+
+function isLiveShareWorkspace(uri: Uri) {
+  return (
+    uri.path.endsWith("Visual Studio Live Share.code-workspace") ||
+    uri.scheme === "vsls"
+  );
 }
 
 export async function promptForTour(
@@ -111,7 +130,11 @@ export async function promptForTour(
   tours: CodeTour[] = store.tours
 ): Promise<boolean> {
   const key = `${EXTENSION_NAME}:${workspaceRoot}`;
-  if (tours.length > 0 && !globalState.get(key)) {
+  if (
+    tours.length > 0 &&
+    !globalState.get(key) &&
+    !isLiveShareWorkspace(workspaceRoot)
+  ) {
     globalState.update(key, true);
 
     if (
@@ -121,7 +144,6 @@ export async function promptForTour(
       )
     ) {
       const primaryTour = tours.find(tour => tour.isPrimary);
-
       if (primaryTour) {
         startCodeTour(primaryTour, 0, workspaceRoot, false, undefined, tours);
         return true;

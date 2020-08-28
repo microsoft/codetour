@@ -6,15 +6,31 @@
 		{
 			"type": "npm",
 			"script": "watch",
-			"problemMatcher": "$tsc-watch",
-			"isBackground": true,
 			"presentation": {
-				"reveal": "never"
+				"echo": true,
+				"reveal": "never",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
 			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			}
+			"runOptions": {
+				"runOn": "folderOpen"
+			},
+			"isBackground": true,
+		},
+		{
+			"type": "npm",
+			"script": "ts-compile",
+			"problemMatcher": "$tsc",
+			"presentation": {
+				"echo": true,
+				"reveal": "never",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
+			},
 		}
 	]
 }

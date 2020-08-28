@@ -15,7 +15,7 @@
   "license": "ISC",
   "icon": "images/icon.png",
   "engines": {
-    "vscode": "^1.40.0"
+    "vscode": "^1.48.0"
   },
   "categories": [
     "Other"
@@ -25,12 +25,14 @@
     "Sharing"
   ],
   "extensionKind": [
+    "web",
     "workspace"
   ],
   "activationEvents": [
     "*"
   ],
-  "main": "./out/extension.js",
+  "main": "./dist/extension-node.js",
+  "browser": "./dist/extension-web.js",
   "contributes": {
     "configuration": {
       "type": "object",
@@ -581,11 +583,9 @@
     "webpack-merge": "^4.2.2"
   },
   "scripts": {
-    "build": "webpack --config webpack.config.js",
-    "build:web": "webpack --config webpack.web.js",
+    "build": "webpack --mode production",
     "vscode:prepublish": "npm run build",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "watch": "webpack --mode development --watch",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "package": "vsce package"
   },

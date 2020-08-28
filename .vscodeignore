@@ -1,8 +1,10 @@
+.tours/**
 .vscode/**
+node_modules/**
 src/**
 .gitignore
-**/tsconfig.json
-**/tslint.json
-**/*.map
-**/*.ts
+.space
+package.lock.json
+tsconfig.json
+webpack.config.js
 **/*.vsix

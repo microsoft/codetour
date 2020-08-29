@@ -1,4 +1,3 @@
-import * as path from "path";
 import { ThemeIcon, TreeItem, TreeItemCollapsibleState, Uri } from "vscode";
 import { CONTENT_URI, EXTENSION_NAME, FS_SCHEME } from "../constants";
 import { CodeTour, store } from "../store";
@@ -43,16 +42,11 @@ export class CodeTourNode extends TreeItem {
 
     this.contextValue = contextValues.join(".");
 
-    const icon = isRecording(tour)
-      ? "tour-recording"
+    this.iconPath = isRecording(tour)
+      ? new ThemeIcon("record")
       : isActive
-      ? "tour-active"
-      : "tour";
-
-    this.iconPath = {
-      dark: path.join(extensionPath, `images/dark/${icon}.svg`),
-      light: path.join(extensionPath, `images/light/${icon}.svg`)
-    };
+      ? new ThemeIcon("play-circle")
+      : new ThemeIcon("location");
   }
 }
 

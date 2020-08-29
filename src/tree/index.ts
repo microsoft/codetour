@@ -14,8 +14,8 @@ import { CodeTourNode, CodeTourStepNode } from "./nodes";
 class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
   private _disposables: Disposable[] = [];
 
-  private _onDidChangeTreeData = new EventEmitter<TreeItem>();
-  public readonly onDidChangeTreeData: Event<TreeItem> = this
+  private _onDidChangeTreeData = new EventEmitter<TreeItem | undefined>();
+  public readonly onDidChangeTreeData: Event<TreeItem | undefined> = this
     ._onDidChangeTreeData.event;
 
   constructor(private extensionPath: string) {
@@ -36,7 +36,7 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
           : null
       ],
       () => {
-        this._onDidChangeTreeData.fire();
+        this._onDidChangeTreeData.fire(undefined);
       }
     );
   }

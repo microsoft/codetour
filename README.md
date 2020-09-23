@@ -28,7 +28,7 @@ If you need to edit or delete a step while recording, click the `...` menu next 
 
 ### Workspaces
 
-If you record a tour within a "multi-root workspace", you'll be asked to select the folder that you'd like to save the tour to. This is neccessary because tours are written as [files](#tour-files) to your workspace, and so we need to disamgiuate which folder the tour should be persisted to. That said, when you're recording a tour, you can add steps that span any of the folders within the workspace, which allows you to create tours for a specific folder and/or that demonstrate concepts across multiple folders within the workspace.
+If you record a tour within a "multi-root workspace", you'll be asked to select the folder that you'd like to save the tour to. This is necessary because tours are written as [files](#tour-files) to your workspace, and so we need to disamgiuate which folder the tour should be persisted to. That said, when you're recording a tour, you can add steps that span any of the folders within the workspace, which allows you to create tours for a specific folder and/or that demonstrate concepts across multiple folders within the workspace.
 
 ### Step Titles
 
@@ -70,7 +70,7 @@ If you need to delete multiple steps, the `CodeTour` tree supports multi-select,
 
 If you want to edit an existing tour, simply right-click the tour in the `CodeTour` tree and select `Edit Tour`. Alternatively, you can edit a tour you're actively viewing by clicking the pencil icon in the current step's comment bar, or running the `CodeTour: Edit Tour` command.
 
-At any time, you can right-click a tour in the `CodeTour` tree and change it's title, description or git ref, by selecting the `Change Title`, `Change Description` or `Change Git Ref` menu items. Additionally, you can delete a tour by right-clicking it in the `CodeTour` tree and seelcting `Delete Tour`.
+At any time, you can right-click a tour in the `CodeTour` tree and change it's title, description or git ref, by selecting the `Change Title`, `Change Description` or `Change Git Ref` menu items. Additionally, you can delete a tour by right-clicking it in the `CodeTour` tree and selecting `Delete Tour`.
 
 ### Primary Tours
 
@@ -80,7 +80,7 @@ In order to mark a specific tour as the primary tour, simply right-click it in t
 
 ### CodeTour-Flavored Markdown
 
-When you describe a step, you're able to use the full-breadth of markdown capabilties in order to write rich/compelling content (e.g. images, links, headings, code fences). However, CodeTour also provides some additional syntactic features that allow you to include additional interactivity to your tours:
+When you describe a step, you're able to use the full-breadth of markdown capabilities in order to write rich/compelling content (e.g. images, links, headings, code fences). However, CodeTour also provides some additional syntactic features that allow you to include additional interactivity to your tours:
 
 #### Step References
 
@@ -116,7 +116,7 @@ In order to add more interactivity to a tour, you can include "command links" to
 
 ##### Well-Known Commands
 
-In order to make it simpler to call common commands, CodeTour will prompt you with a list of well-known commands as soon as you type `command:` in a step comment. If you select an option, it will generates the respective markdown code, and include placeholders for any neccessary arguments. The following list explaisn the set of currently supported well-known commands:
+In order to make it simpler to call common commands, CodeTour will prompt you with a list of well-known commands as soon as you type `command:` in a step comment. If you select an option, it will generates the respective markdown code, and include placeholders for any necessary arguments. The following list explains the set of currently supported well-known commands:
 
 - `Navigate to tour step` - Allows you to specify a tour step, that when clicked, will navigate the end-user to that step in the current tour. This can be useful for giving the end-user the option to skip ahead in the tour, or quickly reference previous steps.
 

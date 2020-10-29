@@ -1,14 +1,17 @@
-## v0.0.35 (10/29/2020)
+## v0.0.36 (10/29/2020)
 
 - Removed the `Reply...` box from the tour step visualization.
+
+## v0.0.35 (06/28/2020)
+
+- Added new extensibility APIs to record and playback tours for external workspaces (e.g. GistPad repo editing).
+- Updated the `CodeTour` tree to always show when you're taking a tour, even if you don't have a workspace open.
 
 ## v0.0.34 (06/27/2020)
 
 - Updated the tour recorder, to allow you to edit the line associated with a step
 - Updated the tour recorder, to allow you to add a tour step from an editor selection
 - Added the ability to record a new tour that is saved to an arbitrary location on disk, as opposed to the `.tours` directory of the opened workspace.
-- Added new extensibility APIs to record and playback tours for external workspaces (e.g. GistPad repo editing).
-- Updated the `CodeTour` tree to always show when you're taking a tour, even if you don't have a workspace open.
 
 ## v0.0.33 (06/18/2020)
 

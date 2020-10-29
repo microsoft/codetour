@@ -12,6 +12,7 @@ In order to get started, install the [CodeTour extension](https://aka.ms/codetou
 - [Exporting Tours](#exporting-tours)
 - [Starting Tours](#starting-tours)
 - [Navigating Tours](#navigating-tours)
+- [Maintaining Tours](#maintaining-tours)
 - [Reference](#reference)
 
 ## Recording Tours
@@ -270,6 +271,10 @@ At any time, you can end the current code tour by means of one of the following 
 - Click the stop button (the red square) in the current step comment
 - Click the stop button next to the active tour in the `CodeTour` tree
 - Running the `CodeTour: End Tour` command in the command palette
+
+## Maintaining Tours
+
+In order to ensure that your tours stay up-to-date as your codebase evolves, you can install the [CodeTour Watch](https://github.com/marketplace/actions/codetour-watch) in a GitHub Actions workflow, which allows you to detect "tour drift" in response to PRs/commits/etc. to your codebase.
 
 ## Reference
 

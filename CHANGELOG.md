@@ -1,3 +1,7 @@
+## v0.0.35 (10/29/2020)
+
+- Removed the `Reply...` box from the tour step visualization.
+
 ## v0.0.34 (06/27/2020)
 
 - Updated the tour recorder, to allow you to edit the line associated with a step

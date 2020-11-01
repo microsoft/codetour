@@ -25,9 +25,9 @@ const CONTROLLER_LABEL = "CodeTour";
 
 let id = 0;
 
-const SHELL_SCRIPT_PATTERN = /^>>\s+(.*)$/gm;
-const COMMAND_PATTERN = /(\(command:[\w+\.]+\?)(\[[^\]]+\])/gm;
-const TOUR_REFERENCE_PATTERN = /(?:\[([^\]]+)\])?\[([^\]#]+)?(?:#(\d+))?\](?!\()/gm;
+const SHELL_SCRIPT_PATTERN = /^>>\s+(?<script>.*)$/gm;
+const COMMAND_PATTERN = /(?<commandPrefix>\(command:[\w+\.]+\?)(?<params>\[[^\]]+\])/gm;
+const TOUR_REFERENCE_PATTERN = /(?:\[(?<linkTitle>[^\]]+)\])?\[(?=\s*[^\]\s])(?<tourTitle>[^\]#]+)?(?:#(?<stepNumber>\d+))?\](?!\()/gm;
 
 export class CodeTourComment implements Comment {
   public id: string = (++id).toString();

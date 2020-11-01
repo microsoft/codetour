@@ -27,7 +27,7 @@ let id = 0;
 
 const SHELL_SCRIPT_PATTERN = /^>>\s+(?<script>.*)$/gm;
 const COMMAND_PATTERN = /(?<commandPrefix>\(command:[\w+\.]+\?)(?<params>\[[^\]]+\])/gm;
-const TOUR_REFERENCE_PATTERN = /(?:\[(?<linkTitle>[^\]]+)\])?\[(?<tourTitle>[^\]#]+)?(?:#(?<stepNumber>\d+))?\](?!\()/gm;
+const TOUR_REFERENCE_PATTERN = /(?:\[(?<linkTitle>[^\]]+)\])?\[(?=[^\]])(?<tourTitle>[^\]#]+)?(?:#(?<stepNumber>\d+))?\](?!\()/gm;
 
 export class CodeTourComment implements Comment {
   public id: string = (++id).toString();

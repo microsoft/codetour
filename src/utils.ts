@@ -5,6 +5,25 @@ import { CONTENT_URI, FS_SCHEME } from "./constants";
 import { api } from "./git";
 import { CodeTour, CodeTourStep, store } from "./store";
 
+const HEADING_PATTERN = /^#+\s*(.*)/;
+export function getStepLabel(tour: CodeTour, stepNumber: number, includeStepNumber: boolean = true) {
+  const step = tour.steps[stepNumber];
+
+  const prefix = includeStepNumber ? `#${stepNumber + 1} - ` : "";
+  let label;
+  if (step.title) {
+    label = step.title;
+  } else if (HEADING_PATTERN.test(step.description.trim())) {
+    label = step.description.trim().match(HEADING_PATTERN)![1];
+  } else {
+    label = step.uri
+      ? step.uri!
+      : decodeURIComponent(step.directory || step.file!);
+  }
+
+  return `${prefix}${label}`;
+}
+
 export function getRelativePath(root: string, filePath: string) {
   let relativePath = path.relative(root, filePath);
 

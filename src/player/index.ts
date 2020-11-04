@@ -18,7 +18,7 @@ import {
 } from "vscode";
 import { SMALL_ICON_URL } from "../constants";
 import { store } from "../store";
-import { getFileUri, getStepFileUri } from "../utils";
+import { getFileUri, getStepFileUri, getStepLabel } from "../utils";
 
 const CONTROLLER_ID = "codetour";
 const CONTROLLER_LABEL = "CodeTour";
@@ -170,8 +170,8 @@ async function renderCurrentStep() {
   const line = step.line
     ? step.line - 1
     : step.selection
-    ? step.selection.end.line - 1
-    : 2000;
+      ? step.selection.end.line - 1
+      : 2000;
 
   const range = new Range(line, 0, line, 0);
   let label = `Step #${currentStep + 1} of ${currentTour!.steps.length}`;
@@ -185,8 +185,32 @@ async function renderCurrentStep() {
   store.activeTour!.thread = controller!.createCommentThread(uri, range, []);
 
   const mode = store.isRecording ? CommentMode.Editing : CommentMode.Preview;
+  let content = step.description;
+
+  const hasPreviousStep = currentStep > 0;
+  const hasNextStep = currentStep < currentTour.steps.length - 1;
+  const isFinalStep = currentStep === currentTour.steps.length - 1;
+
+  const showNavigation = hasPreviousStep || hasNextStep || isFinalStep;
+  if (!store.isRecording && showNavigation) {
+    content += "\n\n---\n";
+
+    if (hasPreviousStep) {
+      const stepLabel = getStepLabel(currentTour, currentStep - 1, false);
+      content += `[Previous (${stepLabel})](command:codetour.previousTourStep "Navigate to previous step")`;
+    }
+
+    const prefix = hasPreviousStep ? " | " : "";
+    if (hasNextStep) {
+      const stepLabel = getStepLabel(currentTour, currentStep + 1, false);
+      content += `${prefix}[Next (${stepLabel})](command:codetour.nextTourStep "Navigate to next step")`;
+    } else if (isFinalStep) {
+      content += `${prefix}[Finish Tour](command:codetour.endTour "Finish the tour")`;
+    }
+  }
+
   const comment = new CodeTourComment(
-    step.description,
+    content,
     label,
     store.activeTour!.thread!,
     mode
@@ -198,11 +222,11 @@ async function renderCurrentStep() {
   store.activeTour!.thread.comments = [comment];
 
   const contextValues = [];
-  if (currentStep > 0) {
+  if (hasPreviousStep) {
     contextValues.push("hasPrevious");
   }
 
-  if (currentStep < currentTour.steps.length - 1) {
+  if (hasNextStep) {
     contextValues.push("hasNext");
   }
 
@@ -287,16 +311,16 @@ reaction(
   () => [
     store.activeTour
       ? [
-          store.activeTour.step,
-          store.activeTour.tour.title,
-          store.activeTour.tour.steps.map(step => [
-            step.title,
-            step.description,
-            step.line,
-            step.directory,
-            step.view
-          ])
-        ]
+        store.activeTour.step,
+        store.activeTour.tour.title,
+        store.activeTour.tour.steps.map(step => [
+          step.title,
+          step.description,
+          step.line,
+          step.directory,
+          step.view
+        ])
+      ]
       : null
   ],
   () => {

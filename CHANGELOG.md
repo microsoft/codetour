@@ -1,3 +1,7 @@
+## v0.0.37 (11/04/2020)
+
+- Added `Previous`, `Next` and `Finish` commands to the bottom of the comment UI, in order to make it easier to navigate a tour.
+
 ## v0.0.36 (10/29/2020)
 
 - Removed the `Reply...` box from the tour step visualization.

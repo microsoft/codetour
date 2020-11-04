@@ -1,7 +1,7 @@
 import { ThemeIcon, TreeItem, TreeItemCollapsibleState, Uri } from "vscode";
 import { CONTENT_URI, EXTENSION_NAME, FS_SCHEME } from "../constants";
 import { CodeTour, store } from "../store";
-import { getFileUri, getWorkspaceUri } from "../utils";
+import { getFileUri, getStepLabel, getWorkspaceUri } from "../utils";
 
 function isRecording(tour: CodeTour) {
   return (
@@ -48,25 +48,6 @@ export class CodeTourNode extends TreeItem {
       ? new ThemeIcon("play-circle")
       : new ThemeIcon("location");
   }
-}
-
-const HEADING_PATTERN = /^#+\s*(.*)/;
-function getStepLabel(tour: CodeTour, stepNumber: number) {
-  const step = tour.steps[stepNumber];
-
-  const prefix = `#${stepNumber + 1} - `;
-  let label;
-  if (step.title) {
-    label = step.title;
-  } else if (HEADING_PATTERN.test(step.description.trim())) {
-    label = step.description.trim().match(HEADING_PATTERN)![1];
-  } else {
-    label = step.uri
-      ? step.uri!
-      : decodeURIComponent(step.directory || step.file!);
-  }
-
-  return `${prefix}${label}`;
 }
 
 export class CodeTourStepNode extends TreeItem {

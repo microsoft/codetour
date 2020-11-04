@@ -109,7 +109,7 @@
               }
             }
           },
-          "commmands": {
+          "commands": {
             "type": "array",
             "description": "Specifies an array of command URIs that will be executed when this step is navigated to.",
             "default": [],

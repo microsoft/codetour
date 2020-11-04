@@ -175,12 +175,16 @@ Within the tour file, you need to specify the following required properties:
 - `title` - The display name of the tour, which will be shown in the `CodeTour` tree view, quick pick, etc.
 - `description` - An optional description for the tour, which will be shown as the tooltip for the tour in the `CodeTour` tree view
 - `ref` - An optional "git ref" (branch/tag/commit) that this tour applies to. See [versioning tours](#versioning-tours) for more details.
+- `isPrimary` - Indicates that this tour is the primary tour within the workspace that an end-user should be guided through.
 - `steps` - An array of tour steps
   - `file` - The file path (relative to the workspace root) that this step is associated with
+  - `directory` - The path of a directory (relative to the workspace root) that this step is associated with. _Note: This property takes precedence over the `file` property, and so will "win" if both are present._
+  - `view` - The ID of a VS Code view that will be automatically focused when this step is navigated to.
   - `uri` - An absolute URI that this step is associated with. Note that `uri` and `file` are mutually exclusive, so only set one per step
   - `line` - The 1-based line number that this step is associated with
   - `title` - An optional title, which will be displayed as the step name in the `CodeTour` tree view.
   - `description` - The text which explains the current file/line number, and can include plain text and markdown syntax
+  - `commands` - An array of VS Code command strings, that indicate the name of a command (e.g. `codetour.endTour`) and any optional parameters to pass to it, specified as a query string array (eg. `codetour.endTour?[2]`).
 
 For an example, refer to the `.tours/tree.tour` file of this repository.
 

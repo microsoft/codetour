@@ -1,3 +1,8 @@
+## v0.0.38 (11/06/2020)
+
+- Introduced support for inserting code snippets
+- Added arrow icons to the previous/next navigation links
+
 ## v0.0.37 (11/04/2020)
 
 - Added `Previous`, `Next` and `Finish` commands to the bottom of the comment UI, in order to make it easier to navigate a tour.

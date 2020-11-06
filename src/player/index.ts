@@ -28,6 +28,7 @@ let id = 0;
 const SHELL_SCRIPT_PATTERN = /^>>\s+(?<script>.*)$/gm;
 const COMMAND_PATTERN = /(?<commandPrefix>\(command:[\w+\.]+\?)(?<params>\[[^\]]+\])/gm;
 const TOUR_REFERENCE_PATTERN = /(?:\[(?<linkTitle>[^\]]+)\])?\[(?=\s*[^\]\s])(?<tourTitle>[^\]#]+)?(?:#(?<stepNumber>\d+))?\](?!\()/gm;
+const CODE_FENCE_PATTERN = /```\w+\n([^`]+)\n```/gm;
 
 export class CodeTourComment implements Comment {
   public id: string = (++id).toString();
@@ -85,6 +86,13 @@ export class CodeTourComment implements Comment {
           }
 
           return _;
+        }
+      ).replace(
+        CODE_FENCE_PATTERN,
+        (_, codeBlock) => {
+          const params = encodeURIComponent(JSON.stringify([codeBlock]));
+          return `${_}
+↪ [Insert Code](command:codetour.insertCodeSnippet?${params} "Insert Code")`;
         }
       );
   }
@@ -197,13 +205,13 @@ async function renderCurrentStep() {
 
     if (hasPreviousStep) {
       const stepLabel = getStepLabel(currentTour, currentStep - 1, false);
-      content += `[Previous (${stepLabel})](command:codetour.previousTourStep "Navigate to previous step")`;
+      content += `← [Previous (${stepLabel})](command:codetour.previousTourStep "Navigate to previous step")`;
     }
 
     const prefix = hasPreviousStep ? " | " : "";
     if (hasNextStep) {
       const stepLabel = getStepLabel(currentTour, currentStep + 1, false);
-      content += `${prefix}[Next (${stepLabel})](command:codetour.nextTourStep "Navigate to next step")`;
+      content += `${prefix}[Next (${stepLabel})](command:codetour.nextTourStep "Navigate to next step") →`;
     } else if (isFinalStep) {
       content += `${prefix}[Finish Tour](command:codetour.endTour "Finish the tour")`;
     }

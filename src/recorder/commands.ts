@@ -15,6 +15,18 @@ import {
 import { CodeTourNode, CodeTourStepNode } from "../tree/nodes";
 import { getActiveWorkspacePath, getRelativePath } from "../utils";
 
+export async function saveTour(tour: CodeTour) {
+  const uri = vscode.Uri.parse(tour.id);
+  const newTour = {
+    ...tour
+  };
+  delete newTour.id;
+  const tourContent = JSON.stringify(newTour, null, 2);
+
+  const bytes = new TextEncoder().encode(tourContent);
+  return vscode.workspace.fs.writeFile(uri, bytes);
+}
+
 export function registerRecorderCommands() {
   function getTourFileUri(workspaceRoot: vscode.Uri, title: string) {
     const file = title
@@ -459,18 +471,6 @@ export function registerRecorderCommands() {
       await saveTour(store.activeTour!.tour);
     }
   );
-
-  async function saveTour(tour: CodeTour) {
-    const uri = vscode.Uri.parse(tour.id);
-    const newTour = {
-      ...tour
-    };
-    delete newTour.id;
-    const tourContent = JSON.stringify(newTour, null, 2);
-
-    const bytes = new TextEncoder().encode(tourContent);
-    return vscode.workspace.fs.writeFile(uri, bytes);
-  }
 
   async function updateTourProperty(tour: CodeTour, property: string) {
     const propertyValue = await vscode.window.showInputBox({

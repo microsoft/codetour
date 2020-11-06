@@ -2,6 +2,7 @@ import { when } from "mobx";
 import * as vscode from "vscode";
 import { EXTENSION_NAME } from "../constants";
 import { focusPlayer } from "../player";
+import { saveTour } from "../recorder/commands";
 import { CodeTour, store } from "../store";
 import {
   endCurrentCodeTour,
@@ -82,6 +83,21 @@ export function registerPlayerCommands() {
 
       terminal.show();
       terminal.sendText(text, true);
+    }
+  );
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.insertCodeSnippet`,
+    async (codeBlock: string) => {
+      const codeSnippet = decodeURIComponent(codeBlock);
+      const snippet = new vscode.SnippetString(codeSnippet);
+      vscode.window.activeTextEditor?.insertSnippet(snippet);
+
+      const lineAdjustment = codeSnippet.split("\n").length - 1;
+      if (lineAdjustment > 0) {
+        store.activeTour!.tour.steps[store.activeTour!.step].line! += lineAdjustment;
+        saveTour(store.activeTour!.tour);
+      }
     }
   );
 

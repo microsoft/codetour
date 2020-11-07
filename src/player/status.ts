@@ -14,7 +14,6 @@ function createCurrentTourItem() {
   );
 
   currentTourItem.show();
-
   return currentTourItem;
 }
 

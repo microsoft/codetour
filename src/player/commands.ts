@@ -90,14 +90,23 @@ export function registerPlayerCommands() {
     `${EXTENSION_NAME}.insertCodeSnippet`,
     async (codeBlock: string) => {
       const codeSnippet = decodeURIComponent(codeBlock);
-      const snippet = new vscode.SnippetString(codeSnippet);
-      vscode.window.activeTextEditor?.insertSnippet(snippet);
+      const snippetStart =
+        store.activeTour!.tour.steps[store.activeTour!.step].line! - 1;
+
+      await vscode.window.activeTextEditor?.edit(e => {
+        e.insert(new vscode.Position(snippetStart, 0), codeSnippet);
+      });
 
       const lineAdjustment = codeSnippet.split("\n").length - 1;
+
       if (lineAdjustment > 0) {
-        store.activeTour!.tour.steps[store.activeTour!.step].line! += lineAdjustment;
+        store.activeTour!.tour.steps[
+          store.activeTour!.step
+        ].line! += lineAdjustment;
         saveTour(store.activeTour!.tour);
       }
+
+      await vscode.commands.executeCommand("editor.action.formatDocument");
     }
   );
 

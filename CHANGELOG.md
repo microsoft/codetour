@@ -2,6 +2,7 @@
 
 - Introduced support for inserting code snippets
 - Added arrow icons to the previous/next navigation links
+- The `$schema` property is now explicitly added to `*.tour` files
 
 ## v0.0.37 (11/04/2020)
 

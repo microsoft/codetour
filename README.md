@@ -137,6 +137,8 @@ In order to make it simpler to call common commands, CodeTour will prompt you wi
 
 If you add a markdown code block to a step's body content, then the CodeTour player will render an `Insert Code` link below it, which allows the viewer to automatically insert the code snippet into the current file, at the line that the step is associated with. This can make it easy to use CodeTour for creating interactive tutorials or samples.
 
+> Note: The code snippet will be formatted after inserting it into the document, and therefore, you don't need to worry about adding whitespace/etc. to the snippet itself.
+
 ### Versioning Tours
 
 When you record a tour, you'll be asked which git "ref" to associate it with. This allows you to define how resilient you want the tour to be, as changes are made to the respective codebase.

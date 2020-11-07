@@ -354,7 +354,7 @@
         {
           "command": "codetour.moveTourStepForward",
           "group": "move@2",
-          "when": "commentController == codetour && codetour:canEditTour commentThread =~ /hasNext/"
+          "when": "commentController == codetour && codetour:canEditTour && commentThread =~ /hasNext/"
         },
         {
           "command": "codetour.changeTourStepLine",
@@ -540,7 +540,7 @@
     "jsonValidation": [
       {
         "fileMatch": "*.tour",
-        "url": "https://cdn.jsdelivr.net/gh/vsls-contrib/code-tour/schema.json"
+        "url": "https://aka.ms/codetour-schema"
       }
     ],
     "keybindings": [

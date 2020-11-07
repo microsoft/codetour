@@ -18,6 +18,7 @@ import { getActiveWorkspacePath, getRelativePath } from "../utils";
 export async function saveTour(tour: CodeTour) {
   const uri = vscode.Uri.parse(tour.id);
   const newTour = {
+    $schema: "https://aka.ms/codetour-schema",
     ...tour
   };
   delete newTour.id;

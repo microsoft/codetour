@@ -87,14 +87,12 @@ export class CodeTourComment implements Comment {
 
           return _;
         }
-      ).replace(
-        CODE_FENCE_PATTERN,
-        (_, codeBlock) => {
-          const params = encodeURIComponent(JSON.stringify([codeBlock]));
-          return `${_}
+      )
+      .replace(CODE_FENCE_PATTERN, (_, codeBlock) => {
+        const params = encodeURIComponent(JSON.stringify([codeBlock]));
+        return `${_}
 ↪ [Insert Code](command:codetour.insertCodeSnippet?${params} "Insert Code")`;
-        }
-      );
+      });
   }
 }
 
@@ -178,8 +176,8 @@ async function renderCurrentStep() {
   const line = step.line
     ? step.line - 1
     : step.selection
-      ? step.selection.end.line - 1
-      : 2000;
+    ? step.selection.end.line - 1
+    : 2000;
 
   const range = new Range(line, 0, line, 0);
   let label = `Step #${currentStep + 1} of ${currentTour!.steps.length}`;
@@ -204,14 +202,26 @@ async function renderCurrentStep() {
     content += "\n\n---\n";
 
     if (hasPreviousStep) {
-      const stepLabel = getStepLabel(currentTour, currentStep - 1, false);
-      content += `← [Previous (${stepLabel})](command:codetour.previousTourStep "Navigate to previous step")`;
+      const stepLabel = getStepLabel(
+        currentTour,
+        currentStep - 1,
+        false,
+        false
+      );
+      const suffix = stepLabel ? ` (${stepLabel})` : "";
+      content += `← [Previous${suffix}](command:codetour.previousTourStep "Navigate to previous step")`;
     }
 
     const prefix = hasPreviousStep ? " | " : "";
     if (hasNextStep) {
-      const stepLabel = getStepLabel(currentTour, currentStep + 1, false);
-      content += `${prefix}[Next (${stepLabel})](command:codetour.nextTourStep "Navigate to next step") →`;
+      const stepLabel = getStepLabel(
+        currentTour,
+        currentStep + 1,
+        false,
+        false
+      );
+      const suffix = stepLabel ? ` (${stepLabel})` : "";
+      content += `${prefix}[Next${suffix}](command:codetour.nextTourStep "Navigate to next step") →`;
     } else if (isFinalStep) {
       content += `${prefix}[Finish Tour](command:codetour.endTour "Finish the tour")`;
     }
@@ -319,16 +329,16 @@ reaction(
   () => [
     store.activeTour
       ? [
-        store.activeTour.step,
-        store.activeTour.tour.title,
-        store.activeTour.tour.steps.map(step => [
-          step.title,
-          step.description,
-          step.line,
-          step.directory,
-          step.view
-        ])
-      ]
+          store.activeTour.step,
+          store.activeTour.tour.title,
+          store.activeTour.tour.steps.map(step => [
+            step.title,
+            step.description,
+            step.line,
+            step.directory,
+            step.view
+          ])
+        ]
       : null
   ],
   () => {

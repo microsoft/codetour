@@ -1,3 +1,7 @@
+## v0.0.39 (11/08/2020)
+
+- Updated the previous/next navigation links, so that they don't show file names when a step doesn't have a title
+
 ## v0.0.38 (11/06/2020)
 
 - Introduced support for inserting code snippets

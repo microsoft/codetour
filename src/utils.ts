@@ -6,16 +6,21 @@ import { api } from "./git";
 import { CodeTour, CodeTourStep, store } from "./store";
 
 const HEADING_PATTERN = /^#+\s*(.*)/;
-export function getStepLabel(tour: CodeTour, stepNumber: number, includeStepNumber: boolean = true) {
+export function getStepLabel(
+  tour: CodeTour,
+  stepNumber: number,
+  includeStepNumber: boolean = true,
+  defaultToFileName: boolean = true
+) {
   const step = tour.steps[stepNumber];
 
   const prefix = includeStepNumber ? `#${stepNumber + 1} - ` : "";
-  let label;
+  let label = "";
   if (step.title) {
     label = step.title;
   } else if (HEADING_PATTERN.test(step.description.trim())) {
     label = step.description.trim().match(HEADING_PATTERN)![1];
-  } else {
+  } else if (defaultToFileName) {
     label = step.uri
       ? step.uri!
       : decodeURIComponent(step.directory || step.file!);

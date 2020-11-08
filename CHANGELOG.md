@@ -1,3 +1,7 @@
+## v0.0.40 (11/?/2020)
+
+- Added the current tour status as a "message" in the `CodeTour` tree
+
 ## v0.0.39 (11/08/2020)
 
 - Updated the previous/next navigation links, so that they don't show file names when a step doesn't have a title

@@ -143,10 +143,15 @@ export function registerTreeProvider(extensionPath: string) {
           return;
         }
 
+        treeView.message = `Current step: #${store.activeTour.step + 1} of ${
+          store.activeTour.tour.steps.length
+        } (${store.activeTour.tour.title})`;
+
         revealCurrentStepNode();
       } else {
         // TODO: Once VS Code supports it, we want
         // to de-select the step node once the tour ends.
+        treeView.message = undefined;
       }
     }
   );

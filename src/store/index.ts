@@ -60,12 +60,15 @@ export interface ActiveTour {
   tours?: CodeTour[];
 }
 
+type CodeTourProgress = [string, number[]];
+
 export interface Store {
   tours: CodeTour[];
   activeTour: ActiveTour | null;
   hasTours: boolean;
   isRecording: boolean;
   showMarkers: boolean;
+  progress: CodeTourProgress[];
 }
 
 export const store: Store = observable({
@@ -75,5 +78,6 @@ export const store: Store = observable({
   get hasTours() {
     return this.tours.length > 0;
   },
-  showMarkers: false
+  showMarkers: false,
+  progress: []
 });

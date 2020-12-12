@@ -11,10 +11,12 @@ import { registerCompletionProvider } from "./recorder/completionProvider";
 import { store } from "./store";
 import { promptForTour } from "./store/actions";
 import { discoverTours } from "./store/provider";
+import { initializeStorage } from "./store/storage";
 import { registerTreeProvider } from "./tree";
 
 export async function activate(context: vscode.ExtensionContext) {
   registerCommands();
+  initializeStorage(context);
 
   // If the user has a workspace open, then attempt to discover
   // the tours contained within it and optionally prompt the user.

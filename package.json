@@ -3,7 +3,7 @@
   "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
-  "version": "0.0.40",
+  "version": "0.0.41",
   "repository": {
     "type": "git",
     "url": "https://github.com/vsls-contrib/codetour"
@@ -83,6 +83,15 @@
       {
         "command": "codetour.changeTourTitle",
         "title": "Change Title"
+      },
+      {
+        "command": "codetour.resetProgress",
+        "title": "Reset Progress",
+        "category": "CodeTour"
+      },
+      {
+        "command": "codetour.resetTourProgress",
+        "title": "Reset Progress"
       },
       {
         "command": "codetour.deleteTourStep",
@@ -211,10 +220,6 @@
           "when": "codetour:inTour"
         },
         {
-          "command": "codetour.hideMarkers",
-          "when": "codetour:hasTours && codetour:showingMarkers"
-        },
-        {
           "command": "codetour.previewTour",
           "when": "codetour:inTour && codetour:recording"
         },
@@ -223,12 +228,12 @@
           "when": "workspaceFolderCount != 0"
         },
         {
-          "command": "codetour.resumeTour",
-          "when": "codetour:inTour"
+          "command": "codetour.resetProgress",
+          "when": "codetour:hasProgress"
         },
         {
-          "command": "codetour.showMarkers",
-          "when": "codetour:hasTours && !codetour:showingMarkers"
+          "command": "codetour.resumeTour",
+          "when": "codetour:inTour"
         },
         {
           "command": "codetour.startTour",
@@ -283,6 +288,10 @@
           "when": "false"
         },
         {
+          "command": "codetour.hideMarkers",
+          "when": "false"
+        },
+        {
           "command": "codetour.makeTourPrimary",
           "when": "false"
         },
@@ -299,7 +308,15 @@
           "when": "false"
         },
         {
+          "command": "codetour.resetTourProgress",
+          "when": "false"
+        },
+        {
           "command": "codetour.saveTourStep",
+          "when": "false"
+        },
+        {
+          "command": "codetour.showMarkers",
           "when": "false"
         },
         {
@@ -428,13 +445,8 @@
           "group": "basic@1"
         },
         {
-          "command": "codetour.makeTourPrimary",
-          "when": "viewItem =~ /^codetour.tour(.recording)?(.active)?$/",
-          "group": "basic@2"
-        },
-        {
-          "command": "codetour.unmakeTourPrimary",
-          "when": "viewItem =~ /^codetour.tour.primary(.recording)?(.active)?$/",
+          "command": "codetour.resetTourProgress",
+          "when": "false",
           "group": "basic@2"
         },
         {
@@ -453,19 +465,29 @@
           "group": "change@3"
         },
         {
+          "command": "codetour.makeTourPrimary",
+          "when": "viewItem =~ /^codetour.tour(.recording)?(.active)?$/",
+          "group": "edit@1"
+        },
+        {
+          "command": "codetour.unmakeTourPrimary",
+          "when": "viewItem =~ /^codetour.tour.primary(.recording)?(.active)?$/",
+          "group": "edit@2"
+        },
+        {
           "command": "codetour.editTour",
           "when": "viewItem =~ /^codetour.tour(.primary)?(.active)?$/",
-          "group": "edit@1"
+          "group": "edit@2"
         },
         {
           "command": "codetour.previewTour",
           "when": "viewItem =~ /^codetour.tour(.primary)?.recording/",
-          "group": "edit@1"
+          "group": "edit@2"
         },
         {
           "command": "codetour.deleteTour",
           "when": "viewItem =~ /^codetour.tour(.primary)?(.recording)?(.active)?$/",
-          "group": "edit@2"
+          "group": "edit@3"
         },
         {
           "command": "codetour.exportTour",

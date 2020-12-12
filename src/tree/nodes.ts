@@ -1,6 +1,13 @@
-import { ThemeIcon, TreeItem, TreeItemCollapsibleState, Uri } from "vscode";
+import {
+  ThemeColor,
+  ThemeIcon,
+  TreeItem,
+  TreeItemCollapsibleState,
+  Uri
+} from "vscode";
 import { CONTENT_URI, EXTENSION_NAME, FS_SCHEME } from "../constants";
 import { CodeTour, store } from "../store";
+import { progress } from "../store/storage";
 import { getFileUri, getStepLabel, getWorkspaceUri } from "../utils";
 
 function isRecording(tour: CodeTour) {
@@ -10,6 +17,12 @@ function isRecording(tour: CodeTour) {
     store.activeTour.tour.id === tour.id
   );
 }
+
+const completeIcon = new ThemeIcon(
+  "check",
+  // @ts-ignore
+  new ThemeColor("terminal.ansiGreen")
+);
 
 export class CodeTourNode extends TreeItem {
   constructor(public tour: CodeTour, extensionPath: string) {
@@ -45,6 +58,8 @@ export class CodeTourNode extends TreeItem {
       ? new ThemeIcon("record")
       : isActive
       ? new ThemeIcon("play-circle")
+      : progress.isComplete(tour)
+      ? completeIcon
       : new ThemeIcon("location");
   }
 }
@@ -84,7 +99,17 @@ export class CodeTourStepNode extends TreeItem {
 
     this.resourceUri = resourceUri;
 
-    if (step.directory) {
+    const isActive =
+      store.activeTour &&
+      tour.id === store.activeTour?.tour.id &&
+      store.activeTour.step === stepNumber;
+
+    if (isActive) {
+      this.iconPath = new ThemeIcon("play-circle");
+    } else if (progress.isComplete(tour, stepNumber)) {
+      // @ts-ignore
+      this.iconPath = completeIcon;
+    } else if (step.directory) {
       this.iconPath = ThemeIcon.Folder;
     } else {
       this.iconPath = ThemeIcon.File;

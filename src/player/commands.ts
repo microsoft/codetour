@@ -12,6 +12,7 @@ import {
   selectTour,
   startCodeTour
 } from "../store/actions";
+import { progress } from "../store/storage";
 import { CodeTourNode } from "../tree/nodes";
 import { readUriContents } from "../utils";
 
@@ -44,6 +45,22 @@ export function registerPlayerCommands() {
           undefined,
           store.activeTour?.tours
         );
+      }
+    }
+  );
+
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.finishTour`,
+    async (title?: string) => {
+      await progress.update();
+
+      if (title) {
+        vscode.commands.executeCommand(
+          `${EXTENSION_NAME}.startTourByTitle`,
+          title
+        );
+      } else {
+        vscode.commands.executeCommand(`${EXTENSION_NAME}.endTour`);
       }
     }
   );
@@ -253,5 +270,9 @@ export function registerPlayerCommands() {
 
   vscode.commands.registerCommand(`${EXTENSION_NAME}.showMarkers`, () =>
     setShowMarkers(true)
+  );
+
+  vscode.commands.registerCommand(`${EXTENSION_NAME}.resetProgress`, () =>
+    progress.reset()
   );
 }

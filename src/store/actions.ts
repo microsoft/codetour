@@ -8,6 +8,7 @@ import {
   getWorkspaceUri,
   readUriContents
 } from "../utils";
+import { progress } from "./storage";
 
 const CAN_EDIT_TOUR_KEY = `${EXTENSION_NAME}:canEditTour`;
 const IN_TOUR_KEY = `${EXTENSION_NAME}:inTour`;
@@ -111,7 +112,9 @@ export function moveCurrentCodeTourBackward() {
   _onDidStartTour.fire([store.activeTour!.tour, store.activeTour!.step]);
 }
 
-export function moveCurrentCodeTourForward() {
+export async function moveCurrentCodeTourForward() {
+  await progress.update();
+
   store.activeTour!.step++;
 
   _onDidStartTour.fire([store.activeTour!.tour, store.activeTour!.step]);

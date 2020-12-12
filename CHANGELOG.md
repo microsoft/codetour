@@ -1,3 +1,9 @@
+## v0.0.41 (12/12/2020)
+
+- The `CodeTour` view now indicates the tours/steps that you've already taken
+- The `CodeTour` view now displays an icon next to the active tour step
+- The `CodeTour: Hide Markers` and `CodeTour: Show Markers` commands are now hidden from the command palette
+
 ## v0.0.40 (12/11/2020)
 
 - Tours with titles that start with `#1 -` or `1 -` are now automatically considered the primary tour, if there isn't already a tour that's explicitly marked as being the primary.

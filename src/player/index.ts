@@ -251,9 +251,9 @@ async function renderCurrentStep() {
         const argsContent = encodeURIComponent(
           JSON.stringify([nextTour.title])
         );
-        content += `${prefix}[Next Tour (${tourTitle})](command:codetour.startTourByTitle?${argsContent} "Start next tour")`;
+        content += `${prefix}[Next Tour (${tourTitle})](command:codetour.finishTour?${argsContent} "Start next tour")`;
       } else {
-        content += `${prefix}[Finish Tour](command:codetour.endTour "Finish the tour")`;
+        content += `${prefix}[Finish Tour](command:codetour.finishTour "Finish the tour")`;
       }
     }
   }

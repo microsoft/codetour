@@ -9,7 +9,6 @@ import {
 } from "vscode";
 import { EXTENSION_NAME } from "../constants";
 import { store } from "../store";
-import { getTourTitle } from "../utils";
 import { CodeTourNode, CodeTourStepNode } from "./nodes";
 
 class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
@@ -25,6 +24,10 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
         store.tours,
         store.hasTours,
         store.isRecording,
+        store.progress.map(([id, completedSteps]) => [
+          id,
+          completedSteps.map(step => step)
+        ]),
         store.activeTour
           ? [
               store.activeTour.tour.title,
@@ -143,11 +146,6 @@ export function registerTreeProvider(extensionPath: string) {
           isRevealPending = true;
           return;
         }
-
-        const title = getTourTitle(store.activeTour.tour);
-        treeView.message = `Current step: #${store.activeTour.step + 1} of ${
-          store.activeTour.tour.steps.length
-        } (${title})`;
 
         revealCurrentStepNode();
       } else {

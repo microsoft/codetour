@@ -2,6 +2,7 @@ import { reaction } from "mobx";
 import * as vscode from "vscode";
 import { EXTENSION_NAME } from "../constants";
 import { store } from "../store";
+import { getTourTitle } from "../utils";
 
 function createCurrentTourItem() {
   const currentTourItem = vscode.window.createStatusBarItem(
@@ -38,11 +39,11 @@ export function registerStatusBar() {
         }
 
         const prefix = store.isRecording ? "Recording " : "";
+        const tourTitle = getTourTitle(store.activeTour.tour);
+
         currentTourItem.text = `${prefix}CodeTour: #${
           store.activeTour.step + 1
-        } of ${store.activeTour.tour.steps.length} (${
-          store.activeTour.tour.title
-        })`;
+        } of ${store.activeTour.tour.steps.length} (${tourTitle})`;
       } else {
         if (currentTourItem) {
           currentTourItem.dispose();

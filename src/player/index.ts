@@ -17,8 +17,13 @@ import {
   window
 } from "vscode";
 import { SMALL_ICON_URL } from "../constants";
-import { store } from "../store";
-import { getFileUri, getStepFileUri, getStepLabel } from "../utils";
+import { CodeTour, store } from "../store";
+import {
+  getFileUri,
+  getStepFileUri,
+  getStepLabel,
+  getTourTitle
+} from "../utils";
 
 const CONTROLLER_ID = "codetour";
 const CONTROLLER_LABEL = "CodeTour";
@@ -157,6 +162,22 @@ const VIEW_COMMANDS = new Map([
   ["terminal", "workbench.panel.terminal"]
 ]);
 
+function getNextTour(): CodeTour | undefined {
+  if (store.activeTour?.tour.nextTour) {
+    return store.tours.find(
+      tour => tour.title === store.activeTour?.tour.nextTour
+    );
+  } else {
+    const match = store.activeTour?.tour.title.match(/^#?(\d+)\s+-/);
+    if (match) {
+      const nextTourNumber = Number(match[1]) + 1;
+      return store.tours.find(tour =>
+        tour.title.match(new RegExp(`^#?${nextTourNumber}\\s+-`))
+      );
+    }
+  }
+}
+
 async function renderCurrentStep() {
   if (store.activeTour!.thread) {
     store.activeTour!.thread.dispose();
@@ -183,7 +204,8 @@ async function renderCurrentStep() {
   let label = `Step #${currentStep + 1} of ${currentTour!.steps.length}`;
 
   if (currentTour.title) {
-    label += ` (${currentTour.title})`;
+    const title = getTourTitle(currentTour);
+    label += ` (${title})`;
   }
 
   const workspaceRoot = store.activeTour?.workspaceRoot;
@@ -223,7 +245,16 @@ async function renderCurrentStep() {
       const suffix = stepLabel ? ` (${stepLabel})` : "";
       content += `${prefix}[Next${suffix}](command:codetour.nextTourStep "Navigate to next step") →`;
     } else if (isFinalStep) {
-      content += `${prefix}[Finish Tour](command:codetour.endTour "Finish the tour")`;
+      const nextTour = getNextTour();
+      if (nextTour) {
+        const tourTitle = getTourTitle(nextTour);
+        const argsContent = encodeURIComponent(
+          JSON.stringify([nextTour.title])
+        );
+        content += `${prefix}[Next Tour (${tourTitle})](command:codetour.startTourByTitle?${argsContent} "Start next tour")`;
+      } else {
+        content += `${prefix}[Finish Tour](command:codetour.endTour "Finish the tour")`;
+      }
     }
   }
 

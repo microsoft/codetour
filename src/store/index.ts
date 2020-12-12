@@ -36,6 +36,7 @@ export interface CodeTour {
   steps: CodeTourStep[];
   ref?: string;
   isPrimary?: boolean;
+  nextTour?: string;
 }
 
 export interface ActiveTour {

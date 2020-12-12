@@ -29,6 +29,14 @@ export function getStepLabel(
   return `${prefix}${label}`;
 }
 
+export function getTourTitle(tour: CodeTour) {
+  if (tour.title.match(/^#?\d+\s-/)) {
+    return tour.title.split("-")[1].trim();
+  }
+
+  return tour.title;
+}
+
 export function getRelativePath(root: string, filePath: string) {
   let relativePath = path.relative(root, filePath);
 

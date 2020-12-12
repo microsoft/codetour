@@ -27,7 +27,6 @@ export class CodeTourNode extends TreeItem {
 
     if (tour.isPrimary) {
       contextValues.push("primary");
-
       this.description += " (Primary)";
     }
 

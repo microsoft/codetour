@@ -1,5 +1,6 @@
 {
-  "title": "Status Bar",
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "#1 - Status Bar",
   "description": "Describes how we augment the status bar",
   "steps": [
     {

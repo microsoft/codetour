@@ -9,6 +9,7 @@ import {
 } from "vscode";
 import { EXTENSION_NAME } from "../constants";
 import { store } from "../store";
+import { getTourTitle } from "../utils";
 import { CodeTourNode, CodeTourStepNode } from "./nodes";
 
 class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
@@ -143,9 +144,10 @@ export function registerTreeProvider(extensionPath: string) {
           return;
         }
 
+        const title = getTourTitle(store.activeTour.tour);
         treeView.message = `Current step: #${store.activeTour.step + 1} of ${
           store.activeTour.tour.steps.length
-        } (${store.activeTour.tour.title})`;
+        } (${title})`;
 
         revealCurrentStepNode();
       } else {

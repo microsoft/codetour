@@ -119,6 +119,10 @@
           }
         }
       }
+    },
+    "nextTour": {
+      "type": "string",
+      "description": "Specifies the title of the tour that is meant to follow this tour."
     }
   }
 }

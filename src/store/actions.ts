@@ -143,7 +143,10 @@ export async function promptForTour(
         "Start CodeTour"
       )
     ) {
-      const primaryTour = tours.find(tour => tour.isPrimary);
+      const primaryTour =
+        tours.find(tour => tour.isPrimary) ||
+        tours.find(tour => tour.title.match(/^#?1\s+-/));
+
       if (primaryTour) {
         startCodeTour(primaryTour, 0, workspaceRoot, false, undefined, tours);
         return true;

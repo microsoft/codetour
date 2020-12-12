@@ -1,5 +1,7 @@
-## v0.0.40 (11/?/2020)
+## v0.0.40 (12/11/2020)
 
+- Tours with titles that start with `#1 -` or `1 -` are now automatically considered the primary tour, if there isn't already a tour that's explicitly marked as being the primary.
+- Added support for numbering/linking tours, and the `nextTour` property in `*.tour` files
 - Added the current tour status as a "message" in the `CodeTour` tree
 
 ## v0.0.39 (11/08/2020)

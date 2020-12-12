@@ -79,6 +79,8 @@ A codebase can include one or more tours, but it might have a primary tour, that
 
 In order to mark a specific tour as the primary tour, simply right-click it in the `CodeTour` tree, and select `Make Primary`. When you mark a tour as primary, any other tours that were marked as primary, will be updated to remove that annotation. Additionally, if you want to manually unmark a tour as being the primary tour, you can right-click it and select `Unmake Primary`.
 
+If you'd prefer to number your tours (e.g. `1 - Status Bar`), then a tour whose title starts with either `#1 - ` or `1 - ` will be automatically considered the primary tour, and you don't need to do anything further.
+
 ### CodeTour-Flavored Markdown
 
 When you describe a step, you're able to use the full-breadth of markdown capabilities in order to write rich/compelling content (e.g. images, links, headings, code fences). However, CodeTour also provides some additional syntactic features that allow you to include additional interactivity to your tours:

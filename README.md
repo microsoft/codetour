@@ -73,6 +73,16 @@ If you want to edit an existing tour, simply right-click the tour in the `CodeTo
 
 At any time, you can right-click a tour in the `CodeTour` tree and change it's title, description or git ref, by selecting the `Change Title`, `Change Description` or `Change Git Ref` menu items. Additionally, you can delete a tour by right-clicking it in the `CodeTour` tree and selecting `Delete Tour`.
 
+### Linking Tours
+
+If you want to create a series of tours, that a user can navigate through in sequence, then simply prefix your tour title's with the number they represent in the tour order (e.g. `1: Foo`, `2 - Bar`). When your tours are titled like this, the tour player will automatically provides the following benefis to your readers:
+
+1. If the current tour has a subsequent tour, then it's final step will display a `Next Tour` link instead of the `Finish Tour` link. This allows users to easily jump to the next tour.
+
+1. If the current tour has a previous tour, then it's first step will display a `Previous Tour` link. This allows users to navigate back to the tour they might have just navigated from.
+
+> _If you don't want to number your tours like this, but you'd still link to link one tour to another, you can open it's `*.tour` file and set the `nextTour` property to the title of the tour you'd like it to link to._
+
 ### Primary Tours
 
 A codebase can include one or more tours, but it might have a primary tour, that is intended for new developers to start with. This way, when they open the codebase for the first time, they can be immediately presented with this tour, as opposed to a list of all tours.
@@ -180,21 +190,20 @@ Within the `.tours` (or `.vscode/tours`) directory, you can organize your tour f
 
 #### Tour Schema
 
-Within the tour file, you need to specify the following required properties:
-
-- `title` - The display name of the tour, which will be shown in the `CodeTour` tree view, quick pick, etc.
+- `title` _(Required)_ - The display name of the tour, which will be shown in the `CodeTour` tree view, quick pick, etc.
 - `description` - An optional description for the tour, which will be shown as the tooltip for the tour in the `CodeTour` tree view
 - `ref` - An optional "git ref" (branch/tag/commit) that this tour applies to. See [versioning tours](#versioning-tours) for more details.
 - `isPrimary` - Indicates that this tour is the primary tour within the workspace that an end-user should be guided through.
-- `steps` - An array of tour steps
+- `steps` _(Required)_ - An array of tour steps
+  - `description` _(Required)_ - The text which explains the current file/line number, and can include plain text and markdown syntax
   - `file` - The file path (relative to the workspace root) that this step is associated with
   - `directory` - The path of a directory (relative to the workspace root) that this step is associated with. _Note: This property takes precedence over the `file` property, and so will "win" if both are present._
   - `view` - The ID of a VS Code view that will be automatically focused when this step is navigated to.
   - `uri` - An absolute URI that this step is associated with. Note that `uri` and `file` are mutually exclusive, so only set one per step
   - `line` - The 1-based line number that this step is associated with
   - `title` - An optional title, which will be displayed as the step name in the `CodeTour` tree view.
-  - `description` - The text which explains the current file/line number, and can include plain text and markdown syntax
   - `commands` - An array of VS Code command strings, that indicate the name of a command (e.g. `codetour.endTour`) and any optional parameters to pass to it, specified as a query string array (eg. `codetour.endTour?[2]`).
+  - `nextTour` - The title of the tour that this tour is [linked to](#linking-tours).
 
 For an example, refer to the `.tours/tree.tour` file of this repository.
 

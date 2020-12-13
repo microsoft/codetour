@@ -486,8 +486,9 @@ export function registerRecorderCommands() {
 
     // @ts-ignore
     tour[property] = propertyValue;
+    await saveTour(tour);
 
-    saveTour(tour);
+    return propertyValue;
   }
 
   function moveStep(
@@ -540,7 +541,22 @@ export function registerRecorderCommands() {
 
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.changeTourTitle`,
-    (node: CodeTourNode) => updateTourProperty(node.tour, "title")
+    async (node: CodeTourNode) => {
+      const oldTitle = node.tour.title;
+      const newTitle = await updateTourProperty(node.tour, "title");
+
+      // If the user updated the tour's title, then we need to check
+      // whether there are other tours that reference this tour, and
+      // if so, we want to update the tour reference to match the new title.
+      if (newTitle) {
+        store.tours
+          .filter(tour => tour.nextTour === oldTitle)
+          .forEach(tour => {
+            tour.nextTour = newTitle;
+            saveTour(tour);
+          });
+      }
+    }
   );
 
   vscode.commands.registerCommand(

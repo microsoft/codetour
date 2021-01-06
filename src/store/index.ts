@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { observable } from "mobx";
 import { CommentThread, Uri } from "vscode";
 

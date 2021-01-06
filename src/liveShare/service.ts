@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { Uri } from "vscode";
 import { LiveShare, Role, SharedService, SharedServiceProxy } from "vsls";
 import {

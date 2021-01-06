@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import * as vsls from "vsls";
 import { EXTENSION_NAME } from "../constants";
 import { startCodeTour } from "../store/actions";

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { comparer, runInAction, set } from "mobx";
 import * as vscode from "vscode";
 import { CodeTour, store } from ".";

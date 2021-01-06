@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { action, comparer, runInAction } from "mobx";
 import * as path from "path";
 import * as vscode from "vscode";

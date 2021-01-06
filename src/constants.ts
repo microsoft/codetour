@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { Uri } from "vscode";
 
 export const EXTENSION_NAME = "codetour";

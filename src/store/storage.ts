@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { observable } from "mobx";
 import { commands, ExtensionContext, Uri, workspace } from "vscode";
 import { CodeTour, store } from ".";

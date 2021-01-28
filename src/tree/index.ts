@@ -1,13 +1,18 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { reaction } from "mobx";
 import {
   Disposable,
   Event,
   EventEmitter,
+  MarkdownString,
   TreeDataProvider,
   TreeItem,
   window
 } from "vscode";
 import { EXTENSION_NAME } from "../constants";
+import { generatePreviewContent } from "../player";
 import { store } from "../store";
 import { CodeTourNode, CodeTourStepNode } from "./nodes";
 
@@ -97,6 +102,24 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
     } else {
       return null;
     }
+  }
+
+  // This is called whenever a tree item is hovered over, and we're
+  // using it to generate preview tooltips for tour steps on-demand.
+  async resolveTreeItem(element: TreeItem): Promise<TreeItem> {
+    if (element instanceof CodeTourStepNode) {
+      const content = generatePreviewContent(
+        element.tour.steps[element.stepNumber].description
+      );
+
+      const tooltip = new MarkdownString(content);
+      tooltip.isTrusted = true;
+
+      // @ts-ignore
+      element.tooltip = tooltip;
+    }
+
+    return element;
   }
 
   dispose() {

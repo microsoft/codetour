@@ -1,6 +1,12 @@
+## v0.0.42 (12/13/2020)
+
+- Added a hover preview for tour steps in the `CodeTour` tree view, so you can see the step's content at-a-glance
+- If a tour has a previous tour, then its first step will now display a `Previous Tour` link to navigate "back" to it
+- Tour references are now automatically updated when you the change the title of a tour through the `CodeTour` view
+
 ## v0.0.41 (12/12/2020)
 
-- The `CodeTour` view now indicates the tours/steps that you've already taken
+- The `CodeTour` view now indicates the progress for tours/steps you've already taken
 - The `CodeTour` view now displays an icon next to the active tour step
 - The `CodeTour: Hide Markers` and `CodeTour: Show Markers` commands are now hidden from the command palette
 
@@ -8,7 +14,6 @@
 
 - Tours with titles that start with `#1 -` or `1 -` are now automatically considered the primary tour, if there isn't already a tour that's explicitly marked as being the primary.
 - Added support for numbering/linking tours, and the `nextTour` property in `*.tour` files
-- Added the current tour status as a "message" in the `CodeTour` tree
 
 ## v0.0.39 (11/08/2020)
 

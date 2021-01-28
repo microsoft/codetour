@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { reaction } from "mobx";
 import * as vscode from "vscode";
 import { EXTENSION_NAME } from "../constants";

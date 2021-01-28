@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import * as os from "os";
 import * as path from "path";
 import { Uri, workspace } from "vscode";

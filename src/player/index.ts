@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 import { reaction } from "mobx";
 import {
   commands,
@@ -38,6 +41,44 @@ const COMMAND_PATTERN = /(?<commandPrefix>\(command:[\w+\.]+\?)(?<params>\[[^\]]
 const TOUR_REFERENCE_PATTERN = /(?:\[(?<linkTitle>[^\]]+)\])?\[(?=\s*[^\]\s])(?<tourTitle>[^\]#]+)?(?:#(?<stepNumber>\d+))?\](?!\()/gm;
 const CODE_FENCE_PATTERN = /```\w+\n([^`]+)\n```/gm;
 
+export function generatePreviewContent(content: string) {
+  return content
+    .replace(SHELL_SCRIPT_PATTERN, (_, script) => {
+      const args = encodeURIComponent(JSON.stringify([script]));
+      return `> [${script}](command:codetour.sendTextToTerminal?${args} "Run \\"${script}\\" in a terminal")`;
+    })
+    .replace(COMMAND_PATTERN, (_, commandPrefix, params) => {
+      const args = encodeURIComponent(JSON.stringify(JSON.parse(params)));
+      return `${commandPrefix}${args}`;
+    })
+    .replace(TOUR_REFERENCE_PATTERN, (_, linkTitle, tourTitle, stepNumber) => {
+      if (!tourTitle) {
+        const title = linkTitle || `#${stepNumber}`;
+        return `[${title}](command:codetour.navigateToStep?${stepNumber} "Navigate to step #${stepNumber}")`;
+      }
+
+      const tours = store.activeTour?.tours || store.tours;
+      const tour = tours.find(tour => tour.title === tourTitle);
+      if (tour) {
+        const args = [tourTitle];
+
+        if (stepNumber) {
+          args.push(Number(stepNumber));
+        }
+        const argsContent = encodeURIComponent(JSON.stringify(args));
+        const title = linkTitle || tourTitle;
+        return `[${title}](command:codetour.startTourByTitle?${argsContent} "Start \\"#${tourTitle}\\" tour")`;
+      }
+
+      return _;
+    })
+    .replace(CODE_FENCE_PATTERN, (_, codeBlock) => {
+      const params = encodeURIComponent(JSON.stringify([codeBlock]));
+      return `${_}
+↪ [Insert Code](command:codetour.insertCodeSnippet?${params} "Insert Code")`;
+    });
+}
+
 export class CodeTourComment implements Comment {
   public id: string = (++id).toString();
   public contextValue: string = "";
@@ -54,53 +95,10 @@ export class CodeTourComment implements Comment {
     public mode: CommentMode
   ) {
     const body =
-      mode === CommentMode.Preview
-        ? this.generatePreviewContent(content)
-        : content;
+      mode === CommentMode.Preview ? generatePreviewContent(content) : content;
 
     this.body = new MarkdownString(body);
     this.body.isTrusted = true;
-  }
-
-  private generatePreviewContent(content: string) {
-    return content
-      .replace(SHELL_SCRIPT_PATTERN, (_, script) => {
-        const args = encodeURIComponent(JSON.stringify([script]));
-        return `> [${script}](command:codetour.sendTextToTerminal?${args} "Run \\"${script}\\" in a terminal")`;
-      })
-      .replace(COMMAND_PATTERN, (_, commandPrefix, params) => {
-        const args = encodeURIComponent(JSON.stringify(JSON.parse(params)));
-        return `${commandPrefix}${args}`;
-      })
-      .replace(
-        TOUR_REFERENCE_PATTERN,
-        (_, linkTitle, tourTitle, stepNumber) => {
-          if (!tourTitle) {
-            const title = linkTitle || `#${stepNumber}`;
-            return `[${title}](command:codetour.navigateToStep?${stepNumber} "Navigate to step #${stepNumber}")`;
-          }
-
-          const tours = store.activeTour?.tours || store.tours;
-          const tour = tours.find(tour => tour.title === tourTitle);
-          if (tour) {
-            const args = [tourTitle];
-
-            if (stepNumber) {
-              args.push(Number(stepNumber));
-            }
-            const argsContent = encodeURIComponent(JSON.stringify(args));
-            const title = linkTitle || tourTitle;
-            return `[${title}](command:codetour.startTourByTitle?${argsContent} "Start \\"#${tourTitle}\\" tour")`;
-          }
-
-          return _;
-        }
-      )
-      .replace(CODE_FENCE_PATTERN, (_, codeBlock) => {
-        const params = encodeURIComponent(JSON.stringify([codeBlock]));
-        return `${_}
-↪ [Insert Code](command:codetour.insertCodeSnippet?${params} "Insert Code")`;
-      });
   }
 }
 
@@ -165,6 +163,24 @@ const VIEW_COMMANDS = new Map([
   ["terminal", "workbench.panel.terminal"]
 ]);
 
+function getPreviousTour(): CodeTour | undefined {
+  const previousTour = store.tours.find(
+    tour => tour.nextTour === store.activeTour?.tour.title
+  );
+
+  if (previousTour) {
+    return previousTour;
+  }
+
+  const match = store.activeTour?.tour.title.match(/^#?(\d+)\s+-/);
+  if (match) {
+    const previousTourNumber = Number(match[1]) - 1;
+    return store.tours.find(tour =>
+      tour.title.match(new RegExp(`^#?${previousTourNumber}\\s+[-:]`))
+    );
+  }
+}
+
 function getNextTour(): CodeTour | undefined {
   if (store.activeTour?.tour.nextTour) {
     return store.tours.find(
@@ -175,7 +191,7 @@ function getNextTour(): CodeTour | undefined {
     if (tourNumber) {
       const nextTourNumber = tourNumber + 1;
       return store.tours.find(tour =>
-        tour.title.match(new RegExp(`^#?${nextTourNumber}\\s+-`))
+        tour.title.match(new RegExp(`^#?${nextTourNumber}\\s+[-:]`))
       );
     }
   }
@@ -234,7 +250,7 @@ async function renderCurrentStep() {
   const mode = store.isRecording ? CommentMode.Editing : CommentMode.Preview;
   let content = step.description;
 
-  const hasPreviousStep = currentStep > 0;
+  let hasPreviousStep = currentStep > 0;
   const hasNextStep = currentStep < currentTour.steps.length - 1;
   const isFinalStep = currentStep === currentTour.steps.length - 1;
 
@@ -251,6 +267,17 @@ async function renderCurrentStep() {
       );
       const suffix = stepLabel ? ` (${stepLabel})` : "";
       content += `← [Previous${suffix}](command:codetour.previousTourStep "Navigate to previous step")`;
+    } else {
+      const previousTour = getPreviousTour();
+      if (previousTour) {
+        hasPreviousStep = true;
+
+        const tourTitle = getTourTitle(previousTour);
+        const argsContent = encodeURIComponent(
+          JSON.stringify([previousTour.title])
+        );
+        content += `← [Previous Tour (${tourTitle})](command:codetour.startTourByTitle?${argsContent} "Navigate to previous tour")`;
+      }
     }
 
     const prefix = hasPreviousStep ? " | " : "";

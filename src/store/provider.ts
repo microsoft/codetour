@@ -2,7 +2,7 @@ import { comparer, runInAction, set } from "mobx";
 import * as vscode from "vscode";
 import { CodeTour, store } from ".";
 import { EXTENSION_NAME, VSCODE_DIRECTORY } from "../constants";
-import { appendUriPath, readUriContents } from "../utils";
+import { appendUriPath, readUriContents, updateMarkerTitles } from "../utils";
 import { endCurrentCodeTour } from "./actions";
 
 const MAIN_TOUR_FILES = [".tour", `${VSCODE_DIRECTORY}/main.tour`];
@@ -112,12 +112,17 @@ async function discoverSubTours(workspaceUri: vscode.Uri): Promise<CodeTour[]> {
   return tours.flat();
 }
 
-vscode.workspace.onDidChangeWorkspaceFolders(discoverTours);
+async function discoverToursAndUpdateTitles() {
+  await discoverTours();
+  updateMarkerTitles();
+}
+
+vscode.workspace.onDidChangeWorkspaceFolders(discoverToursAndUpdateTitles);
 
 const watcher = vscode.workspace.createFileSystemWatcher(
   "**/{.vscode/tours,.tours}/**/*.{json,tour}"
 );
 
-watcher.onDidChange(discoverTours);
-watcher.onDidCreate(discoverTours);
-watcher.onDidDelete(discoverTours);
+watcher.onDidChange(discoverToursAndUpdateTitles);
+watcher.onDidCreate(discoverToursAndUpdateTitles);
+watcher.onDidDelete(discoverToursAndUpdateTitles);

@@ -34,6 +34,7 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
               store.activeTour.tour.description,
               store.activeTour.tour.steps.map(step => [
                 step.title,
+                step.markerTitle,
                 step.description
               ])
             ]

@@ -13,7 +13,11 @@ import {
   startCodeTour
 } from "../store/actions";
 import { CodeTourNode, CodeTourStepNode } from "../tree/nodes";
-import { getActiveWorkspacePath, getRelativePath } from "../utils";
+import {
+  getActiveWorkspacePath,
+  getRelativePath,
+  getStepMarkerForLine
+} from "../utils";
 
 export async function saveTour(tour: CodeTour) {
   const uri = vscode.Uri.parse(tour.id);
@@ -22,6 +26,10 @@ export async function saveTour(tour: CodeTour) {
     ...tour
   };
   delete newTour.id;
+  newTour.steps.forEach(step => {
+    delete step.markerTitle;
+  });
+
   const tourContent = JSON.stringify(newTour, null, 2);
 
   const bytes = new TextEncoder().encode(tourContent);
@@ -314,26 +322,37 @@ export function registerRecorderCommands() {
 
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.addTourStep`,
-    action((reply: vscode.CommentReply) => {
+    action(async (reply: vscode.CommentReply) => {
       if (store.activeTour!.thread) {
         store.activeTour!.thread.dispose();
       }
 
       store.activeTour!.thread = reply.thread;
-      store.activeTour!.step++;
 
       const tour = store.activeTour!.tour;
       const thread = store.activeTour!.thread;
-      const stepNumber = store.activeTour!.step;
 
       const workspaceRoot = getActiveWorkspacePath();
       const file = getRelativePath(workspaceRoot, thread!.uri.path);
 
       const step = {
         file,
-        line: thread!.range.start.line + 1,
         description: reply.text
       };
+
+      const stepMarkerNumber = await getStepMarkerForLine(
+        thread!.uri,
+        thread!.range.start.line
+      );
+      if (!stepMarkerNumber) {
+        // @ts-ignore
+        step.line = thread!.range.start.line + 1;
+        store.activeTour!.step++;
+      } else {
+        store.activeTour!.step = stepMarkerNumber - 1;
+      }
+
+      const stepNumber = store.activeTour!.step;
 
       const selection = getStepSelection();
       if (selection) {

@@ -177,6 +177,8 @@ export async function exportTour(tour: CodeTour) {
       const stepFileUri = await getStepFileUri(step, workspaceRoot, tour.ref);
       const contents = await readUriContents(stepFileUri);
 
+      delete step.markerTitle;
+
       return {
         ...step,
         contents

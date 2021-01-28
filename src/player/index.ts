@@ -14,11 +14,14 @@ import {
   TextDocument,
   TextEditorRevealType,
   Uri,
-  window
+  window,
+  workspace
 } from "vscode";
 import { SMALL_ICON_URL } from "../constants";
 import { CodeTour, store } from "../store";
 import {
+  getActiveStepMarker,
+  getActiveTourNumber,
   getFileUri,
   getStepFileUri,
   getStepLabel,
@@ -168,9 +171,9 @@ function getNextTour(): CodeTour | undefined {
       tour => tour.title === store.activeTour?.tour.nextTour
     );
   } else {
-    const match = store.activeTour?.tour.title.match(/^#?(\d+)\s+-/);
-    if (match) {
-      const nextTourNumber = Number(match[1]) + 1;
+    const tourNumber = getActiveTourNumber();
+    if (tourNumber) {
+      const nextTourNumber = tourNumber + 1;
       return store.tours.find(tour =>
         tour.title.match(new RegExp(`^#?${nextTourNumber}\\s+-`))
       );
@@ -187,20 +190,38 @@ async function renderCurrentStep() {
   const currentStep = store.activeTour!.step;
 
   const step = currentTour!.steps[currentStep];
-
   if (!step) {
     return;
   }
 
-  // Adjust the line number, to allow the user to specify
-  // them in 1-based format, not 0-based
-  const line = step.line
+  const workspaceRoot = store.activeTour?.workspaceRoot;
+  const uri = await getStepFileUri(step, workspaceRoot, currentTour.ref);
+
+  let line = step.line
     ? step.line - 1
     : step.selection
     ? step.selection.end.line - 1
-    : 2000;
+    : undefined;
 
-  const range = new Range(line, 0, line, 0);
+  if (step.file && !line) {
+    const stepMarker = getActiveStepMarker();
+    if (stepMarker) {
+      const document = await workspace.openTextDocument(uri);
+      const match = document.getText().match(new RegExp(stepMarker));
+      if (match) {
+        line = document.positionAt(match.index!).line;
+      } else {
+        line = 2000;
+      }
+    } else {
+      // The step doesn't have a discoverable line number and so
+      // stick the step at the end of the file. Unfortunately, there
+      // isn't a way to say EOF, so 2000 is a temporary hack.
+      line = 2000;
+    }
+  }
+
+  const range = new Range(line!, 0, line!, 0);
   let label = `Step #${currentStep + 1} of ${currentTour!.steps.length}`;
 
   if (currentTour.title) {
@@ -208,8 +229,6 @@ async function renderCurrentStep() {
     label += ` (${title})`;
   }
 
-  const workspaceRoot = store.activeTour?.workspaceRoot;
-  const uri = await getStepFileUri(step, workspaceRoot, currentTour.ref);
   store.activeTour!.thread = controller!.createCommentThread(uri, range, []);
 
   const mode = store.isRecording ? CommentMode.Editing : CommentMode.Preview;

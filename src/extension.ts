@@ -13,6 +13,7 @@ import { promptForTour } from "./store/actions";
 import { discoverTours } from "./store/provider";
 import { initializeStorage } from "./store/storage";
 import { registerTreeProvider } from "./tree";
+import { updateMarkerTitles } from "./utils";
 
 export async function activate(context: vscode.ExtensionContext) {
   registerCommands();
@@ -51,6 +52,8 @@ export async function activate(context: vscode.ExtensionContext) {
   registerTextDocumentContentProvider();
   registerStatusBar();
   registerCompletionProvider();
+
+  updateMarkerTitles();
 
   return initializeApi(context);
 }

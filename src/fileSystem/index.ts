@@ -29,6 +29,9 @@ export class CodeTourFileSystemProvider implements FileSystemProvider {
       ...tour
     };
     delete newTour.id;
+    newTour.steps.forEach(step => {
+      delete step.markerTitle;
+    });
 
     const contents = JSON.stringify(newTour, null, 2);
     const bytes = new TextEncoder().encode(contents);

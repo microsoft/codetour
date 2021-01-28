@@ -27,6 +27,8 @@ export interface CodeTourStep {
   selection?: { start: CodeTourStepPosition; end: CodeTourStepPosition };
 
   commands?: string[];
+
+  markerTitle?: string;
 }
 
 export interface CodeTour {
@@ -37,6 +39,7 @@ export interface CodeTour {
   ref?: string;
   isPrimary?: boolean;
   nextTour?: string;
+  stepMarker?: string;
 }
 
 export interface ActiveTour {

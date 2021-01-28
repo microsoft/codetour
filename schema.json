@@ -120,6 +120,10 @@
         }
       }
     },
+    "stepMarker": {
+      "type": "string",
+      "description": "Specifies the 'marker' that indicates a line of code represents a step for this tour."
+    },
     "nextTour": {
       "type": "string",
       "description": "Specifies the title of the tour that is meant to follow this tour."

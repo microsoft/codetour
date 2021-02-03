@@ -4,15 +4,18 @@
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
   "version": "0.0.42",
+  "author": {
+    "name": "Microsoft Corporation"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/vsls-contrib/codetour"
+    "url": "https://github.com/microsoft/codetour"
   },
   "bugs": {
-    "url": "https://github.com/vsls-contrib/codetour/issues"
+    "url": "https://github.com/microsoft/codetour/issues"
   },
-  "homepage": "https://github.com/vsls-contrib/codetour#readme",
-  "license": "ISC",
+  "homepage": "https://github.com/microsoft/codetour#readme",
+  "license": "MIT",
   "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.48.0"

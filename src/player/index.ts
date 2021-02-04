@@ -58,16 +58,16 @@ export function generatePreviewContent(content: string) {
       }
 
       const tours = store.activeTour?.tours || store.tours;
-      const tour = tours.find(tour => tour.title === tourTitle);
+      const tour = tours.find(tour => getTourTitle(tour) === tourTitle);
       if (tour) {
-        const args = [tourTitle];
+        const args: [string, number?] = [tour.title];
 
         if (stepNumber) {
           args.push(Number(stepNumber));
         }
         const argsContent = encodeURIComponent(JSON.stringify(args));
-        const title = linkTitle || tourTitle;
-        return `[${title}](command:codetour.startTourByTitle?${argsContent} "Start \\"#${tourTitle}\\" tour")`;
+        const title = linkTitle || tour.title;
+        return `[${title}](command:codetour.startTourByTitle?${argsContent} "Start \\"${tour.title}\\" tour")`;
       }
 
       return _;
@@ -220,10 +220,10 @@ async function renderCurrentStep() {
     : undefined;
 
   if (step.file && !line) {
-    const stepMarker = getActiveStepMarker();
-    if (stepMarker) {
+    const stepPattern = step.pattern || getActiveStepMarker();
+    if (stepPattern) {
       const document = await workspace.openTextDocument(uri);
-      const match = document.getText().match(new RegExp(stepMarker));
+      const match = document.getText().match(new RegExp(stepPattern));
       if (match) {
         line = document.positionAt(match.index!).line;
       } else {

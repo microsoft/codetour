@@ -64,6 +64,10 @@
             "type": "number",
             "description": "Line number that the step is associated with."
           },
+          "pattern": {
+            "type": "string",
+            "description": "A regular expression to associate the step with. This is only considered when the line property isn't set, and allows you to associate steps with line content as opposed to ordinal."
+          },
           "title": {
             "type": "string",
             "description": "An optional title for the step."

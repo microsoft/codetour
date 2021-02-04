@@ -18,6 +18,7 @@ const TOUR_DECORATOR = vscode.window.createTextEditorDecorationType({
 
 type CodeTourStepTuple = [CodeTour, CodeTourStep, number];
 
+// TODO: Add support for regex/market steps.
 async function getTourSteps(
   document: vscode.TextDocument,
   lineNumber?: number

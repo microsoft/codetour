@@ -31,6 +31,7 @@ export interface CodeTourStep {
 
   commands?: string[];
 
+  pattern?: string;
   markerTitle?: string;
 }
 

@@ -8,7 +8,7 @@ import { workspace } from "vscode";
 import { EXTENSION_NAME, FS_SCHEME_CONTENT } from "../constants";
 import { api, RefType } from "../git";
 import { CodeTourComment } from "../player";
-import { CodeTour, store } from "../store";
+import { CodeTour, CodeTourStep, store } from "../store";
 import {
   endCurrentCodeTour,
   exportTour,
@@ -16,11 +16,7 @@ import {
   startCodeTour
 } from "../store/actions";
 import { CodeTourNode, CodeTourStepNode } from "../tree/nodes";
-import {
-  getActiveWorkspacePath,
-  getRelativePath,
-  getStepMarkerForLine
-} from "../utils";
+import { getActiveWorkspacePath, getRelativePath } from "../utils";
 
 export async function saveTour(tour: CodeTour) {
   const uri = vscode.Uri.parse(tour.id);
@@ -338,22 +334,13 @@ export function registerRecorderCommands() {
       const workspaceRoot = getActiveWorkspacePath();
       const file = getRelativePath(workspaceRoot, thread!.uri.path);
 
-      const step = {
+      const step: CodeTourStep = {
         file,
         description: reply.text
       };
 
-      const stepMarkerNumber = await getStepMarkerForLine(
-        thread!.uri,
-        thread!.range.start.line
-      );
-      if (!stepMarkerNumber) {
-        // @ts-ignore
-        step.line = thread!.range.start.line + 1;
-        store.activeTour!.step++;
-      } else {
-        store.activeTour!.step = stepMarkerNumber - 1;
-      }
+      step.line = thread!.range.start.line + 1;
+      store.activeTour!.step++;
 
       const stepNumber = store.activeTour!.step;
 
@@ -481,7 +468,6 @@ export function registerRecorderCommands() {
           comment.body instanceof vscode.MarkdownString
             ? comment.body.value
             : comment.body;
-
         const tourStep = store.activeTour!.tour!.steps[store.activeTour!.step];
         tourStep.description = content;
 

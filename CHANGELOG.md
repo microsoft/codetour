@@ -1,3 +1,8 @@
+## v0.0.43 (02/02/2021)
+
+- Tour steps can now be associated with a regular expression or "comment marker" (e.g. `// CT1.1`) in addition to a line number.
+- The `Insert code` gesture will now replace the selection when the current step has one.
+
 ## v0.0.42 (12/13/2020)
 
 - Added a hover preview for tour steps in the `CodeTour` tree view, so you can see the step's content at-a-glance

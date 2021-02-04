@@ -5,12 +5,12 @@
   "steps": [
     {
       "file": "src/extension.ts",
-      "line": 35,
+      "pattern": "initializeGitApi\\(\\)",
       "description": "Upon extension activation, we register the tree view provider"
     },
     {
       "file": "src/tree/index.ts",
-      "line": 50,
+      "pattern": "_onDidChangeTreeData\\.fire",
       "description": "### Test Heading\n\nThe tree is registered with the `codetour.tours` view ID, which is declared in the extension's `package.json` file."
     },
     {

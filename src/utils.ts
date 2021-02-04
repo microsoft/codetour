@@ -155,6 +155,10 @@ function getActiveStepMarkerPrefix(): string | undefined {
 }
 
 export function getActiveStepMarker(): string | undefined {
+  if (!isMarkerStep(store.activeTour!.tour, store.activeTour!.step)) {
+    return;
+  }
+
   const prefix = getActiveStepMarkerPrefix();
   const suffix = `.${store.activeTour!.step + 1}`;
   return `${prefix}${suffix}`;

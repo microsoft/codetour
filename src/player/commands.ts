@@ -110,19 +110,31 @@ export function registerPlayerCommands() {
     `${EXTENSION_NAME}.insertCodeSnippet`,
     async (codeBlock: string) => {
       const codeSnippet = decodeURIComponent(codeBlock);
-      const snippetStart =
-        store.activeTour!.tour.steps[store.activeTour!.step].line! - 1;
 
-      await vscode.window.activeTextEditor?.edit(e => {
-        e.insert(new vscode.Position(snippetStart, 0), codeSnippet);
-      });
+      const step = store.activeTour!.tour.steps[store.activeTour!.step];
+      if (step.selection) {
+        await vscode.window.activeTextEditor?.edit(e => {
+          const selection = new vscode.Selection(
+            step.selection!.start.line - 1,
+            step.selection!.start.character - 1,
+            step.selection!.end.line - 1,
+            step.selection!.end.character - 1
+          );
+          e.replace(selection, codeSnippet);
+        });
+      } else {
+        const position = new vscode.Position(step.line! - 1, 0);
+        await vscode.window.activeTextEditor?.edit(e =>
+          e.insert(position, codeSnippet)
+        );
+      }
 
       const lineAdjustment = codeSnippet.split("\n").length - 1;
-
       if (lineAdjustment > 0) {
         store.activeTour!.tour.steps[
           store.activeTour!.step
         ].line! += lineAdjustment;
+
         saveTour(store.activeTour!.tour);
       }
 

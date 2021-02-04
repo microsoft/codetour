@@ -6,7 +6,7 @@
     {
       "file": "src/extension.ts",
       "line": 36,
-      "description": "### Activation\nThe status bar provider is registered upon extension activiation\n\n#### References\n- Navigate to step [#4]. Or [jump to #4][#4].\n- Navigate to [#2 - Tree View]. Or [jump to tree][#2 - Tree View]. \n- Navigate to [#2 - Tree View#3]. Or [jump to tree @ 3][#2 - Tree View#3].",
+      "description": "### Activation\nThe status bar provider is registered upon extension activiation\n\n#### References\n- Navigate to step [#4]. Or [jump to #4][#4].\n- Navigate to [Tree View]. Or [jump to tree][Tree View]. \n- Navigate to [Tree View#3]. Or [jump to tree @ 3][Tree View#3].\n\n```javascript\nconsole.log(\"GG\");\n```",
       "selection": {
         "start": {
           "line": 32,
@@ -21,12 +21,12 @@
     {
       "file": "src/player/status.ts",
       "line": 35,
-      "description": "### Registration\nIf the currently opened workspace has any code tours, then we register the `Start Code Tour` status bar item."
+      "description": "### Registration\nIf the currently opened workspace has any code tours, then we register the `Start Code Tour` status bar item.\n\n>> npm run package"
     },
     {
       "file": "src/player/status.ts",
       "line": 35,
-      "description": "### Waiting for user\nUsing MobX, we wait for the user to start and/or navigate a code tour."
+      "description": "### Waiting for user\nUsing MobX, we wait for the user to start and/or navigate a code tour.\n\n```javascript\nconsole.log(\"oo\");\n```"
     },
     {
       "file": "src/player/status.ts",

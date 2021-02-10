@@ -1,7 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { commands, EventEmitter, Memento, Uri, window } from "vscode";
+import {
+  commands,
+  EventEmitter,
+  Memento,
+  Uri,
+  window,
+  workspace
+} from "vscode";
 import { CodeTour, store } from ".";
 import { EXTENSION_NAME, FS_SCHEME, FS_SCHEME_CONTENT } from "../constants";
 import { startPlayer, stopPlayer } from "../player";
@@ -139,7 +146,8 @@ export async function promptForTour(
   if (
     tours.length > 0 &&
     !globalState.get(key) &&
-    !isLiveShareWorkspace(workspaceRoot)
+    !isLiveShareWorkspace(workspaceRoot) &&
+    workspace.getConfiguration("codetour").get("promptForWorkspaceTours", true)
   ) {
     globalState.update(key, true);
 

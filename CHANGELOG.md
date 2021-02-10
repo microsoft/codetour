@@ -1,3 +1,9 @@
+## v0.0.44 (02/09/2021)
+
+- Added the `codetour.promptForWorkspaceTours` setting to allow users to supress the notification when opening workspaces with tours
+- Fixed a bug with replaying directory and content steps
+- Fixed a bug where there was a "flash" after adding the first step to a new tour
+
 ## v0.0.43 (02/02/2021)
 
 - Tour steps can now be associated with a regular expression or "comment marker" (e.g. `// CT1.1`) in addition to a line number.

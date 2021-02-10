@@ -226,15 +226,15 @@ async function renderCurrentStep() {
       const match = document.getText().match(new RegExp(stepPattern));
       if (match) {
         line = document.positionAt(match.index!).line;
-      } else {
-        line = 2000;
       }
-    } else {
-      // The step doesn't have a discoverable line number and so
-      // stick the step at the end of the file. Unfortunately, there
-      // isn't a way to say EOF, so 2000 is a temporary hack.
-      line = 2000;
     }
+  }
+
+  if (!line) {
+    // The step doesn't have a discoverable line number and so
+    // stick the step at the end of the file. Unfortunately, there
+    // isn't a way to say EOF, so 2000 is a temporary hack.
+    line = 2000;
   }
 
   const range = new Range(line!, 0, line!, 0);

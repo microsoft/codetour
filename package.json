@@ -3,7 +3,7 @@
   "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
-  "version": "0.0.43",
+  "version": "0.0.44",
   "author": {
     "name": "Microsoft Corporation"
   },
@@ -41,6 +41,11 @@
       "type": "object",
       "title": "CodeTour",
       "properties": {
+        "codetour.promptForWorkspaceTours": {
+          "type": "boolean",
+          "default": true,
+          "description": "Specifies whether or not to display a notification when opening a workspace with tours for the first time."
+        },
         "codetour.showMarkers": {
           "type": "boolean",
           "default": true,

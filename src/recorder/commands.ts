@@ -75,7 +75,12 @@ export function registerRecorderCommands() {
         ? title
         : path.basename(title.path).replace(".tour", "");
 
-    const tour = { title: tourTitle, steps: [] };
+    const tour = {
+      $schema: "https://aka.ms/codetour-schema",
+      title: tourTitle,
+      steps: []
+    };
+
     if (ref && ref !== "HEAD") {
       (tour as any).ref = ref;
     }

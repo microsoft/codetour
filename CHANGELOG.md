@@ -1,3 +1,7 @@
+## v0.0.45 (03/09/2021)
+
+- Fixed an issue with gutter decorators being duplicated when copying/pasting code on lines associated with a tour step
+
 ## v0.0.44 (02/09/2021)
 
 - Added the `codetour.promptForWorkspaceTours` setting to allow users to supress the notification when opening workspaces with tours

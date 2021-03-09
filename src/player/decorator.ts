@@ -13,7 +13,8 @@ const TOUR_DECORATOR = vscode.window.createTextEditorDecorationType({
   gutterIconPath: vscode.Uri.parse(ICON_URL),
   gutterIconSize: "contain",
   overviewRulerColor: "rgb(246,232,154)",
-  overviewRulerLane: vscode.OverviewRulerLane.Right
+  overviewRulerLane: vscode.OverviewRulerLane.Right,
+  rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed
 });
 
 type CodeTourStepTuple = [CodeTour, CodeTourStep, number];

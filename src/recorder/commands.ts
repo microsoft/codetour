@@ -10,6 +10,7 @@ import { api, RefType } from "../git";
 import { CodeTourComment } from "../player";
 import { CodeTour, CodeTourStep, store } from "../store";
 import {
+  EDITING_KEY,
   endCurrentCodeTour,
   exportTour,
   onDidEndTour,
@@ -264,7 +265,7 @@ export function registerRecorderCommands() {
 
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.addContentStep`,
-    action(async () => {
+    action(async (node?: CodeTourStepNode) => {
       const value = store.activeTour?.step === -1 ? "Introduction" : "";
       const title = await vscode.window.showInputBox({
         prompt: "Specify the title of the step",
@@ -275,13 +276,25 @@ export function registerRecorderCommands() {
         return;
       }
 
-      const stepNumber = ++store.activeTour!.step;
+      let stepNumber;
+      if (node) {
+        stepNumber = node.stepNumber + 1;
+        store.activeTour!.step = stepNumber;
+      } else {
+        stepNumber = ++store.activeTour!.step;
+    }
+    
       const tour = store.activeTour!.tour;
 
       tour.steps.splice(stepNumber, 0, {
         title,
         description: ""
       });
+
+      if (!store.isEditing) {
+        store.isEditing = true;
+        vscode.commands.executeCommand("setContext", EDITING_KEY, false);
+      }
 
       saveTour(tour);
     })
@@ -301,6 +314,11 @@ export function registerRecorderCommands() {
         description: ""
       });
 
+      if (!store.isEditing) {
+        store.isEditing = true;
+        vscode.commands.executeCommand("setContext", EDITING_KEY, false);
+      }
+
       saveTour(tour);
     })
   );
@@ -319,6 +337,11 @@ export function registerRecorderCommands() {
         selection: getStepSelection(),
         description: ""
       });
+
+      if (!store.isEditing) {
+        store.isEditing = true;
+        vscode.commands.executeCommand("setContext", EDITING_KEY, false);
+      }
 
       saveTour(tour);
     })
@@ -356,6 +379,9 @@ export function registerRecorderCommands() {
 
       tour.steps.splice(stepNumber, 0, step);
 
+      store.isEditing = false;
+      vscode.commands.executeCommand("setContext", EDITING_KEY, false);
+
       saveTour(tour);
 
       let label = `Step #${stepNumber + 1} of ${tour.steps.length}`;
@@ -391,7 +417,8 @@ export function registerRecorderCommands() {
         "codetour:recording",
         true
       );
-
+      await vscode.commands.executeCommand("setContext", EDITING_KEY, true);
+      
       if (node instanceof CodeTourNode) {
         startCodeTour(node.tour);
       } else if (store.activeTour) {
@@ -417,6 +444,7 @@ export function registerRecorderCommands() {
     `${EXTENSION_NAME}.previewTour`,
     async (node: CodeTourNode | vscode.CommentThread) => {
       store.isEditing = false;
+      vscode.commands.executeCommand("setContext", EDITING_KEY, false);
       await vscode.commands.executeCommand(
         "setContext",
         "codetour:recording",
@@ -485,6 +513,7 @@ export function registerRecorderCommands() {
       });
 
       store.isEditing = false;
+      vscode.commands.executeCommand("setContext", EDITING_KEY, false);
       await saveTour(store.activeTour!.tour);
     }
   );

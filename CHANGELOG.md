@@ -1,3 +1,10 @@
+## v0.0.46 (03/09/2021)
+
+- Added the new `Add Tour Step` command to tour step nodes in the `CodeTour` tree
+- When you add a new tour step, you're now transitioned into preview mode.
+- Fixed a bug with the rendering of shell commands, immediately after saving a step.
+- The `CodeTour: Edit Tour` command is now hidden from the command palette
+
 ## v0.0.45 (03/09/2021)
 
 - Fixed an issue with gutter decorators being duplicated when copying/pasting code on lines associated with a tour step

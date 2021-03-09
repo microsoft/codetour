@@ -247,7 +247,7 @@ async function renderCurrentStep() {
 
   store.activeTour!.thread = controller!.createCommentThread(uri, range, []);
 
-  const mode = store.isRecording ? CommentMode.Editing : CommentMode.Preview;
+  const mode = store.isRecording && store.isEditing ? CommentMode.Editing : CommentMode.Preview;
   let content = step.description;
 
   let hasPreviousStep = currentStep > 0;
@@ -255,7 +255,7 @@ async function renderCurrentStep() {
   const isFinalStep = currentStep === currentTour.steps.length - 1;
 
   const showNavigation = hasPreviousStep || hasNextStep || isFinalStep;
-  if (!store.isRecording && showNavigation) {
+  if (!store.isEditing && showNavigation) {
     content += "\n\n---\n";
 
     if (hasPreviousStep) {

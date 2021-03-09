@@ -1,6 +1,7 @@
 ## v0.0.45 (03/09/2021)
 
 - Fixed an issue with gutter decorators being duplicated when copying/pasting code on lines associated with a tour step
+- When you save a tour step, you're now automatically transitioned into "preview mode", in order to make it simpler to view the rendering of your step
 
 ## v0.0.44 (02/09/2021)
 

@@ -74,6 +74,7 @@ export interface Store {
   activeTour: ActiveTour | null;
   hasTours: boolean;
   isRecording: boolean;
+  isEditing: boolean;
   showMarkers: boolean;
   progress: CodeTourProgress[];
 }
@@ -82,6 +83,7 @@ export const store: Store = observable({
   tours: [],
   activeTour: null,
   isRecording: false,
+  isEditing: false,
   get hasTours() {
     return this.tours.length > 0;
   },

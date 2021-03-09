@@ -58,6 +58,7 @@ export function startCodeTour(
 
   if (startInEditMode) {
     store.isRecording = true;
+    store.isEditing = true;
     commands.executeCommand("setContext", RECORDING_KEY, true);
   } else {
     _onDidStartTour.fire([tour, step]);
@@ -98,6 +99,7 @@ export async function endCurrentCodeTour(fireEvent: boolean = true) {
 
   if (store.isRecording) {
     store.isRecording = false;
+    store.isEditing = false;
     commands.executeCommand("setContext", RECORDING_KEY, false);
   }
 

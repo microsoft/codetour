@@ -385,6 +385,7 @@ export function registerRecorderCommands() {
     `${EXTENSION_NAME}.editTour`,
     async (node: CodeTourNode | vscode.CommentThread) => {
       store.isRecording = true;
+      store.isEditing = true;
       await vscode.commands.executeCommand(
         "setContext",
         "codetour:recording",
@@ -415,7 +416,7 @@ export function registerRecorderCommands() {
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.previewTour`,
     async (node: CodeTourNode | vscode.CommentThread) => {
-      store.isRecording = false;
+      store.isEditing = false;
       await vscode.commands.executeCommand(
         "setContext",
         "codetour:recording",
@@ -473,6 +474,7 @@ export function registerRecorderCommands() {
           comment.body instanceof vscode.MarkdownString
             ? comment.body.value
             : comment.body;
+
         const tourStep = store.activeTour!.tour!.steps[store.activeTour!.step];
         tourStep.description = content;
 
@@ -482,6 +484,7 @@ export function registerRecorderCommands() {
         }
       });
 
+      store.isEditing = false;
       await saveTour(store.activeTour!.tour);
     }
   );

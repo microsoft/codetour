@@ -39,7 +39,7 @@ let id = 0;
 const SHELL_SCRIPT_PATTERN = /^>>\s+(?<script>.*)$/gm;
 const COMMAND_PATTERN = /(?<commandPrefix>\(command:[\w+\.]+\?)(?<params>\[[^\]]+\])/gm;
 const TOUR_REFERENCE_PATTERN = /(?:\[(?<linkTitle>[^\]]+)\])?\[(?=\s*[^\]\s])(?<tourTitle>[^\]#]+)?(?:#(?<stepNumber>\d+))?\](?!\()/gm;
-const CODE_FENCE_PATTERN = /```\w+\n([^`]+)\n```/gm;
+const CODE_FENCE_PATTERN = /```\w+\s+([^`]+)\s+```/gm;
 
 export function generatePreviewContent(content: string) {
   return content
@@ -223,7 +223,7 @@ async function renderCurrentStep() {
     const stepPattern = step.pattern || getActiveStepMarker();
     if (stepPattern) {
       const document = await workspace.openTextDocument(uri);
-      const match = document.getText().match(new RegExp(stepPattern));
+      const match = document.getText().match(new RegExp(stepPattern, "m"));
       if (match) {
         line = document.positionAt(match.index!).line;
       }

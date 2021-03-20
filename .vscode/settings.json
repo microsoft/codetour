@@ -9,5 +9,6 @@
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.organizeImports": true
-  }
+  },
+  "codetour.recordMode": "pattern"
 }

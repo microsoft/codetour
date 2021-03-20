@@ -152,7 +152,16 @@ export function registerRecorderCommands() {
       }
     }
 
-    const ref = await promptForTourRef(workspaceRoot);
+    let ref;
+    
+    const mode = vscode.workspace
+        .getConfiguration("codetour")
+        .get("recordMode", "lineNumber");
+
+    if (mode === "lineNumber") {
+      ref = await promptForTourRef(workspaceRoot);
+    }
+
     const tour = await writeTourFile(workspaceRoot, tourTitle, ref);
 
     startCodeTour(tour, 0, workspaceRoot, true);
@@ -367,7 +376,17 @@ export function registerRecorderCommands() {
         description: reply.text
       };
 
-      step.line = thread!.range.start.line + 1;
+      const mode = vscode.workspace
+        .getConfiguration("codetour")
+        .get("recordMode", "lineNumber");
+
+      if (mode === "lineNumber") {
+        step.line = thread!.range.start.line + 1;
+      } else if (mode === "pattern") {
+        const contents = vscode.window.activeTextEditor?.document.lineAt(thread.range.start).text;
+        step.pattern = contents!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').trim();
+      }
+      
       store.activeTour!.step++;
 
       const stepNumber = store.activeTour!.step;

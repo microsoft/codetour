@@ -4,7 +4,7 @@
 import { reaction } from "mobx";
 import * as vscode from "vscode";
 import { FS_SCHEME_CONTENT, ICON_URL } from "../constants";
-import { CodeTour, CodeTourStep, store } from "../store";
+import { CodeTourStepTuple, store } from "../store";
 import { getStepFileUri, getWorkspaceUri } from "../utils";
 
 const DISABLED_SCHEMES = [FS_SCHEME_CONTENT, "comment"];
@@ -17,12 +17,8 @@ const TOUR_DECORATOR = vscode.window.createTextEditorDecorationType({
   rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed
 });
 
-type CodeTourStepTuple = [CodeTour, CodeTourStep, number];
-
-// TODO: Add support for regex/market steps.
 async function getTourSteps(
-  document: vscode.TextDocument,
-  lineNumber?: number
+  document: vscode.TextDocument
 ): Promise<CodeTourStepTuple[]> {
   const steps: CodeTourStepTuple[] = store.tours.flatMap(tour =>
     tour.steps.map(
@@ -36,8 +32,7 @@ async function getTourSteps(
       const uri = await getStepFileUri(step, workspaceRoot);
 
       if (
-        uri.toString().localeCompare(document.uri.toString()) === 0 &&
-        (!lineNumber || step.line! - 1 === lineNumber)
+        uri.toString().localeCompare(document.uri.toString()) === 0
       ) {
         return [tour, step, stepNumber];
       }
@@ -48,23 +43,6 @@ async function getTourSteps(
   return tourSteps.filter(i => i);
 }
 
-async function setDecorations(editor: vscode.TextEditor) {
-  if (DISABLED_SCHEMES.includes(editor.document.uri.scheme)) {
-    return;
-  }
-
-  const tourSteps = await getTourSteps(editor.document);
-  if (tourSteps.length === 0) {
-    return;
-  }
-
-  const ranges = tourSteps.map(
-    ([, step]) => new vscode.Range(step.line! - 1, 0, step.line! - 1, 1000)
-  );
-
-  editor.setDecorations(TOUR_DECORATOR, ranges);
-}
-
 let hoverProviderDisposable: vscode.Disposable | undefined;
 function registerHoverProvider() {
   return vscode.languages.registerHoverProvider("*", {
@@ -72,11 +50,11 @@ function registerHoverProvider() {
       document: vscode.TextDocument,
       position: vscode.Position
     ) => {
-      const tourSteps = await getTourSteps(document, position.line);
-      if (tourSteps.length === 0) {
+      if (!store.activeEditorSteps) {
         return;
       }
 
+      const tourSteps = store.activeEditorSteps.filter(([,,,line]) => line === position.line);
       const hovers = tourSteps.map(([tour, _, stepNumber]) => {
         const args = encodeURIComponent(JSON.stringify([tour.id, stepNumber]));
         const command = `command:codetour._startTourById?${args}`;
@@ -90,6 +68,47 @@ function registerHoverProvider() {
       return new vscode.Hover(content);
     }
   });
+}
+
+async function updateDecorations(editor: vscode.TextEditor) {
+  if (DISABLED_SCHEMES.includes(editor.document.uri.scheme)) {
+    return;
+  }
+
+  const tourSteps = await getTourSteps(editor.document);
+  if (tourSteps.length === 0) {
+    return clearDecorations(editor);
+  }
+
+  const contents = editor.document.getText();
+
+  // @ts-ignore
+  store.activeEditorSteps = (await Promise.all(tourSteps.map(
+    async (tourStep) => {
+      let line, step = tourStep[1];
+      if (step.line) {
+        line = step.line - 1;
+      } else if (step.pattern) {
+        const match = contents.match(new RegExp(step.pattern, "m"));
+        if (match) {
+          line = editor.document.positionAt(match.index!).line;
+        }
+      }
+
+      if (line) {
+        tourStep.push(line);
+        return tourStep;
+      }
+    }
+  ))).filter(tourStep => tourStep);
+
+  const ranges = store.activeEditorSteps!.map(([,,,line]) => new vscode.Range(line!, 0, line!, 1000));
+  editor.setDecorations(TOUR_DECORATOR, ranges);
+}
+
+function clearDecorations(editor: vscode.TextEditor) {
+  store.activeEditorSteps = undefined;
+  editor.setDecorations(TOUR_DECORATOR, []);
 }
 
 let disposables: vscode.Disposable[] = [];
@@ -111,16 +130,33 @@ export async function registerDecorators() {
         disposables.push(
           vscode.window.onDidChangeActiveTextEditor(editor => {
             if (editor) {
-              setDecorations(editor);
+              updateDecorations(editor);
             }
           })
         );
 
+   
+
+        /*disposables.push(vscode.workspace.onDidChangeTextDocument(e => {
+          if (!store.activeEditorSteps) {
+            return;
+          }
+
+          e.contentChanges.map(async (change) => {
+            const tourSteps = store.activeEditorSteps!.filter(([,,,line]) => line === change.range.start.line);
+            for (let [tour, step] of tourSteps) {
+              step.pattern = change.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').trim();
+              await saveTour(tour);
+            }
+          })
+        }));*/
+
         if (activeEditor) {
-          setDecorations(activeEditor);
+          updateDecorations(activeEditor);
         }
       } else if (activeEditor) {
-        activeEditor.setDecorations(TOUR_DECORATOR, []);
+        clearDecorations(activeEditor);
+        
         disposables.forEach(disposable => disposable.dispose());
         hoverProviderDisposable = undefined;
         disposables = [];

@@ -46,6 +46,15 @@
           "default": true,
           "description": "Specifies whether or not to display a notification when opening a workspace with tours for the first time."
         },
+        "codetour.recordMode": {
+          "type": "string",
+          "enum": [
+            "lineNumber",
+            "pattern"
+          ],
+          "default": "lineNumber",
+          "description": "Specifies how the tour recorder will behave when capturing a new step."
+        },
         "codetour.showMarkers": {
           "type": "boolean",
           "default": true,
@@ -586,6 +595,18 @@
         "when": "codetour:inTour && !textInputFocus && !terminalFocus",
         "key": "ctrl+right",
         "mac": "cmd+right"
+      },
+      {
+        "command": "codetour.endTour",
+        "when": "codetour:inTour && !textInputFocus && !terminalFocus",
+        "key": "ctrl+down ctrl+down",
+        "mac": "cmd+down cmd+down"
+      },
+      {
+        "command": "codetour.startTour",
+        "when": "!terminalFocus",
+        "key": "ctrl+up ctrl+up",
+        "mac": "cmd+up cmd+up"
       }
     ],
     "languages": [

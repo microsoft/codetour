@@ -31,7 +31,7 @@
     {
       "file": "src/tree/nodes.ts",
       "line": 12,
-      "description": "### Headings \n\nThe nodes returned by the tree use the tour's title and description as it's display properties. Additionally, the node specifies the `codetour.startStart` command as its click-behavior.\n\n```javascript\nconsole.log(\"SDFddf\");\n```foo.js"
+      "description": "### Headings \n\nThe nodes returned by the tree use the tour's title and description as it's display properties. Additionally, the node specifies the `codetour.startStart` command as its click-behavior.\n\n```javascript\nconsole.log(\"SDFddf\");\n```"
     },
     {
       "file": "src/commands.ts",

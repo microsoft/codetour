@@ -1,3 +1,8 @@
+## v0.0.47 (03/10/2021)
+
+- Introduced the new `CodeTour: Record Mode` setting, that allows you to create tours that are associated with code via regex patterns, in addition to line numbers.
+- Added keybindings for starting and ending tours
+
 ## v0.0.46 (03/09/2021)
 
 - Added the new `Add Tour Step` command to tour step nodes in the `CodeTour` tree

@@ -3,7 +3,11 @@
 - Automatically updating a tour file as the associated code changes
 - Automatically set the "pattern" record mode when you create a new tour, and select `None` for the git ref
 
-## v0.0.48 (03/26/2021)
+## v0.0.49 (03/27/2021)
+
+- Fixed a bug with code fences, that allows the use of backticks in the code snippet
+
+## v0.0.48 (03/27/2021)
 
 - Added support for conditional tours via the new `when` property to tour files
 - Added keybindings for starting and ending tours

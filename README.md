@@ -1,6 +1,6 @@
 # CodeTour 🗺️
 
-CodeTour is a Visual Studio Code extension, which allows you to record and playback guided walkthroughs of your codebases. It's like a virtual brownbag, or table of contents, that can make it easier to onboard (or re-board!) to a new project/feature area, visualize bug reports, or understand the context of a code review/PR change. A "code tour" is simply a series of interactive steps, each of which are associated with a specific directory, or file/line, and include a description of the respective code. This allows developers to clone a repo, and then immediately start **learning it**, without needing to refer to a `CONTRIBUTING.md` file and/or rely on help from others. Tours can either be checked into a repo, to enable sharing with other contributors, or [exported](#exporting-tours) to a "tour file", which allows anyone to replay the same tour, without having to clone any code to do it!
+CodeTour is a Visual Studio Code extension, which allows you to record and playback guided walkthroughs of your codebases. It's like a table of contents, that can make it easier to onboard (or re-board!) to a new project/feature area, visualize bug reports, or understand the context of a code review/PR change. A "code tour" is simply a series of interactive steps, each of which are associated with a specific directory, or file/line, and include a description of the respective code. This allows developers to clone a repo, and then immediately start **learning it**, without needing to refer to a `CONTRIBUTING.md` file and/or rely on help from others. Tours can either be checked into a repo, to enable sharing with other contributors, or [exported](#exporting-tours) to a "tour file", which allows anyone to replay the same tour, without having to clone any code to do it!
 
 <img width="800px" src="https://user-images.githubusercontent.com/116461/76165260-c6c00500-6112-11ea-9cda-0a6cb9b72e8f.gif" />
 
@@ -161,7 +161,7 @@ When you record a tour, you'll be asked which git "ref" to associate it with. Th
 
 You can choose to associate with the tour with the following ref types:
 
-- `None` - The tour isn't associated with any ref, and therefore, the file/line numbers in the tour might get out of sync over time. The benefit of this option is that it enables the code to be edited as part of the tour, since the tour will walk the user through whichever branch/commit they have checked out.
+- `None` - The tour isn't associated with any ref. When you select this option, tour steps will be associated with code via a regex pattern, as opposed to a line number. This ensures that they can retain resilient if the attached line is moved around the file. The benefit of this option is that it enables the code to be edited as part of the tour, since the tour will walk the user through whichever branch/commit they have checked out (e.g. interactive tutorials).
 - `Current Branch` - The tour is restricted to the current branch. This can have the same resiliency challenges as `None`, but, it allows you to maintain a special branch for your tours that can be versioned seperately. If the end-user has the associated branch checked out, then the tour will enable them to make edits to files as its taken. Otherwise, the tour will replay with read-only files.
 - `Current Commit` - The tour is restricted to the current commit, and therefore, will never get out of sync. If the end-user's `HEAD` points at the specified commit, then the tour will enable them to make edits to files as its taken. Otherwise, the tour will replay with read-only files.
 - Tags - The tour is restricted to the selected tag, and therefore, will never get out of sync. The repo's entire list of tags will be displayed, which allows you to easily select one.
@@ -201,7 +201,7 @@ Within the `.tours` (or `.vscode/tours`) directory, you can organize your tour f
   - `directory` - The path of a directory (relative to the workspace root) that this step is associated with. _Note: This property takes precedence over the `file` property, and so will "win" if both are present._
   - `uri` - An absolute URI that this step is associated with. Note that `uri` and `file` are mutually exclusive, so only set one per step
   - `line` - The 1-based line number that this step is associated with
-  - `pattern` - A regular expression to associate the step with. This is only considered when the line property isn't set, and allows you to associate steps with line content as opposed to ordinal.
+  - `pattern` - A regular expression to associate the step with. This is only considered when the `line` property isn't set, and allows you to associate steps with line content as opposed to ordinal.
   - `title` - An optional title, which will be displayed as the step name in the `CodeTour` tree view.
   - `commands` - An array of VS Code command strings, that indicate the name of a command (e.g. `codetour.endTour`) and any optional parameters to pass to it, specified as a query string array (eg. `codetour.endTour?[2]`).
   - `view` - The ID of a VS Code view that will be automatically focused when this step is navigated to.
@@ -346,19 +346,22 @@ In addition to the `CodeTour` tree view and the status bar item, the CodeTour ex
 
 The `CodeTour` extension contributes the following settings:
 
-- `codetour.promptForWorkspaceTours` - Specifies whether or not to display a notification when opening a workspace with tours for the first time.
-- `codetour.showMarkers` - Specifies whether or not to show [tour markers](#tour-markers). Defaults to `true`.
+- `Codetour > Prompt For Workspace Tours` - Specifies whether or not to display a notification when opening a workspace with tours for the first time.
+
+- `Codetour > Record Mode` - Specifies how you want to associate tour steps to code when you're recording a new tour. Can either be `lineNumber` or `pattern`. Defaults to `lineNumber`.
+
+- `Codetour > Show Markers` - Specifies whether or not to show [tour markers](#tour-markers). Defaults to `true`.
 
 ### Keybindings
 
 In addition to the available commands, the Code Tour extension also contributes the following commands, which are active while you're currently taking a tour:
 
-| Windows/Linux | macOS | Description |
-|-|-|-|
-| `ctrl+right` | `cmd+right` | Move to the next step in the tour |
-| `ctrl+left` | `cmd+left` | Move to the previous step in the tour |
-| `ctrl+down ctrl+down` | `cmd+down cmd+down` | End the current tour |
-| `ctrl+up ctrl+up` | `cmd+up cmd+up` | Start new tour |
+| Windows/Linux         | macOS               | Description                           |
+| --------------------- | ------------------- | ------------------------------------- |
+| `ctrl+right`          | `cmd+right`         | Move to the next step in the tour     |
+| `ctrl+left`           | `cmd+left`          | Move to the previous step in the tour |
+| `ctrl+down ctrl+down` | `cmd+down cmd+down` | End the current tour                  |
+| `ctrl+up ctrl+up`     | `cmd+up cmd+up`     | Start new tour                        |
 
 ## Extension API
 

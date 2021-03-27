@@ -11,9 +11,9 @@ import {
   TreeItem,
   window
 } from "vscode";
-import { EXTENSION_NAME } from "../constants";
-import { generatePreviewContent } from "../player";
-import { store } from "../store";
+import { EXTENSION_NAME } from "../../constants";
+import { generatePreviewContent } from "..";
+import { store } from "../../store";
 import { CodeTourNode, CodeTourStepNode } from "./nodes";
 
 class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {

@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 import * as vscode from "vscode";
-import { FS_SCHEME_CONTENT } from "../constants";
+import { FS_SCHEME_CONTENT } from "../../constants";
 
 class CodeTourTextDocumentContentProvider
   implements vscode.TextDocumentContentProvider {

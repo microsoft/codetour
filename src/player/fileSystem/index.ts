@@ -14,8 +14,8 @@ import {
   Uri,
   workspace
 } from "vscode";
-import { FS_SCHEME } from "../constants";
-import { CodeTour, CodeTourStep, store } from "../store";
+import { FS_SCHEME } from "../../constants";
+import { CodeTour, CodeTourStep, store } from "../../store";
 
 export class CodeTourFileSystemProvider implements FileSystemProvider {
   private count = 0;

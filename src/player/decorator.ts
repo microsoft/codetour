@@ -17,8 +17,8 @@ const TOUR_DECORATOR = vscode.window.createTextEditorDecorationType({
   rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed
 });
 
-async function getTourSteps(
-  document: vscode.TextDocument
+export async function getTourSteps(
+  editor: vscode.TextEditor
 ): Promise<CodeTourStepTuple[]> {
   const steps: CodeTourStepTuple[] = store.tours.flatMap(tour =>
     tour.steps.map(
@@ -26,15 +26,24 @@ async function getTourSteps(
     )
   );
 
+  const contents = editor.document.getText();
   const tourSteps = await Promise.all(
     steps.map(async ([tour, step, stepNumber]) => {
       const workspaceRoot = getWorkspaceUri(tour);
       const uri = await getStepFileUri(step, workspaceRoot);
 
-      if (
-        uri.toString().localeCompare(document.uri.toString()) === 0
-      ) {
-        return [tour, step, stepNumber];
+      if (uri.toString().localeCompare(editor.document.uri.toString()) === 0) {
+        let line;
+        if (step.line) {
+          line = step.line - 1;
+        } else if (step.pattern) {
+          const match = contents.match(new RegExp(step.pattern, "m"));
+          if (match) {
+            line = editor.document.positionAt(match.index!).line;
+          }
+        }
+
+        return [tour, step, stepNumber, line];
       }
     })
   );
@@ -54,7 +63,9 @@ function registerHoverProvider() {
         return;
       }
 
-      const tourSteps = store.activeEditorSteps.filter(([,,,line]) => line === position.line);
+      const tourSteps = store.activeEditorSteps.filter(
+        ([, , , line]) => line === position.line
+      );
       const hovers = tourSteps.map(([tour, _, stepNumber]) => {
         const args = encodeURIComponent(JSON.stringify([tour.id, stepNumber]));
         const command = `command:codetour._startTourById?${args}`;
@@ -70,39 +81,21 @@ function registerHoverProvider() {
   });
 }
 
-async function updateDecorations(editor: vscode.TextEditor) {
-  if (DISABLED_SCHEMES.includes(editor.document.uri.scheme)) {
+export async function updateDecorations(
+  editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
+) {
+  if (!editor || DISABLED_SCHEMES.includes(editor.document.uri.scheme)) {
     return;
   }
 
-  const tourSteps = await getTourSteps(editor.document);
-  if (tourSteps.length === 0) {
+  store.activeEditorSteps = await getTourSteps(editor);
+  if (store.activeEditorSteps.length === 0) {
     return clearDecorations(editor);
   }
 
-  const contents = editor.document.getText();
-
-  // @ts-ignore
-  store.activeEditorSteps = (await Promise.all(tourSteps.map(
-    async (tourStep) => {
-      let line, step = tourStep[1];
-      if (step.line) {
-        line = step.line - 1;
-      } else if (step.pattern) {
-        const match = contents.match(new RegExp(step.pattern, "m"));
-        if (match) {
-          line = editor.document.positionAt(match.index!).line;
-        }
-      }
-
-      if (line) {
-        tourStep.push(line);
-        return tourStep;
-      }
-    }
-  ))).filter(tourStep => tourStep);
-
-  const ranges = store.activeEditorSteps!.map(([,,,line]) => new vscode.Range(line!, 0, line!, 1000));
+  const ranges = store.activeEditorSteps!.map(
+    ([, , , line]) => new vscode.Range(line!, 0, line!, 1000)
+  );
   editor.setDecorations(TOUR_DECORATOR, ranges);
 }
 
@@ -135,32 +128,26 @@ export async function registerDecorators() {
           })
         );
 
-   
-
-        /*disposables.push(vscode.workspace.onDidChangeTextDocument(e => {
-          if (!store.activeEditorSteps) {
-            return;
-          }
-
-          e.contentChanges.map(async (change) => {
-            const tourSteps = store.activeEditorSteps!.filter(([,,,line]) => line === change.range.start.line);
-            for (let [tour, step] of tourSteps) {
-              step.pattern = change.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').trim();
-              await saveTour(tour);
-            }
-          })
-        }));*/
-
         if (activeEditor) {
           updateDecorations(activeEditor);
         }
       } else if (activeEditor) {
         clearDecorations(activeEditor);
-        
+
         disposables.forEach(disposable => disposable.dispose());
         hoverProviderDisposable = undefined;
         disposables = [];
       }
     }
+  );
+
+  store.showMarkers = vscode.workspace
+    .getConfiguration("codetour")
+    .get("showMarkers", true);
+
+  vscode.commands.executeCommand(
+    "setContext",
+    "codetour:showingMarkers",
+    store.showMarkers
   );
 }

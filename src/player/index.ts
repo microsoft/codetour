@@ -11,6 +11,7 @@ import {
   comments,
   CommentThread,
   CommentThreadCollapsibleState,
+  ExtensionContext,
   MarkdownString,
   Range,
   Selection,
@@ -22,6 +23,7 @@ import {
 } from "vscode";
 import { SMALL_ICON_URL } from "../constants";
 import { CodeTour, store } from "../store";
+import { initializeStorage } from "../store/storage";
 import {
   getActiveStepMarker,
   getActiveTourNumber,
@@ -30,6 +32,12 @@ import {
   getStepLabel,
   getTourTitle
 } from "../utils";
+import { registerPlayerCommands } from "./commands";
+import { registerDecorators } from "./decorator";
+import { registerFileSystemProvider } from "./fileSystem";
+import { registerTextDocumentContentProvider } from "./fileSystem/documentProvider";
+import { registerStatusBar } from "./status";
+import { registerTreeProvider } from "./tree";
 
 const CONTROLLER_ID = "codetour";
 const CONTROLLER_LABEL = "CodeTour";
@@ -39,13 +47,17 @@ let id = 0;
 const SHELL_SCRIPT_PATTERN = /^>>\s+(?<script>.*)$/gm;
 const COMMAND_PATTERN = /(?<commandPrefix>\(command:[\w+\.]+\?)(?<params>\[[^\]]+\])/gm;
 const TOUR_REFERENCE_PATTERN = /(?:\[(?<linkTitle>[^\]]+)\])?\[(?=\s*[^\]\s])(?<tourTitle>[^\]#]+)?(?:#(?<stepNumber>\d+))?\](?!\()/gm;
-const CODE_FENCE_PATTERN = /```\w+\s+([^`]+)\s+```/gm;
+const CODE_FENCE_PATTERN = /```[^\n]+\n([^`]+)```/gm;
 
 export function generatePreviewContent(content: string) {
   return content
     .replace(SHELL_SCRIPT_PATTERN, (_, script) => {
       const args = encodeURIComponent(JSON.stringify([script]));
-      return `> [${script}](command:codetour.sendTextToTerminal?${args} "Run \\"${script}\\" in a terminal")`;
+      const s = `> [${script}](command:codetour.sendTextToTerminal?${args} "Run \\"${script.replace(
+        /"/g,
+        "'"
+      )}\\" in a terminal")`;
+      return s;
     })
     .replace(COMMAND_PATTERN, (_, commandPrefix, params) => {
       const args = encodeURIComponent(JSON.stringify(JSON.parse(params)));
@@ -247,7 +259,10 @@ async function renderCurrentStep() {
 
   store.activeTour!.thread = controller!.createCommentThread(uri, range, []);
 
-  const mode = store.isRecording && store.isEditing ? CommentMode.Editing : CommentMode.Preview;
+  const mode =
+    store.isRecording && store.isEditing
+      ? CommentMode.Editing
+      : CommentMode.Preview;
   let content = step.description;
 
   let hasPreviousStep = currentStep > 0;
@@ -400,27 +415,38 @@ async function showDocument(uri: Uri, range: Range, selection?: Selection) {
   document.revealRange(range, TextEditorRevealType.InCenter);
 }
 
-// Watch for changes to the active tour property,
-// and automatically re-render the current step in response.
-reaction(
-  () => [
-    store.activeTour
-      ? [
-          store.activeTour.step,
-          store.activeTour.tour.title,
-          store.activeTour.tour.steps.map(step => [
-            step.title,
-            step.description,
-            step.line,
-            step.directory,
-            step.view
-          ])
-        ]
-      : null
-  ],
-  () => {
-    if (store.activeTour) {
-      renderCurrentStep();
+export function registerPlayerModule(context: ExtensionContext) {
+  registerPlayerCommands();
+  registerTreeProvider(context.extensionPath);
+  registerFileSystemProvider();
+  registerTextDocumentContentProvider();
+  registerStatusBar();
+  registerDecorators();
+
+  initializeStorage(context);
+
+  // Watch for changes to the active tour property,
+  // and automatically re-render the current step in response.
+  reaction(
+    () => [
+      store.activeTour
+        ? [
+            store.activeTour.step,
+            store.activeTour.tour.title,
+            store.activeTour.tour.steps.map(step => [
+              step.title,
+              step.description,
+              step.line,
+              step.directory,
+              step.view
+            ])
+          ]
+        : null
+    ],
+    () => {
+      if (store.activeTour) {
+        renderCurrentStep();
+      }
     }
-  }
-);
+  );
+}

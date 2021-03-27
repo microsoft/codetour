@@ -16,7 +16,7 @@ import {
   startCodeTour
 } from "../store/actions";
 import { progress } from "../store/storage";
-import { CodeTourNode } from "../tree/nodes";
+import { CodeTourNode } from "./tree/nodes";
 import { readUriContents } from "../utils";
 
 let terminal: vscode.Terminal | null;

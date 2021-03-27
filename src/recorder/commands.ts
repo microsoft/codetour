@@ -8,6 +8,7 @@ import { workspace } from "vscode";
 import { EXTENSION_NAME, FS_SCHEME_CONTENT } from "../constants";
 import { api, RefType } from "../git";
 import { CodeTourComment } from "../player";
+import { CodeTourNode, CodeTourStepNode } from "../player/tree/nodes";
 import { CodeTour, CodeTourStep, store } from "../store";
 import {
   EDITING_KEY,
@@ -16,7 +17,6 @@ import {
   onDidEndTour,
   startCodeTour
 } from "../store/actions";
-import { CodeTourNode, CodeTourStepNode } from "../tree/nodes";
 import { getActiveWorkspacePath, getRelativePath } from "../utils";
 
 export async function saveTour(tour: CodeTour) {
@@ -25,6 +25,8 @@ export async function saveTour(tour: CodeTour) {
     $schema: "https://aka.ms/codetour-schema",
     ...tour
   };
+
+  // @ts-ignore
   delete newTour.id;
   newTour.steps.forEach(step => {
     delete step.markerTitle;
@@ -33,7 +35,7 @@ export async function saveTour(tour: CodeTour) {
   const tourContent = JSON.stringify(newTour, null, 2);
 
   const bytes = new TextEncoder().encode(tourContent);
-  return vscode.workspace.fs.writeFile(uri, bytes);
+  await vscode.workspace.fs.writeFile(uri, bytes);
 }
 
 export function registerRecorderCommands() {
@@ -153,10 +155,10 @@ export function registerRecorderCommands() {
     }
 
     let ref;
-    
+
     const mode = vscode.workspace
-        .getConfiguration("codetour")
-        .get("recordMode", "lineNumber");
+      .getConfiguration("codetour")
+      .get("recordMode", "lineNumber");
 
     if (mode === "lineNumber") {
       ref = await promptForTourRef(workspaceRoot);
@@ -291,8 +293,8 @@ export function registerRecorderCommands() {
         store.activeTour!.step = stepNumber;
       } else {
         stepNumber = ++store.activeTour!.step;
-    }
-    
+      }
+
       const tour = store.activeTour!.tour;
 
       tour.steps.splice(stepNumber, 0, {
@@ -378,15 +380,17 @@ export function registerRecorderCommands() {
 
       const mode = vscode.workspace
         .getConfiguration("codetour")
-        .get("recordMode", "lineNumber");
+        .get("recordMode");
 
-      if (mode === "lineNumber") {
+      if (mode === "pattern" || tour.ref === undefined) {
+        const contents = vscode.window.activeTextEditor?.document.lineAt(
+          thread.range.start
+        ).text;
+        step.pattern = contents!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").trim();
+      } else if (mode === "lineNumber" || tour.ref !== undefined) {
         step.line = thread!.range.start.line + 1;
-      } else if (mode === "pattern") {
-        const contents = vscode.window.activeTextEditor?.document.lineAt(thread.range.start).text;
-        step.pattern = contents!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').trim();
       }
-      
+
       store.activeTour!.step++;
 
       const stepNumber = store.activeTour!.step;
@@ -437,7 +441,7 @@ export function registerRecorderCommands() {
         true
       );
       await vscode.commands.executeCommand("setContext", EDITING_KEY, true);
-      
+
       if (node instanceof CodeTourNode) {
         startCodeTour(node.tour);
       } else if (store.activeTour) {

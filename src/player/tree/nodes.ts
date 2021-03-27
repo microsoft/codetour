@@ -8,10 +8,10 @@ import {
   TreeItemCollapsibleState,
   Uri
 } from "vscode";
-import { CONTENT_URI, EXTENSION_NAME, FS_SCHEME } from "../constants";
-import { CodeTour, store } from "../store";
-import { progress } from "../store/storage";
-import { getFileUri, getStepLabel, getWorkspaceUri } from "../utils";
+import { CONTENT_URI, EXTENSION_NAME, FS_SCHEME } from "../../constants";
+import { CodeTour, store } from "../../store";
+import { progress } from "../../store/storage";
+import { getFileUri, getStepLabel, getWorkspaceUri } from "../../utils";
 
 function isRecording(tour: CodeTour) {
   return (

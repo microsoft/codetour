@@ -51,6 +51,8 @@ export async function discoverTours(): Promise<void> {
   });
 
   vscode.commands.executeCommand("setContext", HAS_TOURS_KEY, store.hasTours);
+
+  updateMarkerTitles();
 }
 
 async function discoverMainTours(
@@ -115,17 +117,12 @@ async function discoverSubTours(workspaceUri: vscode.Uri): Promise<CodeTour[]> {
   return tours.flat();
 }
 
-async function discoverToursAndUpdateTitles() {
-  await discoverTours();
-  updateMarkerTitles();
-}
-
-vscode.workspace.onDidChangeWorkspaceFolders(discoverToursAndUpdateTitles);
+vscode.workspace.onDidChangeWorkspaceFolders(discoverTours);
 
 const watcher = vscode.workspace.createFileSystemWatcher(
   "**/{.vscode/tours,.tours}/**/*.{json,tour}"
 );
 
-watcher.onDidChange(discoverToursAndUpdateTitles);
-watcher.onDidCreate(discoverToursAndUpdateTitles);
-watcher.onDidDelete(discoverToursAndUpdateTitles);
+watcher.onDidChange(discoverTours);
+watcher.onDidCreate(discoverTours);
+watcher.onDidDelete(discoverTours);

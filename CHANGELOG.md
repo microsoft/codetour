@@ -1,7 +1,17 @@
+## Upcoming
+
+- Automatically updating a tour file as the associated code changes
+
+## v0.0.48 (03/26/2021)
+
+- The pattern record mode is now automatically used when you create a new tour, and select `None` for the git ref
+- Added keybindings for starting and ending tours
+- Fixed an issue with using quotes in a shell command
+- Fixed a bug with code fences that used a multi-word language (e.g. `codefusion html`)
+
 ## v0.0.47 (03/10/2021)
 
 - Introduced the new `CodeTour: Record Mode` setting, that allows you to create tours that are associated with code via regex patterns, in addition to line numbers.
-- Added keybindings for starting and ending tours
 
 ## v0.0.46 (03/09/2021)
 

@@ -1,6 +1,7 @@
 ## Upcoming
 
 - Automatically updating a tour file as the associated code changes
+- Automatically set the "pattern" record mode when you create a new tour, and select `None` for the git ref
 
 ## v0.0.48 (03/26/2021)
 
@@ -8,7 +9,6 @@
 - Added keybindings for starting and ending tours
 - Fixed an issue with using quotes in a shell command
 - Fixed a bug with code fences that used a multi-word language (e.g. `codefusion html`)
-- The pattern record mode is now automatically used when you create a new tour, and select `None` for the git ref
 
 ## v0.0.47 (03/10/2021)
 

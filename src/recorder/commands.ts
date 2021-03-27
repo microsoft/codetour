@@ -382,7 +382,7 @@ export function registerRecorderCommands() {
         .getConfiguration("codetour")
         .get("recordMode");
 
-      if (mode === "pattern" || tour.ref === undefined) {
+      if (mode === "pattern") {
         const contents = vscode.window.activeTextEditor?.document
           .lineAt(thread.range.start)
           .text.trim();
@@ -402,7 +402,7 @@ export function registerRecorderCommands() {
           // TODO: Try to get smarter about how to handle this.
           step.line = thread.range.start.line + 1;
         }
-      } else if (mode === "lineNumber" || tour.ref !== undefined) {
+      } else {
         step.line = thread.range.start.line + 1;
       }
 

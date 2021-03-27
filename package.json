@@ -580,7 +580,7 @@
     "jsonValidation": [
       {
         "fileMatch": "*.tour",
-        "url": "https://aka.ms/codetour-schema"
+        "url": "./schema.json"        
       }
     ],
     "keybindings": [
@@ -619,7 +619,9 @@
     ]
   },
   "dependencies": {
+    "@types/jexl": "^2.2.0",
     "axios": "^0.19.2",
+    "jexl": "^2.3.0",
     "mobx": "^5.14.2",
     "throttle-debounce": "^3.0.1",
     "vsls": "^1.0.2532"

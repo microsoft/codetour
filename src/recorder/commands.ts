@@ -383,12 +383,27 @@ export function registerRecorderCommands() {
         .get("recordMode");
 
       if (mode === "pattern" || tour.ref === undefined) {
-        const contents = vscode.window.activeTextEditor?.document.lineAt(
-          thread.range.start
-        ).text;
-        step.pattern = contents!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").trim();
+        const contents = vscode.window.activeTextEditor?.document
+          .lineAt(thread.range.start)
+          .text.trim();
+
+        const pattern =
+          "^[^\\S\\n]*" + contents!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const match = vscode.window.activeTextEditor?.document
+          .getText()
+          .match(new RegExp(pattern, "gm"));
+
+        // If the selected line isn't empty, and it's associated
+        // pattern only matches a single line, then use it. Otherwise,
+        // we have to fall back to the line number.
+        if (contents && match && match.length === 1) {
+          step.pattern = pattern;
+        } else {
+          // TODO: Try to get smarter about how to handle this.
+          step.line = thread.range.start.line + 1;
+        }
       } else if (mode === "lineNumber" || tour.ref !== undefined) {
-        step.line = thread!.range.start.line + 1;
+        step.line = thread.range.start.line + 1;
       }
 
       store.activeTour!.step++;

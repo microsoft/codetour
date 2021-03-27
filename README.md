@@ -91,6 +91,18 @@ In order to mark a specific tour as the primary tour, simply right-click it in t
 
 If you'd prefer to number your tours (e.g. `1 - Status Bar`), then a tour whose title starts with either `#1 - ` or `1 - ` will be automatically considered the primary tour, and you don't need to do anything further.
 
+### Conditional Tours
+
+If you author a tour that isn't relevant to every developer on the team, then you can decide when to conditionally show it in the `CodeTour` tree by adding a `when` property to the respective `*.tour` file. This property expects a JavaScript expression, that will determine the visibility of the tour, based on whether it evaluates to `true` or `false`. By default, all tours are displayed, and therefore, only tours with a `when` property that evaluate to `false` will be hidden.
+
+In order to simplify the process of defining conditional tours, the following variables are made available to your `when` clause:
+
+- `isLinux` - The current user is running on Linux
+- `isMac` - The current user is running on macoS
+- `isWindows` - The current user is running on Windows
+
+For example, if you want to define a tour that is only displayed for Linux users, you can simply set the `when` property to `"isLinux"`.
+
 ### CodeTour-Flavored Markdown
 
 When you describe a step, you're able to use the full-breadth of markdown capabilities in order to write rich/compelling content (e.g. images, links, headings, code fences). However, CodeTour also provides some additional syntactic features that allow you to include additional interactivity to your tours:
@@ -195,6 +207,7 @@ Within the `.tours` (or `.vscode/tours`) directory, you can organize your tour f
 - `ref` - An optional "git ref" (branch/tag/commit) that this tour applies to. See [versioning tours](#versioning-tours) for more details.
 - `isPrimary` - Indicates that this tour is the primary tour within the workspace that an end-user should be guided through.
 - `nextTour` - The title of the tour that this tour is [meant to precede](#linking-tours).
+- `when` - Specifies the condition that must be met before this tour is shown. The value of this property is a string that is evaluated as JavaScript.
 - `steps` _(Required)_ - An array of tour steps
   - `description` _(Required)_ - The text which explains the current file/line number, and can include plain text and markdown syntax
   - `file` - The file path (relative to the workspace root) that this step is associated with
@@ -298,7 +311,10 @@ At any time, you can end the current code tour by means of one of the following 
 
 ## Maintaining Tours
 
-In order to ensure that your tours stay up-to-date as your codebase evolves, you can install the [CodeTour Watch](https://github.com/marketplace/actions/codetour-watch) in a GitHub Actions workflow, which allows you to detect "tour drift" in response to PRs/commits/etc. to your codebase.
+In order to ensure that your tours stay up-to-date as your codebase evolves, you can install one of the following tasks as part of your CI pipeline, in order to detect "tour drift" in response to PRs/commits/etc.
+
+- [CodeTour Watch](https://github.com/marketplace/actions/codetour-watch) (GitHub Actions)
+- [CodeTour Watcher](https://marketplace.visualstudio.com/items?itemName=Sharma.CodeTourWatcher) (Azure Pipelines)
 
 ## Reference
 

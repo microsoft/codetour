@@ -44,6 +44,7 @@ export interface CodeTour {
   isPrimary?: boolean;
   nextTour?: string;
   stepMarker?: string;
+  when?: string;
 }
 
 export interface ActiveTour {

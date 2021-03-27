@@ -1,17 +1,26 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import * as jexl from "jexl";
 import { comparer, runInAction, set } from "mobx";
+import * as os from "os";
 import * as vscode from "vscode";
 import { CodeTour, store } from ".";
 import { EXTENSION_NAME, VSCODE_DIRECTORY } from "../constants";
 import { appendUriPath, readUriContents, updateMarkerTitles } from "../utils";
 import { endCurrentCodeTour } from "./actions";
-
 const MAIN_TOUR_FILES = [".tour", `${VSCODE_DIRECTORY}/main.tour`];
 const SUB_TOUR_DIRECTORIES = [`${VSCODE_DIRECTORY}/tours`, `.tours`];
 
 const HAS_TOURS_KEY = `${EXTENSION_NAME}:hasTours`;
+
+const PLATFORM = os.platform();
+const TOUR_CONTEXT = {
+  isLinux: PLATFORM === "linux",
+  isMac: PLATFORM === "darwin",
+  isWindows: PLATFORM === "win32",
+  isWeb: vscode.env.uiKind === vscode.UIKind.Web
+};
 
 export async function discoverTours(): Promise<void> {
   const tours = await Promise.all(
@@ -28,7 +37,10 @@ export async function discoverTours(): Promise<void> {
   );
 
   runInAction(() => {
-    store.tours = tours.flat().sort((a, b) => a.title.localeCompare(b.title));
+    store.tours = tours
+      .flat()
+      .sort((a, b) => a.title.localeCompare(b.title))
+      .filter(tour => !tour.when || jexl.evalSync(tour.when, TOUR_CONTEXT));
 
     if (store.activeTour) {
       const tour = store.tours.find(

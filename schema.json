@@ -131,6 +131,10 @@
     "nextTour": {
       "type": "string",
       "description": "Specifies the title of the tour that is meant to follow this tour."
+    },
+    "when": {
+      "type": "string",
+      "description": "Specifies the condition that must be met before this tour is shown. The value of this property is a string that is evaluated as JavaScript."
     }
   }
 }

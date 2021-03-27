@@ -5,6 +5,7 @@
 
 ## v0.0.49 (03/27/2021)
 
+- Fixed a bug with tours that span multi-root workspaces
 - Fixed a bug with code fences, that allows the use of backticks in the code snippet
 
 ## v0.0.48 (03/27/2021)

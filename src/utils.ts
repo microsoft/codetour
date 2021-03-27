@@ -52,15 +52,6 @@ export function getRelativePath(root: string, filePath: string) {
   return relativePath;
 }
 
-export function appendUriPath(uri: Uri, pathSuffix: string) {
-  const pathPrefix = uri.path.endsWith("/") ? uri.path : `${uri.path}/`;
-  let filePath = `${pathPrefix}${pathSuffix}`;
-
-  return uri.with({
-    path: filePath
-  });
-}
-
 export async function readUriContents(uri: Uri) {
   const bytes = await workspace.fs.readFile(uri);
   return new TextDecoder().decode(bytes);
@@ -71,7 +62,8 @@ export function getFileUri(file: string, workspaceRoot?: Uri) {
     return Uri.parse(file);
   }
 
-  return appendUriPath(workspaceRoot, file);
+  return Uri.joinPath(workspaceRoot, file);
+  //return appendUriPath(workspaceRoot, file);
 }
 
 export async function getStepFileUri(

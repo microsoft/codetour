@@ -328,7 +328,6 @@ async function renderCurrentStep() {
 
   // @ts-ignore
   store.activeTour!.thread.canReply = false;
-
   store.activeTour!.thread.comments = [comment];
 
   const contextValues = [];

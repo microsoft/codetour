@@ -1,7 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+//import * as MarkdownIt from "markdown-it";
+import { link, paragraph, text } from "mdast-builder";
 import { reaction } from "mobx";
+import remarkParse from "remark-parse";
+import remarkStringify from "remark-stringify";
+import unified from "unified";
+import modify from "unist-util-modify-children";
 import {
   commands,
   Comment,
@@ -47,10 +53,34 @@ let id = 0;
 const SHELL_SCRIPT_PATTERN = /^>>\s+(?<script>.*)$/gm;
 const COMMAND_PATTERN = /(?<commandPrefix>\(command:[\w+\.]+\?)(?<params>\[[^\]]+\])/gm;
 const TOUR_REFERENCE_PATTERN = /(?:\[(?<linkTitle>[^\]]+)\])?\[(?=\s*[^\]\s])(?<tourTitle>[^\]#]+)?(?:#(?<stepNumber>\d+))?\](?!\()/gm;
-const CODE_FENCE_PATTERN = /```[^\n]+\n(.+)\n```/gm;
 
 export function generatePreviewContent(content: string) {
-  return content
+  const contentNode = unified().use(remarkParse).parse(content);
+
+  modify((node, index, parentNode) => {
+    if (node.type === "code") {
+      const params = encodeURIComponent(JSON.stringify([node.value]));
+
+      parentNode.children.splice(
+        index + 1,
+        0,
+        paragraph([
+          text("↪ "),
+          link(
+            `command:codetour.insertCodeSnippet?${params}`,
+            "Insert Code",
+            text("Insert Code")
+          )
+        ])
+      );
+
+      return index + 1;
+    }
+  })(contentNode);
+
+  const newMarkdown = unified().use(remarkStringify).stringify(contentNode);
+
+  return newMarkdown
     .replace(SHELL_SCRIPT_PATTERN, (_, script) => {
       const args = encodeURIComponent(JSON.stringify([script]));
       const s = `> [${script}](command:codetour.sendTextToTerminal?${args} "Run \\"${script.replace(
@@ -83,11 +113,6 @@ export function generatePreviewContent(content: string) {
       }
 
       return _;
-    })
-    .replace(CODE_FENCE_PATTERN, (_, codeBlock) => {
-      const params = encodeURIComponent(JSON.stringify([codeBlock]));
-      return `${_}
-↪ [Insert Code](command:codetour.insertCodeSnippet?${params} "Insert Code")`;
     });
 }
 

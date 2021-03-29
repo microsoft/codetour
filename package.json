@@ -580,7 +580,7 @@
     "jsonValidation": [
       {
         "fileMatch": "*.tour",
-        "url": "./schema.json"        
+        "url": "./schema.json"
       }
     ],
     "keybindings": [
@@ -622,18 +622,25 @@
     "@types/jexl": "^2.2.0",
     "axios": "^0.19.2",
     "jexl": "^2.3.0",
+    "mdast-builder": "^1.1.1",
     "mobx": "^5.14.2",
+    "remark-parse": "^9.0.0",
+    "remark-stringify": "^9.0.1",
     "throttle-debounce": "^3.0.1",
+    "unified": "^9.2.1",
+    "unist-util-modify-children": "^2.0.0",
     "vsls": "^1.0.2532"
   },
   "devDependencies": {
+    "@types/mdast": "^3.0.3",
+    "@types/unist": "^2.0.3",
     "@types/node": "^8.10.25",
     "@types/throttle-debounce": "^2.1.0",
     "ts-loader": "^7.0.4",
     "tslint": "^5.8.0",
     "typescript": "^3.1.4",
     "vsce": "^1.75.0",
-    "vscode": "^1.1.25",
+    "vscode": "^1.1.37",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11",
     "webpack-merge": "^4.2.2"

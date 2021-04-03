@@ -55,32 +55,7 @@ const COMMAND_PATTERN = /(?<commandPrefix>\(command:[\w+\.]+\?)(?<params>\[[^\]]
 const TOUR_REFERENCE_PATTERN = /(?:\[(?<linkTitle>[^\]]+)\])?\[(?=\s*[^\]\s])(?<tourTitle>[^\]#]+)?(?:#(?<stepNumber>\d+))?\](?!\()/gm;
 
 export function generatePreviewContent(content: string) {
-  const contentNode = unified().use(remarkParse).parse(content);
-
-  modify((node, index, parentNode) => {
-    if (node.type === "code") {
-      const params = encodeURIComponent(JSON.stringify([node.value]));
-
-      parentNode.children.splice(
-        index + 1,
-        0,
-        paragraph([
-          text("↪ "),
-          link(
-            `command:codetour.insertCodeSnippet?${params}`,
-            "Insert Code",
-            text("Insert Code")
-          )
-        ])
-      );
-
-      return index + 1;
-    }
-  })(contentNode);
-
-  const newMarkdown = unified().use(remarkStringify).stringify(contentNode);
-
-  return newMarkdown
+  const replacedContent = content
     .replace(SHELL_SCRIPT_PATTERN, (_, script) => {
       const args = encodeURIComponent(JSON.stringify([script]));
       const s = `> [${script}](command:codetour.sendTextToTerminal?${args} "Run \\"${script.replace(
@@ -114,6 +89,31 @@ export function generatePreviewContent(content: string) {
 
       return _;
     });
+
+  const contentNode = unified().use(remarkParse).parse(replacedContent);
+
+  modify((node, index, parentNode) => {
+    if (node.type === "code") {
+      const params = encodeURIComponent(JSON.stringify([node.value]));
+
+      parentNode.children.splice(
+        index + 1,
+        0,
+        paragraph([
+          text("↪ "),
+          link(
+            `command:codetour.insertCodeSnippet?${params}`,
+            "Insert Code",
+            text("Insert Code")
+          )
+        ])
+      );
+
+      return index + 1;
+    }
+  })(contentNode);
+
+  return unified().use(remarkStringify).stringify(contentNode);
 }
 
 export class CodeTourComment implements Comment {

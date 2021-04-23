@@ -107,6 +107,12 @@ For example, if you want to define a tour that is only displayed for Linux users
 
 When you describe a step, you're able to use the full-breadth of markdown capabilities in order to write rich/compelling content (e.g. images, links, headings, code fences). However, CodeTour also provides some additional syntactic features that allow you to include additional interactivity to your tours:
 
+#### File References
+
+If you want a step to reference a file in the workspace, you can add a markdown link to it, using a workspace-relative path. For example, adding `[Open file](./file.html)` to your step content, would add a hyperlink called `Open file`, that when clicked, would open the `./file.html` file.
+
+Additionally, you can reference local images in a step as well, using a markdown reference. For example, adding `![Image](./icon.png)` would render the `icon.png` in the step.
+
 #### Step References
 
 If you want to add a reference to another step within the current tour, you can use markdown's "link reference" syntax, specifying the 1-based number of the step to navigate to, prefixed by a `#` character (e.g. `[#2]`, or `[#23]`). This reference will be automatically rendered as a hyperlink, that when clicked, will navigate the end-user to that step. The text of the link will default to `#<stepNumber>`, but you can customize that by appending a title to the link reference (e.g. `[title][#2]).
@@ -118,6 +124,14 @@ If you want to add a reference to another step within the current tour, you can 
 If you want to reference an entirely seperate tour, then you can create a link reference, that specifies the title of the tour (e.g. `[Tree View]`). This will be rendered as a hyperlink, that when clicked, will navigate the end-user to that tour, starting on step #1. If you'd like to navigate the user to a specific step in the tour, you can append the step number after the tour title, seperated by a `#` (e.g. `[Tree View#3]`). The text of the link will be rendered as `<tourTitle>`, but you can customize that by appending a title to the link reference (e.g. `[title][Tree View]`).
 
 > This syntax is a simplified version of using the `Start tour` [command link](#command-links) instead.
+
+#### Code Blocks
+
+If you add a markdown code block to a step's body content, then the CodeTour player will render an `Insert Code` link below it, which allows the viewer to automatically insert the code snippet into the current file, at the line that the step is associated with. This can make it easy to use CodeTour for creating interactive tutorials or samples.
+
+<img width="600px" src="https://user-images.githubusercontent.com/116461/98431597-bb3f2800-206b-11eb-8f46-55f48ff014ef.gif" />
+
+> Note: The code snippet will be formatted after inserting it into the document, and therefore, you don't need to worry about adding whitespace/etc. to the snippet itself.
 
 #### Shell Commands
 
@@ -156,14 +170,6 @@ In order to make it simpler to call common commands, CodeTour will prompt you wi
 - `Run terminal command...` - Allows you to specify a shell command (e.g. `npm run package`), that when clicked, will run the specified command in the integrated terminal.
 
 - `Start tour...` - Allows you to specify the title or another tour in the workspace, that when clicked, will automatically start that tour.
-
-#### Code Blocks
-
-If you add a markdown code block to a step's body content, then the CodeTour player will render an `Insert Code` link below it, which allows the viewer to automatically insert the code snippet into the current file, at the line that the step is associated with. This can make it easy to use CodeTour for creating interactive tutorials or samples.
-
-<img width="600px" src="https://user-images.githubusercontent.com/116461/98431597-bb3f2800-206b-11eb-8f46-55f48ff014ef.gif" />
-
-> Note: The code snippet will be formatted after inserting it into the document, and therefore, you don't need to worry about adding whitespace/etc. to the snippet itself.
 
 ### Versioning Tours
 

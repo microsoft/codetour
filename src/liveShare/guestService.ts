@@ -15,5 +15,5 @@ export async function initializeService(vslsApi: vsls.LiveShare) {
     startCodeTour(response.tour, response.stepNumber);
   }
 
-  initializeBaseService(vslsApi, vslsApi.session.peerNumber, service);
+  initializeBaseService(vslsApi, service);
 }

@@ -3,6 +3,15 @@
 - Automatically updating a tour file as the associated code changes
 - Automatically set the "pattern" record mode when you create a new tour, and select `None` for the git ref
 
+## v0.0.51 (04/23/2021)
+
+- Added support for referencing workspace images in a tour step
+
+## v0.0.50 (04/23/2021)
+
+- Added support for referencing workspace files in a tour step
+- Fixed a bug with code fences, that allow multi-line snippets
+
 ## v0.0.49 (03/27/2021)
 
 - Fixed a bug with tours that span multi-root workspaces

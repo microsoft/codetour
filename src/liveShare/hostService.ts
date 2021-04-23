@@ -25,5 +25,5 @@ export async function initializeService(vslsApi: vsls.LiveShare) {
     };
   });
 
-  initializeBaseService(vslsApi, vslsApi.session.peerNumber, service, true);
+  initializeBaseService(vslsApi, service);
 }

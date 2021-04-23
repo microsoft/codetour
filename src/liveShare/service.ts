@@ -20,21 +20,19 @@ const TOUR_STARTED_NOTIFICATION = "tourStarted";
 
 export default function (
   api: LiveShare,
-  peer: number,
-  service: SharedService | SharedServiceProxy,
-  broadcastNotifications: boolean = false
+  service: SharedService | SharedServiceProxy
 ) {
+  const peer = api.session.peerNumber;
+
   onDidEndTour(() => {
     service.notify(TOUR_ENDED_NOTIFICATION, { peer });
   });
 
   service.onNotify(TOUR_ENDED_NOTIFICATION, (message: Message) => {
     if (message.peer === peer) return;
-    endCurrentCodeTour(false);
 
-    if (broadcastNotifications) {
-      service.notify(TOUR_ENDED_NOTIFICATION, message);
-    }
+    endCurrentCodeTour(false);
+    service.notify(TOUR_ENDED_NOTIFICATION, message);
   });
 
   onDidStartTour(([tour, stepNumber]) => {
@@ -59,10 +57,8 @@ export default function (
 
   service.onNotify(TOUR_STARTED_NOTIFICATION, (message: Message) => {
     if (message.peer === peer) return;
-    startCodeTour(message.data.tour, message.data.stepNumber);
 
-    if (broadcastNotifications) {
-      service.notify(TOUR_STARTED_NOTIFICATION, message);
-    }
+    startCodeTour(message.data.tour, message.data.stepNumber);
+    service.notify(TOUR_STARTED_NOTIFICATION, message);
   });
 }

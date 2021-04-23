@@ -45,8 +45,9 @@ const CONTROLLER_LABEL = "CodeTour";
 let id = 0;
 
 const SHELL_SCRIPT_PATTERN = /^>>\s+(?<script>.*)$/gm;
-const COMMAND_PATTERN = /(?<commandPrefix>\(command:[\w+\.]+\?)(?<params>\[[^\]]+\])/gm;
+const COMMAND_PATTERN = /(?<=\()(?<commandPrefix>command:[\w+\.]+\?)(?<params>\[[^\]]+\])/gm;
 const TOUR_REFERENCE_PATTERN = /(?:\[(?<linkTitle>[^\]]+)\])?\[(?=\s*[^\]\s])(?<tourTitle>[^\]#]+)?(?:#(?<stepNumber>\d+))?\](?!\()/gm;
+const FILE_REFERENCE_PATTERN = /(\!)?(\[[^\]]+\]\()(\.[^\)]+)(?=\))/gm;
 const CODE_FENCE_PATTERN = /```[^\n]+\n(.+)\n```/gms;
 
 export function generatePreviewContent(content: string) {
@@ -62,6 +63,19 @@ export function generatePreviewContent(content: string) {
     .replace(COMMAND_PATTERN, (_, commandPrefix, params) => {
       const args = encodeURIComponent(JSON.stringify(JSON.parse(params)));
       return `${commandPrefix}${args}`;
+    })
+    .replace(FILE_REFERENCE_PATTERN, (_, isImage, prefix, filePath) => {
+      const workspaceUri = workspace.getWorkspaceFolder(
+        Uri.parse(store.activeTour!.tour.id)
+      )!.uri;
+      const fileUri = Uri.joinPath(workspaceUri, filePath);
+
+      if (isImage) {
+        return `!${prefix}${fileUri.toString()}`;
+      } else {
+        const args = encodeURIComponent(JSON.stringify([fileUri]));
+        return `${prefix}command:vscode.open?${args} "Open ${filePath}"`;
+      }
     })
     .replace(TOUR_REFERENCE_PATTERN, (_, linkTitle, tourTitle, stepNumber) => {
       if (!tourTitle) {

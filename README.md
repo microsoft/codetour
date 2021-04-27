@@ -29,7 +29,7 @@ If you need to edit or delete a step while recording, click the `...` menu next 
 
 ### Workspaces
 
-If you record a tour within a "multi-root workspace", you'll be asked to select the folder that you'd like to save the tour to. This is necessary because tours are written as [files](#tour-files) to your workspace, and so we need to disamgiuate which folder the tour should be persisted to. That said, when you're recording a tour, you can add steps that span any of the folders within the workspace, which allows you to create tours for a specific folder and/or that demonstrate concepts across multiple folders within the workspace.
+If you record a tour within a "multi-root workspace", you'll be asked to select the folder that you'd like to save the tour to. This is necessary because tours are written as [files](#tour-files) to your workspace, and so we need to disambiguate which folder the tour should be persisted to. That said, when you're recording a tour, you can add steps that span any of the folders within the workspace, which allows you to create tours for a specific folder and/or that demonstrate concepts across multiple folders within the workspace.
 
 ### Step Titles
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "#2 - Tree View",
+  "title": "#3 - Tree View",
   "description": "This is a guided walkthrough of how the CodeTour tree view works",
   "steps": [
     {

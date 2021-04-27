@@ -132,7 +132,7 @@
         "command": "codetour.endTour",
         "title": "End Tour",
         "category": "CodeTour",
-        "icon": "$(debug-stop)"
+        "icon": "$(primitive-square)"
       },
       {
         "command": "codetour.exportTour",
@@ -210,7 +210,7 @@
         "command": "codetour.startTour",
         "title": "Start Tour",
         "category": "CodeTour",
-        "icon": "$(debug-start)"
+        "icon": "$(play)"
       },
       {
         "command": "codetour.unmakeTourPrimary",

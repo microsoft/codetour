@@ -1,0 +1,11 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "#1 - Intro",
+  "steps": [
+    {
+      "file": "src/extension.ts",
+      "description": "Hey 👋 Welcome to CodeTour! CodeTour is a VS Code extension that allows you to record and play back walkthroughs of your codebases. The CodeTour codebase itself is comprised of two main components:\n\n* **Recorder:** Allows a repo maintainer/member to create a tour using a visual experience\n* **Player:** Allows members of the repo to view a recorded tour\n\n![foo](./overview.drawio.svg)",
+      "line": 13
+    }
+  ]
+}

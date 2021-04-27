@@ -3,6 +3,11 @@
 - Automatically updating a tour file as the associated code changes
 - Automatically set the "pattern" record mode when you create a new tour, and select `None` for the git ref
 
+## v0.0.52 (04/26/2021)
+
+- Updated the play/stop icons
+- Fixed an issue with tour steps that were attached to the first line of a file
+
 ## v0.0.51 (04/23/2021)
 
 - Added support for referencing workspace images in a tour step

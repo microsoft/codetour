@@ -245,7 +245,7 @@ async function renderCurrentStep() {
     ? step.selection.end.line - 1
     : undefined;
 
-  if (step.file && !line) {
+  if (step.file && line === undefined) {
     const stepPattern = step.pattern || getActiveStepMarker();
     if (stepPattern) {
       const document = await workspace.openTextDocument(uri);
@@ -256,7 +256,7 @@ async function renderCurrentStep() {
     }
   }
 
-  if (!line) {
+  if (line === undefined) {
     // The step doesn't have a discoverable line number and so
     // stick the step at the end of the file. Unfortunately, there
     // isn't a way to say EOF, so 2000 is a temporary hack.

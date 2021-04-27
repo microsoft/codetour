@@ -1,11 +1,11 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "#1 - Status Bar",
+  "title": "#2 - Status Bar",
   "description": "Describes how we augment the status bar",
   "steps": [
     {
       "file": "src/extension.ts",
-      "line": 36,
+      "line": 27,
       "description": "### Activation\nThe status bar provider is registered upon extension activiation\n\n![image](./diagram.drawio.png)\n\n[./CONTRIBUTING.md](./CHANGELOG.md)\n\n#### References\n- Navigate to step [#4]. Or [jump to #4][#4].\n- Navigate to [Tree View]. Or [jump to tree][Tree View]. \n- Navigate to [Tree View#3]. Or [jump to tree @ 3][Tree View#3].\n\n```javascript\nconsole.log(\"GG\");\n```",
       "selection": {
         "start": {

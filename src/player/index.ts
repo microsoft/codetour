@@ -32,6 +32,7 @@ import {
   getStepLabel,
   getTourTitle
 } from "../utils";
+import { registerCodeStatusModule } from "./codeStatus";
 import { registerPlayerCommands } from "./commands";
 import { registerDecorators } from "./decorator";
 import { registerFileSystemProvider } from "./fileSystem";
@@ -435,6 +436,7 @@ export function registerPlayerModule(context: ExtensionContext) {
   registerTextDocumentContentProvider();
   registerStatusBar();
   registerDecorators();
+  registerCodeStatusModule();
 
   initializeStorage(context);
 

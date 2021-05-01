@@ -3,6 +3,10 @@
 - Automatically updating a tour file as the associated code changes
 - Automatically set the "pattern" record mode when you create a new tour, and select `None` for the git ref
 
+## v0.0.53
+
+- Added experimental support for the CodeStatus extension
+
 ## v0.0.52 (04/26/2021)
 
 - Updated the play/stop icons

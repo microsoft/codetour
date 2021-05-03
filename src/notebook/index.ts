@@ -42,7 +42,7 @@ class CodeTourNotebookProvider implements vscode.NotebookSerializer {
 
     // Title cell
     cells.push(new vscode.NotebookCellData(1,
-      `## ![Icon](${SMALL_ICON_URL})&nbsp;&nbsp; CodeTour (${tour.title}) - ${steps.length} steps\n\n${tour.description}`,
+      `## ![Icon](${SMALL_ICON_URL})&nbsp;&nbsp; CodeTour (${tour.title}) - ${steps.length} steps\n\n${tour.description === undefined ? '' : tour.description}`,
       'markdown'))
 
     steps.forEach((step, index) => {

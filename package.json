@@ -7,6 +7,7 @@
   "author": {
     "name": "Microsoft Corporation"
   },
+  "enableProposedApi": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/codetour"
@@ -32,7 +33,8 @@
     "workspace"
   ],
   "activationEvents": [
-    "*"
+    "*",
+    "onNotebookEditor:codetour"
   ],
   "main": "./dist/extension-node.js",
   "browser": "./dist/extension-web.js",
@@ -366,6 +368,11 @@
           "command": "codetour.previewTour",
           "group": "inline@4",
           "when": "commentController == codetour && codetour:isEditing && !commentThreadIsEmpty"
+        },
+        {
+          "command": "codetour.viewNotebook",
+          "when": "viewItem =~ /^codetour.tour/",
+          "group": "basic@2"
         }
       ],
       "comments/commentThread/context": [
@@ -580,7 +587,7 @@
     "jsonValidation": [
       {
         "fileMatch": "*.tour",
-        "url": "./schema.json"        
+        "url": "./schema.json"
       }
     ],
     "keybindings": [
@@ -616,6 +623,17 @@
           ".tour"
         ]
       }
+    ],
+    "notebookProvider": [
+      {
+        "viewType": "codetour",
+        "displayName": "CodeTour Notebook",
+        "selector": [
+          {
+            "filenamePattern": "*.tour"
+          }
+        ]
+      }
     ]
   },
   "dependencies": {
@@ -627,7 +645,7 @@
     "vsls": "^1.0.2532"
   },
   "devDependencies": {
-    "@types/node": "^8.10.25",
+    "@types/node": "^8.10.66",
     "@types/throttle-debounce": "^2.1.0",
     "ts-loader": "^7.0.4",
     "tslint": "^5.8.0",

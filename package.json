@@ -371,7 +371,7 @@
         },
         {
           "command": "codetour.viewNotebook",
-          "when": "viewItem == codetour.tour",
+          "when": "viewItem =~ /^codetour.tour/",
           "group": "basic@2"
         }
       ],

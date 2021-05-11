@@ -222,6 +222,10 @@
         "command": "codetour.viewNotebook",
         "title": "View Notebook",
         "category": "CodeTour"
+      },
+      {
+        "command": "codetour._startTourOnActivation",
+        "title": "Start Tour on Activation"
       }
     ],
     "menus": {
@@ -340,6 +344,10 @@
         },
         {
           "command": "codetour.viewNotebook",
+          "when": "false"
+        },
+        {
+          "command": "codetour._startTourOnActivation",
           "when": "false"
         }
       ],
@@ -659,7 +667,8 @@
   "scripts": {
     "build": "webpack --mode production",
     "vscode:prepublish": "npm run build",
-    "watch": "webpack --mode development --watch",
+    "watch": "webpack --mode development --watch --info-verbosity verbose",
+    "postinstall": "node ./node_modules/vscode/bin/install",
     "package": "vsce package"
   },
   "prettier": {

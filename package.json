@@ -222,10 +222,6 @@
         "command": "codetour.viewNotebook",
         "title": "View Notebook",
         "category": "CodeTour"
-      },
-      {
-        "command": "codetour._startTourOnActivation",
-        "title": "Start Tour on Activation"
       }
     ],
     "menus": {
@@ -344,10 +340,6 @@
         },
         {
           "command": "codetour.viewNotebook",
-          "when": "false"
-        },
-        {
-          "command": "codetour._startTourOnActivation",
           "when": "false"
         }
       ],

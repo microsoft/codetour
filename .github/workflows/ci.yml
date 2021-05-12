@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - '**'
+      - "**"
   release:
     types:
       - created
@@ -22,6 +22,6 @@ jobs:
       - run: npm run build
       - name: Publish to VS Marketplace
         if: success() && startsWith(github.ref, 'refs/tags/')
-        run: vsce publish
+        run: vsce publish --web
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}

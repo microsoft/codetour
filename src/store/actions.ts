@@ -171,20 +171,31 @@ export async function promptForTour(
         "Start CodeTour"
       )
     ) {
-      const primaryTour =
-        tours.find(tour => tour.isPrimary) ||
-        tours.find(tour => tour.title.match(/^#?1\s+-/));
-
-      if (primaryTour) {
-        startCodeTour(primaryTour, 0, workspaceRoot, false, undefined, tours);
-        return true;
-      } else {
-        return selectTour(tours, workspaceRoot);
-      }
+      startDefaultTour(workspaceRoot, tours);
     }
   }
 
   return false;
+}
+
+export async function startDefaultTour(
+  workspaceRoot: Uri = getWorkspaceKey(),
+  tours: CodeTour[] = store.tours
+): Promise<boolean> {
+  if (tours.length === 0) {
+    return false;
+  }
+
+  const primaryTour =
+    tours.find(tour => tour.isPrimary) ||
+    tours.find(tour => tour.title.match(/^#?1\s+-/));
+
+  if (primaryTour) {
+    startCodeTour(primaryTour, 0, workspaceRoot, false, undefined, tours);
+    return true;
+  } else {
+    return selectTour(tours, workspaceRoot);
+  }
 }
 
 export async function exportTour(tour: CodeTour) {

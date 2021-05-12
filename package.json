@@ -637,20 +637,21 @@
   },
   "dependencies": {
     "@types/jexl": "^2.2.0",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "jexl": "^2.3.0",
     "mobx": "^5.14.2",
     "throttle-debounce": "^3.0.1",
     "vsls": "^1.0.2532"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.0",
     "@types/node": "^8.10.66",
     "@types/throttle-debounce": "^2.1.0",
+    "@types/vscode": "~1.48.0",
     "ts-loader": "^7.0.4",
     "tslint": "^5.8.0",
     "typescript": "^3.1.4",
     "vsce": "^1.75.0",
-    "vscode": "^1.1.25",
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.11",
     "webpack-merge": "^4.2.2"
@@ -658,8 +659,7 @@
   "scripts": {
     "build": "webpack --mode production",
     "vscode:prepublish": "npm run build",
-    "watch": "webpack --mode development --watch",
-    "postinstall": "node ./node_modules/vscode/bin/install",
+    "watch": "webpack --mode development --watch --info-verbosity verbose",
     "package": "vsce package"
   },
   "prettier": {

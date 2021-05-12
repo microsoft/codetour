@@ -8,3 +8,6 @@ package.lock.json
 tsconfig.json
 webpack.config.js
 **/*.vsix
+.git/**
+.github/**
+**/*.svg

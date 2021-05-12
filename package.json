@@ -668,7 +668,6 @@
     "build": "webpack --mode production",
     "vscode:prepublish": "npm run build",
     "watch": "webpack --mode development --watch --info-verbosity verbose",
-    "postinstall": "node ./node_modules/vscode/bin/install",
     "package": "vsce package"
   },
   "prettier": {

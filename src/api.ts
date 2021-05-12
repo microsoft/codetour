@@ -6,20 +6,24 @@ import {
   endCurrentCodeTour,
   exportTour,
   onDidEndTour,
+  onDidStartTour,
   promptForTour,
   recordTour,
   selectTour,
-  startCodeTour
+  startCodeTour,
+  startCodeTourByUri
 } from "./store/actions";
 
 export function initializeApi(context: ExtensionContext) {
   return {
     endCurrentTour: endCurrentCodeTour,
     exportTour,
+    onDidStartTour,
     onDidEndTour,
     promptForTour: promptForTour.bind(null, context.globalState),
     recordTour,
     startTour: startCodeTour,
+    startTourByUri: startCodeTourByUri,
     selectTour
   };
 }

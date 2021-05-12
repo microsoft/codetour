@@ -5,7 +5,6 @@ import * as vscode from "vscode";
 import { initializeApi } from "./api";
 import { initializeGitApi } from "./git";
 import { registerLiveShareModule } from "./liveShare";
-import { registerNotebookProvider } from "./notebook";
 import { registerPlayerModule } from "./player";
 import { registerRecorderModule } from "./recorder";
 import { promptForTour } from "./store/actions";
@@ -15,7 +14,6 @@ export async function activate(context: vscode.ExtensionContext) {
   registerPlayerModule(context);
   registerRecorderModule();
   registerLiveShareModule();
-  registerNotebookProvider();
 
   if (vscode.workspace.workspaceFolders) {
     await discoverTours();

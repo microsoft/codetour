@@ -31,6 +31,15 @@ export const onDidEndTour = _onDidEndTour.event;
 const _onDidStartTour = new EventEmitter<[CodeTour, number]>();
 export const onDidStartTour = _onDidStartTour.event;
 
+export async function startCodeTourByUri(tourUri: Uri, stepNumber?: number) {
+  const bytes = await workspace.fs.readFile(tourUri);
+  const contents = new TextDecoder().decode(bytes);
+  const tour = JSON.parse(contents);
+  tour.id = tourUri.toString();
+
+  startCodeTour(tour, stepNumber);
+}
+
 export function startCodeTour(
   tour: CodeTour,
   stepNumber?: number,

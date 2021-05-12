@@ -389,8 +389,36 @@ In addition to the available commands, the Code Tour extension also contributes 
 
 In order to enable other extensions to contribute/manage their own code tours, the CodeTour extension exposes an API with the following methods:
 
+- `startTour(tour: CodeTour, stepNumber: number, workspaceRoot: Uri, startInEditMode: boolean = false, canEditTour: boolean): void` - Starts the specified tour, at a specific step, and using a specific workspace root to resolve relative file paths. Additionally, you can specify whether the tour should be started in edit/record mode or not, as well as whether the tour should be editable. Once the tour has been started, the end-user can use the status bar, command palette, key bindings and comment UI to navigate and edit the tour, just like a "normal" tour.
+
+- `startTourByUri(tourUri: vscode.Uri, stepNumber?: number = 0): void` - Same as above, but allows specifying a file `Uri`, and optionally, a step number.
+
 - `endCurrentTour(): void` - Ends the currently running tour (if there is one). Note that this is simply a programatic way to end the tour, and the end-user can also choose to end the tour using either the command palette (running the `CodeTour: End Tour` command) or comment UI (clicking the red square, stop icon) as usual.
 
 - `exportTour(tour: CodeTour): Promise<string>` - Exports a `CodeTour` instance into a fully-embedded tour file, that can then be written to some persistent storage (e.g. a GitHub Gist).
 
-- `startTour(tour: CodeTour, stepNumber: number, workspaceRoot: Uri, startInEditMode: boolean = false, canEditTour: boolean): void` - Starts the specified tour, at a specific step, and using a specific workspace root to resolve relative file paths. Additionally, you can specify whether the tour should be started in edit/record mode or not, as well as whether the tour should be editable. Once the tour has been started, the end-user can use the status bar, command palette, key bindings and comment UI to navigate and edit the tour, just like a "normal" tour.
+In addition to the aforementioned functions, the extension API also allows subscribing to the following tour events:
+
+- `onDidStartTour(([tour: CodeTour, stepNumber: number]) => void): Disposable` - Registers a callback function, that is triggered whenever a tour is started or navigated. The provided callback is passed a [`CodeTour`](https://github.com/microsoft/codetour/blob/main/src/store/index.ts#L38) instance as well as the step number that is visible.
+
+- `onDidEndTour((tour: CodeTour) => void): Disposable` - Registers a callback function, that is triggered whenever a tour is ended. The provided callback is passed a [`CodeTour`](https://github.com/microsoft/codetour/blob/main/src/store/index.ts#L38) instance, which represents the metadata of the tour that was ended.
+
+```javascript
+// Check if the end-user has the CodeTour extension installed.
+const codeTourExtension = vscode.extensions.getExtension(
+  "vsls-contrib.codetour"
+);
+if (codeTourExtension) {
+  // Grab the extension API.
+  const codeTourApi = codeTour.exports;
+
+  // Use the API object as needed
+  codeTourApi.onDidStartTour(([tour, stepNumber]) => {
+    console.log("Tour started: ", tour.title);
+  });
+
+  codeTourApi.onDidEndTour(tour => {
+    console.log("Tour ended: ", tour.title);
+  });
+}
+```

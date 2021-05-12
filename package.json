@@ -3,11 +3,10 @@
   "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
-  "version": "0.0.52",
+  "version": "0.0.53",
   "author": {
     "name": "Microsoft Corporation"
   },
-  "enableProposedApi": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/codetour"
@@ -368,11 +367,6 @@
           "command": "codetour.previewTour",
           "group": "inline@4",
           "when": "commentController == codetour && codetour:isEditing && !commentThreadIsEmpty"
-        },
-        {
-          "command": "codetour.viewNotebook",
-          "when": "viewItem =~ /^codetour.tour/",
-          "group": "basic@2"
         }
       ],
       "comments/commentThread/context": [
@@ -458,6 +452,11 @@
           "command": "codetour.startTour",
           "when": "viewItem =~ /^codetour.tour(.primary)?$/",
           "group": "basic@1"
+        },
+        {
+          "command": "codetour.viewNotebook",
+          "when": "false",
+          "group": "basic@2"
         },
         {
           "command": "codetour.addContentStep",
@@ -627,10 +626,10 @@
     "notebookProvider": [
       {
         "viewType": "codetour",
-        "displayName": "CodeTour Notebook",
+        "displayName": "CodeTour",
         "selector": [
           {
-            "filenamePattern": "*.tour"
+            "filenamePattern": "*.tour-notebook"
           }
         ]
       }

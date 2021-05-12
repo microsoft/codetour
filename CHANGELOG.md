@@ -2,9 +2,11 @@
 
 - Automatically updating a tour file as the associated code changes
 - Automatically set the "pattern" record mode when you create a new tour, and select `None` for the git ref
+- Added support for opening a `*.tour` file in the VS Code notebook editor (Insiders only)
 
 ## v0.0.53
 
+- Exposed a new `onDidStartTour` event and `startTourByUri` method to the extension API
 - Added experimental support for the CodeStatus extension
 
 ## v0.0.52 (04/26/2021)

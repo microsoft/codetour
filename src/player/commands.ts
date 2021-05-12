@@ -16,8 +16,8 @@ import {
   startCodeTour
 } from "../store/actions";
 import { progress } from "../store/storage";
-import { CodeTourNode } from "./tree/nodes";
 import { readUriContents } from "../utils";
+import { CodeTourNode } from "./tree/nodes";
 
 let terminal: vscode.Terminal | null;
 export function registerPlayerCommands() {

@@ -233,8 +233,8 @@ export function registerPlayerCommands() {
     }
 
     try {
-      const axios = require("axios").default;
-      const response = await axios.get(url);
+      const axios = await import("axios");
+      const response = await axios.default.get<CodeTour>(url);
       const tour = response.data;
       tour.id = url;
       startCodeTour(tour);

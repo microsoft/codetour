@@ -22,6 +22,13 @@ const TOUR_CONTEXT = {
   isWeb: vscode.env.uiKind === vscode.UIKind.Web
 };
 
+const customDirectory = vscode.workspace
+  .getConfiguration("codetour")
+  .get("promptForWorkspaceTours", null);
+if (customDirectory) {
+  SUB_TOUR_DIRECTORIES.push(customDirectory);
+}
+
 export async function discoverTours(): Promise<void> {
   const tours = await Promise.all(
     vscode.workspace.workspaceFolders!.map(async workspaceFolder => {

@@ -24,7 +24,7 @@ const TOUR_CONTEXT = {
 
 const customDirectory = vscode.workspace
   .getConfiguration("codetour")
-  .get("customTourLocation", null);
+  .get("customTourDirectory", null);
 if (customDirectory) {
   SUB_TOUR_DIRECTORIES.push(customDirectory);
 }

@@ -61,7 +61,7 @@
           "default": true,
           "description": "Specifies whether or not to show tour markers in the editor gutter."
         },
-        "codetour.customTourLocation": {
+        "codetour.customTourDirectory": {
           "type": "string",
           "default": null,
           "description": "Specifies a custom location to use when discovering tours."

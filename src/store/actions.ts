@@ -78,7 +78,8 @@ export function startCodeTour(
 
 export async function selectTour(
   tours: CodeTour[],
-  workspaceRoot?: Uri
+  workspaceRoot?: Uri,
+  step: number = 0
 ): Promise<boolean> {
   const items: any[] = tours.map(tour => ({
     label: tour.title!,
@@ -87,7 +88,7 @@ export async function selectTour(
   }));
 
   if (items.length === 1) {
-    startCodeTour(items[0].tour, 0, workspaceRoot, false, true, tours);
+    startCodeTour(items[0].tour, step, workspaceRoot, false, true, tours);
     return true;
   }
 
@@ -195,7 +196,7 @@ export async function startDefaultTour(
     startCodeTour(primaryTour, step, workspaceRoot, false, undefined, tours);
     return true;
   } else {
-    return selectTour(tours, workspaceRoot);
+    return selectTour(tours, workspaceRoot, step);
   }
 }
 

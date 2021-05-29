@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-import { URLSearchParams } from "url";
 import * as vscode from "vscode";
 import { initializeApi } from "./api";
 import { initializeGitApi } from "./git";
@@ -26,6 +25,39 @@ function discoverTours(): Promise<void> {
   return cachedDiscoverTours ?? (cachedDiscoverTours = _discoverTours());
 }
 
+function startTour(params: URLSearchParams) {
+  let tourPath = params.get("tour");
+  const step = params.get("step");
+
+  console.log("CT Tour: ", tourPath);
+  console.log("CT Step: ", step);
+
+  let stepNumber;
+  if (step) {
+    stepNumber = Number(step);
+  }
+
+  if (tourPath) {
+    if (!tourPath.endsWith(".tour")) {
+      tourPath = `${tourPath}.tour`;
+    }
+
+    console.log("CT Tour Path: ", tourPath);
+
+    console.log("CT Tours: ", store.tours);
+
+    const tour = store.tours.find(tour => tour.id.endsWith(tourPath as string));
+
+    console.log("CT Tour: ", tour);
+
+    if (tour) {
+      startCodeTour(tour, stepNumber);
+    }
+  } else {
+    startDefaultTour(undefined, undefined, stepNumber);
+  }
+}
+
 class URIHandler implements vscode.UriHandler {
   private _didStartDefaultTour = false;
   get didStartDefaultTour(): boolean {
@@ -33,42 +65,24 @@ class URIHandler implements vscode.UriHandler {
   }
 
   async handleUri(uri: vscode.Uri): Promise<void> {
+    this._didStartDefaultTour = true;
+    await discoverTours();
+
     if (uri.path === "/startDefaultTour") {
-      this._didStartDefaultTour = true;
-
-      await discoverTours();
-
-      let tourPath: string | null | undefined, stepNumber;
       if (uri.query) {
-        const origin = vscode.Uri.parse(uri.query);
-        if (origin.query) {
-          const params = new URLSearchParams(origin.query);
-          tourPath = params.get("tour");
-
-          const step = params.get("step");
-          if (step) {
-            stepNumber = Number(step);
+        console.log("CT Query: ", uri.query);
+        try {
+          const origin = vscode.Uri.parse(uri.query);
+          if (origin.query) {
+            const params = new URLSearchParams(origin.query);
+            startTour(params);
           }
-        }
+        } catch {}
       }
-
-      if (tourPath) {
-        if (!tourPath.endsWith(".tour")) {
-          tourPath = `${tourPath}.tour`;
-        }
-
-        const tour = store.tours.find(tour =>
-          tour.id.endsWith(tourPath as string)
-        );
-        if (tour) {
-          startCodeTour(tour, stepNumber);
-        }
-      } else {
-        startDefaultTour(undefined, undefined, stepNumber);
-      }
+    } else if (uri.path === "/starTour") {
+      const params = new URLSearchParams(uri.query);
+      startTour(params);
     }
-
-    return;
   }
 }
 

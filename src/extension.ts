@@ -1,13 +1,19 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+import { URLSearchParams } from "url";
 import * as vscode from "vscode";
 import { initializeApi } from "./api";
 import { initializeGitApi } from "./git";
 import { registerLiveShareModule } from "./liveShare";
 import { registerPlayerModule } from "./player";
 import { registerRecorderModule } from "./recorder";
-import { promptForTour, startDefaultTour } from "./store/actions";
+import { store } from "./store";
+import {
+  promptForTour,
+  startCodeTour,
+  startDefaultTour
+} from "./store/actions";
 import { discoverTours as _discoverTours } from "./store/provider";
 
 /**
@@ -21,16 +27,45 @@ function discoverTours(): Promise<void> {
 }
 
 class URIHandler implements vscode.UriHandler {
-
   private _didStartDefaultTour = false;
-  get didStartDefaultTour(): boolean { return this._didStartDefaultTour; }
+  get didStartDefaultTour(): boolean {
+    return this._didStartDefaultTour;
+  }
 
   async handleUri(uri: vscode.Uri): Promise<void> {
-    if (uri.path === '/startDefaultTour') {
+    if (uri.path === "/startDefaultTour") {
       this._didStartDefaultTour = true;
 
       await discoverTours();
-      startDefaultTour();
+
+      let tourPath: string | null | undefined, stepNumber;
+      if (uri.query) {
+        const origin = vscode.Uri.parse(uri.query);
+        if (origin.query) {
+          const params = new URLSearchParams(origin.query);
+          tourPath = params.get("tour");
+
+          const step = params.get("step");
+          if (step) {
+            stepNumber = Number(step);
+          }
+        }
+      }
+
+      if (tourPath) {
+        if (!tourPath.endsWith(".tour")) {
+          tourPath = `${tourPath}.tour`;
+        }
+
+        const tour = store.tours.find(tour =>
+          tour.id.endsWith(tourPath as string)
+        );
+        if (tour) {
+          startCodeTour(tour, stepNumber);
+        }
+      } else {
+        startDefaultTour(undefined, undefined, stepNumber);
+      }
     }
 
     return;

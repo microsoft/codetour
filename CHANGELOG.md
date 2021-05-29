@@ -4,6 +4,10 @@
 - Automatically set the "pattern" record mode when you create a new tour, and select `None` for the git ref
 - Added support for opening a `*.tour` file in the VS Code notebook editor (Insiders only)
 
+## v0.0.54
+
+- Added a URI handler, with support for launching a specific tour and step
+
 ## v0.0.53
 
 - Exposed a new `onDidStartTour` event and `startTourByUri` method to the extension API

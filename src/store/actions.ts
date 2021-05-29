@@ -180,7 +180,8 @@ export async function promptForTour(
 
 export async function startDefaultTour(
   workspaceRoot: Uri = getWorkspaceKey(),
-  tours: CodeTour[] = store.tours
+  tours: CodeTour[] = store.tours,
+  step: number = 0
 ): Promise<boolean> {
   if (tours.length === 0) {
     return false;
@@ -191,7 +192,7 @@ export async function startDefaultTour(
     tours.find(tour => tour.title.match(/^#?1\s+-/));
 
   if (primaryTour) {
-    startCodeTour(primaryTour, 0, workspaceRoot, false, undefined, tours);
+    startCodeTour(primaryTour, step, workspaceRoot, false, undefined, tours);
     return true;
   } else {
     return selectTour(tours, workspaceRoot);

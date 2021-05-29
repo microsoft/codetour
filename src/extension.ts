@@ -29,12 +29,11 @@ function startTour(params: URLSearchParams) {
   let tourPath = params.get("tour");
   const step = params.get("step");
 
-  console.log("CT Tour: ", tourPath);
-  console.log("CT Step: ", step);
-
   let stepNumber;
   if (step) {
-    stepNumber = Number(step);
+    // Allow the step number to be
+    // provided as 1-based vs. 0-based
+    stepNumber = Number(step) - 1;
   }
 
   if (tourPath) {
@@ -42,14 +41,7 @@ function startTour(params: URLSearchParams) {
       tourPath = `${tourPath}.tour`;
     }
 
-    console.log("CT Tour Path: ", tourPath);
-
-    console.log("CT Tours: ", store.tours);
-
     const tour = store.tours.find(tour => tour.id.endsWith(tourPath as string));
-
-    console.log("CT Tour: ", tour);
-
     if (tour) {
       startCodeTour(tour, stepNumber);
     }
@@ -68,20 +60,16 @@ class URIHandler implements vscode.UriHandler {
     this._didStartDefaultTour = true;
     await discoverTours();
 
+    let query = uri.query;
     if (uri.path === "/startDefaultTour") {
-      if (uri.query) {
-        console.log("CT Query: ", uri.query);
-        try {
-          const origin = vscode.Uri.parse(uri.query);
-          if (origin.query) {
-            const params = new URLSearchParams(origin.query);
-            startTour(params);
-          }
-        } catch {}
-      }
-    } else if (uri.path === "/starTour") {
-      const params = new URLSearchParams(uri.query);
+      query = vscode.Uri.parse(uri.query).query;
+    }
+
+    if (query) {
+      const params = new URLSearchParams(query);
       startTour(params);
+    } else {
+      startDefaultTour();
     }
   }
 }

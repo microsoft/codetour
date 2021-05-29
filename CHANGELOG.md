@@ -4,6 +4,10 @@
 - Automatically set the "pattern" record mode when you create a new tour, and select `None` for the git ref
 - Added support for opening a `*.tour` file in the VS Code notebook editor (Insiders only)
 
+## v0.0.56
+
+- URI handler now allows specifying the step via 1-based numbers, as opposed to 0-based
+
 ## v0.0.55
 
 - The URI handler now allows specifying _just_ a step number, in order to index into a repo within only a single tour

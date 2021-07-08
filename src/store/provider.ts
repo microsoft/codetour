@@ -150,7 +150,7 @@ async function discoverSubTours(workspaceUri: vscode.Uri): Promise<CodeTour[]> {
 vscode.workspace.onDidChangeWorkspaceFolders(discoverTours);
 
 const watcher = vscode.workspace.createFileSystemWatcher(
-  "**/{.vscode/tours,.tours}/**/*.{json,tour}"
+  `**/{${SUB_TOUR_DIRECTORIES.join(",")}/**/*.tour`
 );
 
 watcher.onDidChange(discoverTours);

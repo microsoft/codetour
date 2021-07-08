@@ -9,8 +9,18 @@ import { CodeTour, store } from ".";
 import { EXTENSION_NAME, VSCODE_DIRECTORY } from "../constants";
 import { readUriContents, updateMarkerTitles } from "../utils";
 import { endCurrentCodeTour } from "./actions";
-const MAIN_TOUR_FILES = [".tour", `${VSCODE_DIRECTORY}/main.tour`];
-const SUB_TOUR_DIRECTORIES = [`${VSCODE_DIRECTORY}/tours`, `.tours`];
+
+export const MAIN_TOUR_FILES = [
+  ".tour",
+  `${VSCODE_DIRECTORY}/main.tour`,
+  "main.tour"
+];
+
+const SUB_TOUR_DIRECTORIES = [
+  `${VSCODE_DIRECTORY}/tours`,
+  ".github/tours",
+  `.tours`
+];
 
 const HAS_TOURS_KEY = `${EXTENSION_NAME}:hasTours`;
 
@@ -23,8 +33,9 @@ const TOUR_CONTEXT = {
 };
 
 const customDirectory = vscode.workspace
-  .getConfiguration("codetour")
+  .getConfiguration(EXTENSION_NAME)
   .get("customTourDirectory", null);
+
 if (customDirectory) {
   SUB_TOUR_DIRECTORIES.push(customDirectory);
 }

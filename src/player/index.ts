@@ -46,8 +46,12 @@ const CONTROLLER_LABEL = "CodeTour";
 let id = 0;
 
 const SHELL_SCRIPT_PATTERN = /^>>\s+(?<script>.*)$/gm;
-const COMMAND_PATTERN = /(?<=\()(?<commandPrefix>command:[\w+\.]+\?)(?<params>\[[^\]]+\])/gm;
-const TOUR_REFERENCE_PATTERN = /(?:\[(?<linkTitle>[^\]]+)\])?\[(?=\s*[^\]\s])(?<tourTitle>[^\]#]+)?(?:#(?<stepNumber>\d+))?\](?!\()/gm;
+
+const COMMAND_PATTERN =
+  /(?<commandPrefix>\(command:[\w+\.]+\?)(?<params>\[[^\]\)]+\])/gm;
+
+const TOUR_REFERENCE_PATTERN =
+  /(?:\[(?<linkTitle>[^\]]+)\])?\[(?=\s*[^\]\s])(?<tourTitle>[^\]#]+)?(?:#(?<stepNumber>\d+))?\](?!\()/gm;
 const FILE_REFERENCE_PATTERN = /(\!)?(\[[^\]]+\]\()(\.[^\)]+)(?=\))/gm;
 const CODE_FENCE_PATTERN = /```[^\n]+\n(.+)\n```/gms;
 

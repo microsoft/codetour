@@ -7,6 +7,9 @@
 ## v0.0.57 (07/08/2021)
 
 - Added a new `CodeTour: Custom Tour Directory` setting, that allows a project to specify a custom directory for their tours to be stored in
+- Added support for storing tours in the `.github/tours` folder, in addition to the existing `.vscode/tours` and `.tours` directories
+- You can now create a tour called `main.tour` at the root of your workspace, which will be considered a primary tour
+- Fixed a bug with running CodeTour in Safari (which doesn't support lookbehinds in regex)
 
 ## v0.0.56 (05/29/2021)
 

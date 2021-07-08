@@ -202,7 +202,7 @@ If you want to call out a directory as part of a tour, then while recording, you
 
 ### Tour Files
 
-Behind the scenes, the tour will be written as a JSON file to the `.tours` directory of the current workspace. This file is pretty simple and can be hand-edited if you'd like. Additionally, you can manually create tour files, by following the [tour schema](#tour-schema). You can then store these files to the `.tours` (or `.vscode/tours`) directory, or you can also create a tour at any of the following well-known locations: `.tour`, `main.tour`
+Behind the scenes, the tour will be written as a JSON file to the `.tours` directory of the current workspace. This file is pretty simple and can be hand-edited if you'd like. Additionally, you can manually create tour files, by following the [tour schema](#tour-schema). You can then store these files to the `.tours` (or `.vscode/tours` or `.github/tours`) directory, or you can also create a tour at any of the following well-known locations: `.tour`, `main.tour`, `.vscode/main.tour`.
 
 Within the `.tours` (or `.vscode/tours`) directory, you can organize your tour files into arbitrarily deep sub-directories, and the CodeTour player will properly discover them.
 
@@ -373,6 +373,8 @@ The `CodeTour` extension contributes the following settings:
 - `Codetour > Record Mode` - Specifies how you want to associate tour steps to code when you're recording a new tour. Can either be `lineNumber` or `pattern`. Defaults to `lineNumber`.
 
 - `Codetour > Show Markers` - Specifies whether or not to show [tour markers](#tour-markers). Defaults to `true`.
+
+- `Codetour > Custom Tour Directory` - Specifies the name of a custom directory path that tours can be stored in within an opened workspace (e.g. `docs/tours`).
 
 ### Keybindings
 

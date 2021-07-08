@@ -4,6 +4,10 @@
 - Automatically set the "pattern" record mode when you create a new tour, and select `None` for the git ref
 - Added support for opening a `*.tour` file in the VS Code notebook editor (Insiders only)
 
+## v0.0.58 (07/08/2021)
+
+- The "Tours available!" prompt is now suppressed when opening a [CodeSwing](https://aka.ms/codeswing) workspace
+
 ## v0.0.57 (07/08/2021)
 
 - Added a new `CodeTour: Custom Tour Directory` setting, that allows a project to specify a custom directory for their tours to be stored in

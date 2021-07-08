@@ -145,6 +145,11 @@ export async function moveCurrentCodeTourForward() {
   _onDidStartTour.fire([store.activeTour!.tour, store.activeTour!.step]);
 }
 
+async function isCodeSwingWorkspace(uri: Uri) {
+  const files = await workspace.findFiles("codeswing.json");
+  return files && files.length > 0;
+}
+
 function isLiveShareWorkspace(uri: Uri) {
   return (
     uri.path.endsWith("Visual Studio Live Share.code-workspace") ||
@@ -162,7 +167,10 @@ export async function promptForTour(
     tours.length > 0 &&
     !globalState.get(key) &&
     !isLiveShareWorkspace(workspaceRoot) &&
-    workspace.getConfiguration("codetour").get("promptForWorkspaceTours", true)
+    workspace
+      .getConfiguration(EXTENSION_NAME)
+      .get("promptForWorkspaceTours", true) &&
+    !isCodeSwingWorkspace(workspaceRoot)
   ) {
     globalState.update(key, true);
 

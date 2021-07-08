@@ -4,19 +4,23 @@
 - Automatically set the "pattern" record mode when you create a new tour, and select `None` for the git ref
 - Added support for opening a `*.tour` file in the VS Code notebook editor (Insiders only)
 
-## v0.0.56
+## v0.0.57 (07/08/2021)
+
+- Added a new `CodeTour: Custom Tour Directory` setting, that allows a project to specify a custom directory for their tours to be stored in
+
+## v0.0.56 (05/29/2021)
 
 - URI handler now allows specifying the step via 1-based numbers, as opposed to 0-based
 
-## v0.0.55
+## v0.0.55 (05/29/2021)
 
 - The URI handler now allows specifying _just_ a step number, in order to index into a repo within only a single tour
 
-## v0.0.54
+## v0.0.54 (05/29/2021)
 
 - Added a URI handler, with support for launching a specific tour and step
 
-## v0.0.53
+## v0.0.53 (05/12/2021)
 
 - Exposed a new `onDidStartTour` event and `startTourByUri` method to the extension API
 - Added experimental support for the CodeStatus extension

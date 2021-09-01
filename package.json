@@ -28,7 +28,6 @@
     "Sharing"
   ],
   "extensionKind": [
-    "web",
     "workspace"
   ],
   "activationEvents": [

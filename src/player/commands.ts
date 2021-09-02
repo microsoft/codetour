@@ -116,6 +116,12 @@ export function registerPlayerCommands() {
       const codeSnippet = decodeURIComponent(codeBlock);
 
       const step = store.activeTour!.tour.steps[store.activeTour!.step];
+      const line = vscode.window.activeTextEditor?.document.lineAt(step.line!);
+
+      if (codeBlock.includes(line?.text!)) {
+        return; // early out block has already been inserted
+      }
+
       if (step.selection) {
         await vscode.window.activeTextEditor?.edit(e => {
           const selection = new vscode.Selection(

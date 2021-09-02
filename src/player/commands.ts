@@ -19,6 +19,10 @@ import { progress } from "../store/storage";
 import { readUriContents } from "../utils";
 import { CodeTourNode } from "./tree/nodes";
 
+const adjustOnInsertCodeSnippet = vscode.workspace
+  .getConfiguration("codetour")
+  .get("adjustOnInsertCodeSnippet", true);
+
 let terminal: vscode.Terminal | null;
 export function registerPlayerCommands() {
   // This is a "private" command that's used exclusively
@@ -130,11 +134,13 @@ export function registerPlayerCommands() {
       }
 
       const lineAdjustment = codeSnippet.split("\n").length - 1;
-      if (lineAdjustment > 0) {
-        store.activeTour!.tour.steps[
-          store.activeTour!.step
-        ].line! += lineAdjustment;
-
+      if (adjustOnInsertCodeSnippet && lineAdjustment > 0) {
+        const step = store.activeTour!.tour.steps[store.activeTour!.step];
+        step.line! += lineAdjustment;
+        if (step.selection) {
+          step.selection.start.line += lineAdjustment;
+          step.selection.end.line += lineAdjustment;
+        }
         saveTour(store.activeTour!.tour);
       }
 

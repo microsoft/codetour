@@ -191,7 +191,7 @@ const VIEW_COMMANDS = new Map([
   ["problems", "workbench.panel.markers"],
   ["scm", "workbench.view.scm"],
   ["search", "workbench.view.search"],
-  ["terminal", "workbench.panel.terminal"]
+  ["terminal", "terminal.focus"]
 ]);
 
 function getPreviousTour(): CodeTour | undefined {

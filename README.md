@@ -179,7 +179,7 @@ When you record a tour, you'll be asked which git "ref" to associate it with. Th
 
 You can choose to associate with the tour with the following ref types:
 
-- `None` - The tour isn't associated with any ref. When you select this option, tour steps will be associated with code via a regex pattern, as opposed to a line number. This ensures that they can retain resilient if the attached line is moved around the file. The benefit of this option is that it enables the code to be edited as part of the tour, since the tour will walk the user through whichever branch/commit they have checked out (e.g. interactive tutorials).
+- `None` - The tour isn't associated with any ref. The benefit of this option is that it enables the code to be edited as part of the tour, since the tour will walk the user through whichever branch/commit they have checked out (e.g. interactive tutorials).
 - `Current Branch` - The tour is restricted to the current branch. This can have the same resiliency challenges as `None`, but, it allows you to maintain a special branch for your tours that can be versioned seperately. If the end-user has the associated branch checked out, then the tour will enable them to make edits to files as its taken. Otherwise, the tour will replay with read-only files.
 - `Current Commit` - The tour is restricted to the current commit, and therefore, will never get out of sync. If the end-user's `HEAD` points at the specified commit, then the tour will enable them to make edits to files as its taken. Otherwise, the tour will replay with read-only files.
 - Tags - The tour is restricted to the selected tag, and therefore, will never get out of sync. The repo's entire list of tags will be displayed, which allows you to easily select one.

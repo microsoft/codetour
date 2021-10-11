@@ -5,13 +5,12 @@ import {
   ThemeColor,
   ThemeIcon,
   TreeItem,
-  TreeItemCollapsibleState,
-  Uri
+  TreeItemCollapsibleState
 } from "vscode";
 import { CONTENT_URI, EXTENSION_NAME, FS_SCHEME } from "../../constants";
-import { CodeTour, store } from "../../store";
+import { CodeTour, FolderCodeTour, store } from "../../store";
 import { progress } from "../../store/storage";
-import { getFileUri, getStepLabel, getWorkspaceUri } from "../../utils";
+import { getFileUri, getWorkspaceUri } from "../../utils";
 
 function isRecording(tour: CodeTour) {
   return (
@@ -27,8 +26,15 @@ const completeIcon = new ThemeIcon(
   new ThemeColor("terminal.ansiGreen")
 );
 
+export class FolderCodeTourNode extends TreeItem {
+  constructor(public folder: FolderCodeTour) {
+    super(folder.name, TreeItemCollapsibleState.Collapsed)
+  }
+}
+
 export class CodeTourNode extends TreeItem {
   constructor(public tour: CodeTour, extensionPath: string) {
+    // folder with TreeItemCollapsible
     super(
       tour.title!,
       isRecording(tour)
@@ -37,7 +43,7 @@ export class CodeTourNode extends TreeItem {
     );
 
     this.tooltip = tour.description;
-    this.description = `${tour.steps.length} steps`;
+    this.description = `${tour.steps.length} steps - ${tour.folder}`;
 
     const contextValues = ["codetour.tour"];
 

@@ -35,6 +35,11 @@ export interface CodeTourStep {
   markerTitle?: string;
 }
 
+export interface FolderCodeTour {
+  name: string;
+  steps: CodeTour[] | FolderCodeTour[];
+}
+
 export interface CodeTour {
   id: string;
   title: string;
@@ -72,6 +77,7 @@ type CodeTourProgress = [string, number[]];
 export type CodeTourStepTuple = [CodeTour, CodeTourStep, number, number?];
 
 export interface Store {
+  folders?: FolderCodeTour[];
   tours: CodeTour[];
   activeTour: ActiveTour | null;
   activeEditorSteps?: CodeTourStepTuple[];
@@ -83,6 +89,7 @@ export interface Store {
 }
 
 export const store: Store = observable({
+  folders: [],
   tours: [],
   activeTour: null,
   isRecording: false,

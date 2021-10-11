@@ -7,6 +7,7 @@ import * as os from "os";
 import * as vscode from "vscode";
 import { CodeTour, store } from ".";
 import { EXTENSION_NAME, VSCODE_DIRECTORY } from "../constants";
+import { CodeTourNode, FolderCodeTourNode } from "../player/tree/nodes";
 import { readUriContents, updateMarkerTitles } from "../utils";
 import { endCurrentCodeTour } from "./actions";
 
@@ -45,9 +46,14 @@ export async function discoverTours(): Promise<void> {
     vscode.workspace.workspaceFolders!.map(async workspaceFolder => {
       const mainTours = await discoverMainTours(workspaceFolder.uri);
       const tours = await discoverSubTours(workspaceFolder.uri);
+      const folders = await discoverFolders(workspaceFolder.uri)
 
       if (mainTours) {
         tours.push(...mainTours);
+      }
+
+      if (folders) {
+        tours.push(...folders)
       }
 
       return tours;
@@ -55,6 +61,11 @@ export async function discoverTours(): Promise<void> {
   );
 
   runInAction(() => {
+    tours.map(tour => {
+      if (tour instanceof CodeTourNode) {
+        store.tours.push(tour)
+      }
+    })
     store.tours = tours
       .flat()
       .sort((a, b) => a.title.localeCompare(b.title))
@@ -87,7 +98,7 @@ export async function discoverTours(): Promise<void> {
 
 async function discoverMainTours(
   workspaceUri: vscode.Uri
-): Promise<CodeTour[]> {
+): Promise<vscode.TreeItem[]> {
   const tours = await Promise.all(
     MAIN_TOUR_FILES.map(async tourFile => {
       try {
@@ -104,16 +115,14 @@ async function discoverMainTours(
   return tours.filter(tour => tour);
 }
 
-async function readTourDirectory(uri: vscode.Uri): Promise<CodeTour[]> {
+async function readTours(uri: vscode.Uri, folder?: String): Promise<vscode.TreeItem[]> {
   try {
     const tourFiles = await vscode.workspace.fs.readDirectory(uri);
     const tours = await Promise.all(
       tourFiles.map(async ([file, type]) => {
         const fileUri = vscode.Uri.joinPath(uri, file);
         if (type === vscode.FileType.File) {
-          return readTourFile(fileUri);
-        } else {
-          return readTourDirectory(fileUri);
+          return readTourFile(fileUri, folder);
         }
       })
     );
@@ -125,26 +134,59 @@ async function readTourDirectory(uri: vscode.Uri): Promise<CodeTour[]> {
   }
 }
 
+async function readTourDirectory(uri: vscode.Uri, folder?: String): Promise<vscode.TreeItem[]> {
+  try {
+    const tourFiles = await vscode.workspace.fs.readDirectory(uri);
+    const folders = await Promise.all(
+      tourFiles.map(async ([file, type]) => {
+        const fileUri = vscode.Uri.joinPath(uri, file);
+        if (type !== vscode.FileType.File) {
+          const folder = { name: file, steps: readTourDirectory(fileUri, file) }
+          return folder;
+        }
+      })
+    );
+
+    // @ts-ignore
+    return folders.flat().filter(folder => folder);
+  } catch {
+    return [];
+  }
+}
+
 async function readTourFile(
-  tourUri: vscode.Uri
+  tourUri: vscode.Uri,
+  folder?: String,
 ): Promise<CodeTour | undefined> {
   try {
     const tourContent = await readUriContents(tourUri);
     const tour = JSON.parse(tourContent);
     tour.id = decodeURIComponent(tourUri.toString());
+    tour.folder = folder;
     return tour;
   } catch {}
 }
 
-async function discoverSubTours(workspaceUri: vscode.Uri): Promise<CodeTour[]> {
+async function discoverSubTours(workspaceUri: vscode.Uri): Promise<CodeTour[]]> {
   const tours = await Promise.all(
+    SUB_TOUR_DIRECTORIES.map(directory => {
+      const uri = vscode.Uri.joinPath(workspaceUri, directory);
+      return readTours(uri);
+    })
+  );
+
+  return tours.flat();
+}
+
+async function discoverFolders(workspaceUri: vscode.Uri): Promise<FolderCodeTourNode[]> {
+  const folders = await Promise.all(
     SUB_TOUR_DIRECTORIES.map(directory => {
       const uri = vscode.Uri.joinPath(workspaceUri, directory);
       return readTourDirectory(uri);
     })
   );
 
-  return tours.flat();
+  return folders.flat();
 }
 
 vscode.workspace.onDidChangeWorkspaceFolders(discoverTours);

@@ -11,10 +11,10 @@ import {
   TreeItem,
   window
 } from "vscode";
-import { EXTENSION_NAME } from "../../constants";
 import { generatePreviewContent } from "..";
+import { EXTENSION_NAME } from "../../constants";
 import { store } from "../../store";
-import { CodeTourNode, CodeTourStepNode } from "./nodes";
+import { CodeTourNode, CodeTourStepNode, FolderCodeTourNode } from "./nodes";
 
 class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
   private _disposables: Disposable[] = [];
@@ -27,6 +27,7 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
     reaction(
       () => [
         store.tours,
+        store.folders,
         store.hasTours,
         store.isRecording,
         store.progress.map(([id, completedSteps]) => [
@@ -58,8 +59,12 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
       if (!store.hasTours && !store.activeTour) {
         return undefined;
       } else {
+        // [tour1, tour2]
+        // [folder: foler: folder: [tours]]
+        const folders = store.folders?.map(folder => new FolderCodeTourNode(folder) as TreeItem) || []
+        
         const tours = store.tours.map(
-          tour => new CodeTourNode(tour, this.extensionPath)
+          tour => new CodeTourNode(tour, this.extensionPath) as TreeItem
         );
 
         if (
@@ -71,8 +76,12 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
           );
         }
 
-        return tours;
+        return tours.concat(folders);
       }
+    } else if (element instanceof FolderCodeTourNode) {
+      // return element.folder.map(
+      //   (tour, index) => new CodeTourNode(tour, index)
+      // );
     } else if (element instanceof CodeTourNode) {
       if (element.tour.steps.length === 0) {
         let item;

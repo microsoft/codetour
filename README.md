@@ -146,7 +146,7 @@ In order to add more interactivity to a tour, you can include "command links" to
 ```markdown
 <!-- Call a command that doesn't require arguments-->
 
-[Open URL](command:codetour.startTour)
+[Start tour](command:codetour.startTour)
 
 <!-- Call a command that requires arguments-->
 

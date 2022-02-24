@@ -43,14 +43,19 @@ export function registerRecorderCommands() {
     const file = title
       .toLocaleLowerCase()
       .replace(/\s/g, "-")
-      .replace(/[^\w\d-_]/g, "");
+      .replace(/[^\w\d\-_]/g, "");
 
     const prefix = workspaceRoot.path.endsWith("/")
       ? workspaceRoot.path
       : `${workspaceRoot.path}/`;
 
+    const customTourDirectory = vscode.workspace
+      .getConfiguration(EXTENSION_NAME)
+      .get("customTourDirectory", null);
+    const tourDirectory = customTourDirectory || ".tours";
+
     return workspaceRoot.with({
-      path: `${prefix}.tours/${file}.tour`
+      path: `${prefix}${tourDirectory}/${file}.tour`
     });
   }
 
@@ -257,9 +262,8 @@ export function registerRecorderCommands() {
         }
       };
 
-      const previousStep = store.activeTour!.tour.steps[
-        store.activeTour!.step - 1
-      ];
+      const previousStep =
+        store.activeTour!.tour.steps[store.activeTour!.step - 1];
 
       // Check whether the end-user forgot to "reset"
       // the selection from the previous step, and if so,

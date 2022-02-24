@@ -3,7 +3,7 @@
   "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
-  "version": "0.0.58",
+  "version": "0.0.59",
   "author": {
     "name": "Microsoft Corporation"
   },
@@ -18,7 +18,7 @@
   "license": "MIT",
   "icon": "images/icon.png",
   "engines": {
-    "vscode": "^1.48.0"
+    "vscode": "^1.60.0"
   },
   "categories": [
     "Other"
@@ -31,7 +31,8 @@
     "workspace"
   ],
   "activationEvents": [
-    "*",
+    "onStartupFinished",
+    "onView:codetour.tours",
     "onNotebookEditor:codetour"
   ],
   "main": "./dist/extension-node.js",
@@ -651,7 +652,7 @@
     "@types/axios": "^0.14.0",
     "@types/node": "^8.10.66",
     "@types/throttle-debounce": "^2.1.0",
-    "@types/vscode": "~1.48.0",
+    "@types/vscode": "^1.60.0",
     "ts-loader": "^7.0.4",
     "tslint": "^5.8.0",
     "typescript": "^3.1.4",

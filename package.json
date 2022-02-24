@@ -642,7 +642,7 @@
   },
   "dependencies": {
     "@types/jexl": "^2.2.0",
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "jexl": "^2.3.0",
     "mobx": "^5.14.2",
     "throttle-debounce": "^3.0.1",

@@ -177,7 +177,7 @@ function findOrCreateFolder(title: string, folder: CodeTourFolder): CodeTourFold
 vscode.workspace.onDidChangeWorkspaceFolders(discoverTours);
 
 const watcher = vscode.workspace.createFileSystemWatcher(
-  `**/{${SUB_TOUR_DIRECTORIES.join(",")}}/**/*.tour`
+  `**/{${SUB_TOUR_DIRECTORIES.join(",")}}/**`
 );
 
 watcher.onDidChange(discoverTours);

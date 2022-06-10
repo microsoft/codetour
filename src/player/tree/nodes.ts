@@ -9,7 +9,7 @@ import {
   Uri
 } from "vscode";
 import { CONTENT_URI, EXTENSION_NAME, FS_SCHEME } from "../../constants";
-import { CodeTour, store } from "../../store";
+import { CodeTour, CodeTourFolder, store } from "../../store";
 import { progress } from "../../store/storage";
 import { getFileUri, getStepLabel, getWorkspaceUri } from "../../utils";
 
@@ -64,6 +64,19 @@ export class CodeTourNode extends TreeItem {
       : progress.isComplete(tour)
       ? completeIcon
       : new ThemeIcon("location");
+  }
+}
+
+export class CodeTourFolderNode extends TreeItem {
+  constructor(public tour: CodeTourFolder, extensionPath: string) {
+    super(
+      tour.title,
+      TreeItemCollapsibleState.Collapsed
+    );
+
+    this.description = `${tour.tours.length} tours`;
+    this.contextValue = "codetour.folder";
+    this.iconPath = new ThemeIcon("folder");
   }
 }
 

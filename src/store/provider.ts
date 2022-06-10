@@ -5,7 +5,7 @@ import * as jexl from "jexl";
 import { comparer, runInAction, set } from "mobx";
 import * as os from "os";
 import * as vscode from "vscode";
-import { CodeTour, store } from ".";
+import { CodeTour, CodeTourFolder, store } from ".";
 import { EXTENSION_NAME, VSCODE_DIRECTORY } from "../constants";
 import { readUriContents, updateMarkerTitles } from "../utils";
 import { endCurrentCodeTour } from "./actions";
@@ -41,24 +41,28 @@ if (customDirectory) {
 }
 
 export async function discoverTours(): Promise<void> {
-  const tours = await Promise.all(
-    vscode.workspace.workspaceFolders!.map(async workspaceFolder => {
-      const mainTours = await discoverMainTours(workspaceFolder.uri);
-      const tours = await discoverSubTours(workspaceFolder.uri);
+  const root: CodeTourFolder = {
+    title: "",
+    tours: []
+  };
+  
+  for (const workspaceFolder of vscode.workspace.workspaceFolders!) {
+    await discoverSubTours(workspaceFolder.uri, root);
+    
+    const mainTours = await discoverMainTours(workspaceFolder.uri);
 
-      if (mainTours) {
-        tours.push(...mainTours);
-      }
-
-      return tours;
-    })
-  );
+    if (mainTours) {
+      root.tours.push(...mainTours);
+    }
+  }
 
   runInAction(() => {
-    store.tours = tours
-      .flat()
-      .sort((a, b) => a.title.localeCompare(b.title))
-      .filter(tour => !tour.when || jexl.evalSync(tour.when, TOUR_CONTEXT));
+    const tours: CodeTour[] = [];
+    
+    sortAndFilterFolder(root, tours);
+    
+    store.root = root;
+    store.tours = tours;
 
     if (store.activeTour) {
       const tour = store.tours.find(
@@ -85,9 +89,21 @@ export async function discoverTours(): Promise<void> {
   updateMarkerTitles();
 }
 
-async function discoverMainTours(
-  workspaceUri: vscode.Uri
-): Promise<CodeTour[]> {
+function sortAndFilterFolder(folder: CodeTourFolder, tours: CodeTour[]): void {
+  folder.tours
+    .sort((a, b) => a.title.localeCompare(b.title))
+    .filter(tour => 'tours' in tour || !tour.when || jexl.evalSync(tour.when, TOUR_CONTEXT));
+  
+  for (const tour of folder.tours) {
+    if ('tours' in tour) {
+      sortAndFilterFolder(tour, tours)
+    } else {
+      tours.push(tour);
+    }
+  }
+}
+
+async function discoverMainTours(workspaceUri: vscode.Uri): Promise<CodeTour[]> {
   const tours = await Promise.all(
     MAIN_TOUR_FILES.map(async tourFile => {
       try {
@@ -104,47 +120,58 @@ async function discoverMainTours(
   return tours.filter(tour => tour);
 }
 
-async function readTourDirectory(uri: vscode.Uri): Promise<CodeTour[]> {
+async function readTourDirectory(uri: vscode.Uri, folder: CodeTourFolder): Promise<void> {
   try {
     const tourFiles = await vscode.workspace.fs.readDirectory(uri);
-    const tours = await Promise.all(
+
+    await Promise.all(
       tourFiles.map(async ([file, type]) => {
         const fileUri = vscode.Uri.joinPath(uri, file);
         if (type === vscode.FileType.File) {
-          return readTourFile(fileUri);
+          return readTourFile(fileUri, folder);
         } else {
-          return readTourDirectory(fileUri);
+          const newFolder = findOrCreateFolder(file, folder);
+
+          return readTourDirectory(fileUri, newFolder);
         }
       })
     );
-
-    // @ts-ignore
-    return tours.flat().filter(tour => tour);
-  } catch {
-    return [];
-  }
+  } catch {}
 }
 
-async function readTourFile(
-  tourUri: vscode.Uri
-): Promise<CodeTour | undefined> {
+async function readTourFile(tourUri: vscode.Uri, folder: CodeTourFolder): Promise<void> {
   try {
     const tourContent = await readUriContents(tourUri);
     const tour = JSON.parse(tourContent);
     tour.id = decodeURIComponent(tourUri.toString());
-    return tour;
+    folder.tours.push(tour);
   } catch {}
 }
 
-async function discoverSubTours(workspaceUri: vscode.Uri): Promise<CodeTour[]> {
-  const tours = await Promise.all(
+async function discoverSubTours(workspaceUri: vscode.Uri, folder: CodeTourFolder): Promise<void> {
+  await Promise.all(
     SUB_TOUR_DIRECTORIES.map(directory => {
       const uri = vscode.Uri.joinPath(workspaceUri, directory);
-      return readTourDirectory(uri);
+      return readTourDirectory(uri, folder);
     })
   );
+}
 
-  return tours.flat();
+function findOrCreateFolder(title: string, folder: CodeTourFolder): CodeTourFolder {
+  for(const tour of folder.tours) {
+    if ('tours' in tour && tour.title === title) {
+      return tour;
+    }
+  }
+
+  const newFolder = {
+    title,
+    tours: []
+  };
+
+  folder.tours.push(newFolder);
+  
+  return newFolder;
 }
 
 vscode.workspace.onDidChangeWorkspaceFolders(discoverTours);

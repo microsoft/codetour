@@ -47,6 +47,13 @@ export interface CodeTour {
   when?: string;
 }
 
+export interface CodeTourFolder {
+  title: string;
+  tours: CodeTourNode[];
+}
+
+export type CodeTourNode = CodeTour | CodeTourFolder;
+
 export interface ActiveTour {
   tour: CodeTour;
   step: number;
@@ -72,6 +79,7 @@ type CodeTourProgress = [string, number[]];
 export type CodeTourStepTuple = [CodeTour, CodeTourStep, number, number?];
 
 export interface Store {
+  root: CodeTourFolder;
   tours: CodeTour[];
   activeTour: ActiveTour | null;
   activeEditorSteps?: CodeTourStepTuple[];
@@ -83,6 +91,10 @@ export interface Store {
 }
 
 export const store: Store = observable({
+  root: {
+    title: "",
+    tours: []
+  },
   tours: [],
   activeTour: null,
   isRecording: false,

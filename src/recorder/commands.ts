@@ -650,10 +650,39 @@ export function registerRecorderCommands() {
     `${EXTENSION_NAME}.changeTourStepTitle`,
     async (node: CodeTourStepNode) => {
       const step = node.tour.steps[node.stepNumber];
-      step.title = await vscode.window.showInputBox({
+      const response = await vscode.window.showInputBox({
         prompt: `Enter the title for this tour step`,
         value: step.title || ""
       });
+      
+      if (typeof response === "undefined") {
+        return;
+      } else if (response) {
+        step.title = response;
+      } else {
+        delete step.title;
+      }
+      
+      saveTour(node.tour);
+    }
+  );
+  
+  vscode.commands.registerCommand(
+    `${EXTENSION_NAME}.changeTourStepIcon`,
+    async (node: CodeTourStepNode) => {
+      const step = node.tour.steps[node.stepNumber];
+      const response = await vscode.window.showInputBox({
+        prompt: `Enter the icon for this tour step`,
+        value: step.icon || ""
+      });
+      
+      if (typeof response === "undefined") {
+        return;
+      } else if (response) {
+        step.icon = response;
+      } else {
+        delete step.icon;
+      }
 
       saveTour(node.tour);
     }

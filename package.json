@@ -84,8 +84,7 @@
       },
       {
         "command": "codetour.addTourStep",
-        "title": "Add Step to Tour",
-        "enablement": "!commentIsEmpty"
+        "title": "Add Step to Tour"
       },
       {
         "command": "codetour.changeTourDescription",

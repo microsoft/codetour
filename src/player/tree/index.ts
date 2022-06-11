@@ -11,10 +11,10 @@ import {
   TreeItem,
   window
 } from "vscode";
-import { EXTENSION_NAME } from "../../constants";
 import { generatePreviewContent } from "..";
+import { EXTENSION_NAME } from "../../constants";
 import { store } from "../../store";
-import { CodeTourNode, CodeTourStepNode } from "./nodes";
+import { CodeTourFolderNode, CodeTourNode, CodeTourStepNode } from "./nodes";
 
 class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
   private _disposables: Disposable[] = [];
@@ -58,9 +58,13 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
       if (!store.hasTours && !store.activeTour) {
         return undefined;
       } else {
-        const tours = store.tours.map(
-          tour => new CodeTourNode(tour, this.extensionPath)
-        );
+        const tours = store.root.tours.map(tour => {
+          if ('tours' in tour) {
+            return new CodeTourFolderNode(tour, this.extensionPath);
+          } else {
+            return new CodeTourNode(tour, this.extensionPath);
+          }
+        });
 
         if (
           store.activeTour &&
@@ -73,6 +77,16 @@ class CodeTourTreeProvider implements TreeDataProvider<TreeItem>, Disposable {
 
         return tours;
       }
+    } else if (element instanceof CodeTourFolderNode) {
+      const tours = element.tour.tours.map(tour => {
+        if ('tours' in tour) {
+          return new CodeTourFolderNode(tour, this.extensionPath);
+        } else {
+          return new CodeTourNode(tour, this.extensionPath);
+        }
+      });
+      
+      return tours;
     } else if (element instanceof CodeTourNode) {
       if (element.tour.steps.length === 0) {
         let item;

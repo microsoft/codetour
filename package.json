@@ -103,6 +103,10 @@
         "title": "Change Title"
       },
       {
+        "command": "codetour.changeTourStepIcon",
+        "title": "Change Icon"
+      },
+      {
         "command": "codetour.changeTourTitle",
         "title": "Change Title"
       },
@@ -275,6 +279,10 @@
         },
         {
           "command": "codetour.changeTourStepTitle",
+          "when": "false"
+        },
+        {
+          "command": "codetour.changeTourStepIcon",
           "when": "false"
         },
         {
@@ -541,6 +549,11 @@
           "command": "codetour.changeTourStepTitle",
           "when": "viewItem =~ /^codetour.tourStep/",
           "group": "change@1"
+        },
+        {
+          "command": "codetour.changeTourStepIcon",
+          "when": "viewItem =~ /^codetour.tourStep/",
+          "group": "change@2"
         },
         {
           "command": "codetour.addContentStep",

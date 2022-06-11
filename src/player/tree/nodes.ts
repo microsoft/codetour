@@ -112,6 +112,27 @@ export class CodeTourStepNode extends TreeItem {
     } else if (progress.isComplete(tour, stepNumber)) {
       // @ts-ignore
       this.iconPath = completeIcon;
+    } else if (step.icon) {
+      if (step.icon.startsWith('.')) {
+        const resourceRoot = workspaceRoot
+          ? workspaceRoot
+          : getWorkspaceUri(tour);
+          
+          this.iconPath = getFileUri(step.icon, resourceRoot);
+      } else {
+        try {
+          const uri = Uri.parse(step.icon, true);
+          
+          this.iconPath = uri;
+        } catch {
+          const data = step.icon.split(',');
+          if (data.length > 1) {
+            this.iconPath = new ThemeIcon(data[0], new ThemeColor(data[1]));
+          } else {
+            this.iconPath = new ThemeIcon(data[0]);
+          }
+        }
+      }
     } else if (step.directory) {
       this.iconPath = ThemeIcon.Folder;
     } else {

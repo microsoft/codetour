@@ -49,7 +49,7 @@
         },
         "codetour.defaultStepTitle": {
           "type": "string",
-          "default": "{{file}}",
+          "default": null,
           "description": "Specifies a default title when creating a new step."
         },
         "codetour.promptForWorkspaceTours": {

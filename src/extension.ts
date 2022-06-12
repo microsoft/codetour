@@ -75,7 +75,7 @@ class URIHandler implements vscode.UriHandler {
 }
 
 export async function activate(context: vscode.ExtensionContext) {
-  registerPlayerModule(context);
+  await registerPlayerModule(context);
   registerRecorderModule();
   registerLiveShareModule();
 

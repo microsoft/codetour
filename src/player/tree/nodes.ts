@@ -69,12 +69,15 @@ export class CodeTourNode extends TreeItem {
 
 export class CodeTourStepNode extends TreeItem {
   constructor(public tour: CodeTour, public stepNumber: number) {
-    super(getStepLabel(tour, stepNumber));
+    super("")
+  }
+  async init(): Promise<CodeTourStepNode> {
+    this.label = await getStepLabel(this.tour, this.stepNumber);
 
-    const step = tour.steps[stepNumber];
+    const step = this.tour.steps[this.stepNumber];
 
     let workspaceRoot, tours;
-    if (store.activeTour && store.activeTour.tour.id === tour.id) {
+    if (store.activeTour && store.activeTour.tour.id === this.tour.id) {
       workspaceRoot = store.activeTour.workspaceRoot;
       tours = store.activeTour.tours;
     }
@@ -82,7 +85,7 @@ export class CodeTourStepNode extends TreeItem {
     this.command = {
       command: `${EXTENSION_NAME}.startTour`,
       title: "Start Tour",
-      arguments: [tour, stepNumber, workspaceRoot, tours]
+      arguments: [this.tour, this.stepNumber, workspaceRoot, tours]
     };
 
     let resourceUri;
@@ -93,7 +96,7 @@ export class CodeTourStepNode extends TreeItem {
     } else if (step.file || step.directory) {
       const resourceRoot = workspaceRoot
         ? workspaceRoot
-        : getWorkspaceUri(tour);
+        : getWorkspaceUri(this.tour);
 
       resourceUri = getFileUri(step.directory || step.file!, resourceRoot);
     } else {
@@ -104,12 +107,12 @@ export class CodeTourStepNode extends TreeItem {
 
     const isActive =
       store.activeTour &&
-      tour.id === store.activeTour?.tour.id &&
-      store.activeTour.step === stepNumber;
+      this.tour.id === store.activeTour?.tour.id &&
+      store.activeTour.step === this.stepNumber;
 
     if (isActive) {
       this.iconPath = new ThemeIcon("play-circle");
-    } else if (progress.isComplete(tour, stepNumber)) {
+    } else if (progress.isComplete(this.tour, this.stepNumber)) {
       // @ts-ignore
       this.iconPath = completeIcon;
     } else if (step.directory) {
@@ -119,14 +122,16 @@ export class CodeTourStepNode extends TreeItem {
     }
 
     const contextValues = ["codetour.tourStep"];
-    if (stepNumber > 0) {
+    if (this.stepNumber > 0) {
       contextValues.push("hasPrevious");
     }
 
-    if (stepNumber < tour.steps.length - 1) {
+    if (this.stepNumber < this.tour.steps.length - 1) {
       contextValues.push("hasNext");
     }
 
     this.contextValue = contextValues.join(".");
+    
+    return this;
   }
 }

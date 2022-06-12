@@ -433,9 +433,9 @@ async function showDocument(uri: Uri, range: Range, selection?: Selection) {
   document.revealRange(range, TextEditorRevealType.InCenter);
 }
 
-export function registerPlayerModule(context: ExtensionContext) {
+export async function registerPlayerModule(context: ExtensionContext) {
   registerPlayerCommands();
-  registerTreeProvider(context.extensionPath);
+  await registerTreeProvider(context.extensionPath);
   registerFileSystemProvider();
   registerTextDocumentContentProvider();
   registerStatusBar();

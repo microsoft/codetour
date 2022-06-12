@@ -7,9 +7,10 @@ import { Uri, workspace } from "vscode";
 import { CONTENT_URI, FS_SCHEME } from "./constants";
 import { api } from "./git";
 import { CodeTour, CodeTourStep, store } from "./store";
+import { formatter } from "./utils/formatter";
 
 const HEADING_PATTERN = /^#+\s*(.*)/;
-export function getStepLabel(
+export async function getStepLabel(
   tour: CodeTour,
   stepNumber: number,
   includeStepNumber: boolean = true,
@@ -20,7 +21,20 @@ export function getStepLabel(
   const prefix = includeStepNumber ? `#${stepNumber + 1} - ` : "";
   let label = "";
   if (step.title) {
-    label = step.title;
+    label = await formatter(step.title, {
+      file: async () => step.file,
+      line: async () => step.line,
+      text: async () => {
+        if (step.line) {
+          const workspaceRoot = getWorkspaceUri(tour);
+          const stepFileUri = await getStepFileUri(step, workspaceRoot, tour.ref);
+          const contents = await readUriContents(stepFileUri);
+          const lines = contents.split(/\r?\n/g);
+          
+          return lines[step.line - 1].trim();
+        }
+      }
+    });
   } else if (HEADING_PATTERN.test(step.description.trim())) {
     label = step.description.trim().match(HEADING_PATTERN)![1];
   } else if (step.markerTitle) {

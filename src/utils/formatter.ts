@@ -1,7 +1,7 @@
-const $regex = /{{([a-z]+)(?:\|([a-z]+)(?::([a-z,]+))?(?::([a-z0-9,-]+))?(?::([a-z0-9,-]+))?)?}}/g;
-
-export function formatter(format: string, properties: Record<string, unknown>): string {
-  let match = $regex.exec(format);
+export async function formatter(format: string, properties: Record<string, () => Promise<unknown>>): Promise<string> {
+  const regex = /{{([a-z]+)(?:\|([a-z]+)(?::([a-z,]+))?(?::([a-z0-9,-]+))?(?::([a-z0-9,-]+))?)?}}/g;
+  
+  let match = regex.exec(format);
   if (!match) {
     return format;
   }
@@ -10,13 +10,14 @@ export function formatter(format: string, properties: Record<string, unknown>): 
   let index = 0;
 
   while (match) {
-    console.log(match)
     if (match.index > index) {
       result += format.slice(index, match.index);
     }
+    
+    const value = await properties[match[1]]();
 
     if (match[2] === "date") {
-      const date = properties[match[1]] as Date;
+      const date = value as Date;
 
       if (!match[3]) {
         result += String(date);
@@ -47,7 +48,7 @@ export function formatter(format: string, properties: Record<string, unknown>): 
         result += formatter.format(date);
       }
     } else if(match[2] === "string") {
-      const str = String(properties[match[1]]);
+      const str = String(value);
       
       if (match[3] === "sub") {
         if (!match[4]) {
@@ -69,11 +70,11 @@ export function formatter(format: string, properties: Record<string, unknown>): 
         result += str;
       }
     } else {
-      result += String(properties[match[1]]);
+      result += String(value);
     }
 
     index = match.index + match[0].length;
-    match = $regex.exec(format);
+    match = regex.exec(format);
   }
 
   result += format.slice(index, format.length);

@@ -18,7 +18,6 @@ import {
   startCodeTour
 } from "../store/actions";
 import { getActiveWorkspacePath, getRelativePath } from "../utils";
-import { formatter } from "../utils/formatter";
 
 export async function saveTour(tour: CodeTour) {
   const uri = vscode.Uri.parse(tour.id);
@@ -378,19 +377,11 @@ export function registerRecorderCommands() {
       const workspaceRoot = getActiveWorkspacePath();
       const file = getRelativePath(workspaceRoot, thread!.uri.path);
       const line = thread.range.start.line + 1;
-      const contents = vscode.window.activeTextEditor?.document
-        .lineAt(thread.range.start)
-        .text.trim();
-      
-      const format = vscode.workspace
+
+      const customTitle = vscode.workspace
         .getConfiguration("codetour")
-        .get("defaultStepTitle", "{{file}}");
-        
-      const title = formatter(format, {
-        file,
-        line,
-        text: contents
-      });
+        .get("defaultStepTitle", null);
+      const title = customTitle || undefined;
 
       const step: CodeTourStep = {
         title,
@@ -403,6 +394,10 @@ export function registerRecorderCommands() {
         .get("recordMode");
 
       if (mode === "pattern") {
+        const contents = vscode.window.activeTextEditor?.document
+          .lineAt(thread.range.start)
+          .text.trim();
+
         const pattern =
           "^[^\\S\\n]*" + contents!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         const match = vscode.window.activeTextEditor?.document

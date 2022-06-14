@@ -9,6 +9,11 @@ import { api } from "./git";
 import { CodeTour, CodeTourStep, store } from "./store";
 import { formatter } from "./utils/formatter";
 
+interface LabelCache {
+  contents?: string;
+  line?: number;
+}
+
 const HEADING_PATTERN = /^#+\s*(.*)/;
 export async function getStepLabel(
   tour: CodeTour,
@@ -21,18 +26,17 @@ export async function getStepLabel(
   const prefix = includeStepNumber ? `#${stepNumber + 1} - ` : "";
   let label = "";
   if (step.title) {
+    const cache: LabelCache = {};
+    
     label = await formatter(step.title, {
       file: async () => step.file,
-      line: async () => step.line,
+      line: async () => getStepLine(tour, stepNumber, cache),
       text: async () => {
-        if (step.line) {
-          const workspaceRoot = getWorkspaceUri(tour);
-          const stepFileUri = await getStepFileUri(step, workspaceRoot, tour.ref);
-          const contents = await readUriContents(stepFileUri);
-          const lines = contents.split(/\r?\n/g);
+        const line = await getStepLine(tour, stepNumber, cache);
+        const contents = await getStepContents(tour, stepNumber, cache);
+        const lines = contents.split(/\r?\n/g);
           
-          return lines[step.line - 1].trim();
-        }
+        return lines[line - 1].trim();
       }
     });
   } else if (HEADING_PATTERN.test(step.description.trim())) {
@@ -46,6 +50,41 @@ export async function getStepLabel(
   }
 
   return `${prefix}${label}`;
+}
+
+async function getStepLine(tour: CodeTour, stepNumber: number, cache: LabelCache): Promise<number> {
+  const step = tour.steps[stepNumber];
+  
+  if (step.line) {
+    return step.line;
+  } else if (cache.line) {
+    return cache.line;
+  } else if (step.pattern) {
+    const contents = await getStepContents(tour, stepNumber, cache);
+    const match = contents.match(new RegExp(step.pattern, "m"));
+    
+    if (match) {
+      const lines = contents.substring(0, match.index).split(/\r?\n/g);
+      
+      cache.line = lines.length;
+      
+      return cache.line;
+    }
+  }
+  
+  return 1;
+}
+
+async function getStepContents(tour: CodeTour, stepNumber: number, cache: LabelCache): Promise<string> {
+  if (typeof cache.contents === "undefined") {
+    const step = tour.steps[stepNumber];
+    const workspaceRoot = getWorkspaceUri(tour);
+    const stepFileUri = await getStepFileUri(step, workspaceRoot, tour.ref);
+    
+    cache.contents = await readUriContents(stepFileUri);
+  }
+  
+  return cache.contents;
 }
 
 export function getTourTitle(tour: CodeTour) {

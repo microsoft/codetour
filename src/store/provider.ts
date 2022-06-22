@@ -112,6 +112,8 @@ async function readTourDirectory(uri: vscode.Uri): Promise<CodeTour[]> {
         const fileUri = vscode.Uri.joinPath(uri, file);
         if (type === vscode.FileType.File) {
           return readTourFile(fileUri);
+        } else if (type === vscode.FileType.SymbolicLink) {
+          return readTourFile(fileUri)
         } else {
           return readTourDirectory(fileUri);
         }

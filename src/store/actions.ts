@@ -220,7 +220,7 @@ export async function exportTour(tour: CodeTour) {
       }
 
       const workspaceRoot = getWorkspaceUri(tour);
-      const stepFileUri = await getStepFileUri(step, workspaceRoot, tour.ref);
+      const stepFileUri = await getStepFileUri(step, workspaceRoot, tour);
       const contents = await readUriContents(stepFileUri);
 
       delete step.markerTitle;

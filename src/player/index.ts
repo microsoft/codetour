@@ -242,7 +242,7 @@ async function renderCurrentStep() {
   }
 
   const workspaceRoot = store.activeTour?.workspaceRoot;
-  const uri = await getStepFileUri(step, workspaceRoot, currentTour.ref);
+  const uri = await getStepFileUri(step, workspaceRoot, currentTour);
 
   let line = step.line
     ? step.line - 1

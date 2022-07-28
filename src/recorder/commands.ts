@@ -872,6 +872,13 @@ export function registerRecorderCommands() {
         description: "Keep the tour associated with a specific commit",
         ref: repository.state.HEAD ? repository.state.HEAD.commit! : "",
         alwaysShow: true
+      },
+      {
+        label: "$(git-commit) Last commit that modified the tour",
+        description:
+          "Keep the tour associated with the most recent commit that modified the tour",
+        ref: "last-edit",
+        alwaysShow: true
       }
     ];
 

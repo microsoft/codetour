@@ -69,8 +69,9 @@ export function getFileUri(file: string, workspaceRoot?: Uri) {
 export async function getStepFileUri(
   step: CodeTourStep,
   workspaceRoot?: Uri,
-  ref?: string
+  tour?: CodeTour
 ): Promise<Uri> {
+  const ref = tour?.ref;
   let uri;
   if (step.contents) {
     uri = Uri.parse(`${FS_SCHEME}://current/${step.file}`);
@@ -79,10 +80,26 @@ export async function getStepFileUri(
       ? Uri.parse(step.uri)
       : getFileUri(step.file!, workspaceRoot);
 
-    if (api && ref && ref !== "HEAD") {
+    if (api && tour && ref && ref !== "HEAD") {
       const repo = api.getRepository(uri);
 
-      if (
+      if (ref === "last-edit") {
+        const tourUri = Uri.parse(tour.id);
+        const tourPath = tourUri.path;
+
+        if (repo && repo.state.HEAD) {
+          const logResults = await repo.log({
+            maxEntries: 1,
+            path: tourPath
+          });
+          if (logResults.length > 0) {
+            const commit = logResults[0];
+            if (repo.state.HEAD.commit !== commit.hash) {
+              uri = await api.toGitUri(uri, commit.hash);
+            }
+          }
+        }
+      } else if (
         repo &&
         repo.state.HEAD &&
         repo.state.HEAD.name !== ref && // The tour refs the user's current branch
@@ -184,7 +201,7 @@ async function updateMarkerTitleForStep(tour: CodeTour, stepNumber: number) {
   const uri = await getStepFileUri(
     tour.steps[stepNumber],
     getWorkspaceUri(tour),
-    tour.ref
+    tour
   );
 
   const document = await workspace.openTextDocument(uri);

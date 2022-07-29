@@ -21,7 +21,7 @@ class CodeTourNotebookProvider implements vscode.NotebookSerializer {
     let steps: any[] = [];
 
     for (let item of tour.steps) {
-      const uri = await getStepFileUri(item, workspaceRoot, tour.ref);
+      const uri = await getStepFileUri(item, workspaceRoot, tour);
       const document = await vscode.workspace.openTextDocument(uri);
 
       const startLine = item.line! > 10 ? item.line! - 10 : 0;

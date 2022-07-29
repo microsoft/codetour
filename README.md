@@ -175,7 +175,7 @@ In order to make it simpler to call common commands, CodeTour will prompt you wi
 
 When you record a tour, you'll be asked which git "ref" to associate it with. This allows you to define how resilient you want the tour to be, as changes are made to the respective codebase.
 
-<img width="600px" src="https://user-images.githubusercontent.com/116461/76692462-3f8ff700-6614-11ea-88a1-6fbded8e8507.png" />
+<img width="600px" src="https://user-images.githubusercontent.com/6195185/181656075-e90b479c-fbf0-45fb-a49d-65cb40b43320.png" />
 
 You can choose to associate with the tour with the following ref types:
 
@@ -183,6 +183,7 @@ You can choose to associate with the tour with the following ref types:
 - `Current Branch` - The tour is restricted to the current branch. This can have the same resiliency challenges as `None`, but, it allows you to maintain a special branch for your tours that can be versioned seperately. If the end-user has the associated branch checked out, then the tour will enable them to make edits to files as its taken. Otherwise, the tour will replay with read-only files.
 - `Current Commit` - The tour is restricted to the current commit, and therefore, will never get out of sync. If the end-user's `HEAD` points at the specified commit, then the tour will enable them to make edits to files as its taken. Otherwise, the tour will replay with read-only files.
 - Tags - The tour is restricted to the selected tag, and therefore, will never get out of sync. The repo's entire list of tags will be displayed, which allows you to easily select one.
+- `Last Commit that modified the tour` - The tour is restricted to the most recent commit that modified the tour file. If the end-user's `HEAD` points at the specified commit, then the tour will enable them to make edits to files as its taken. Otherwise, the tour will replay with read-only files. This allows you to bundle a code tour along with the changes that it's explaining into a single git commit.
 
 At any time, you can edit the tour's ref by right-clicking it in the `CodeTour` tree and selecting `Change Git Ref`. This let's you "rebase" a tour to a tag/commit as you change/update your code and/or codebase.
 

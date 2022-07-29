@@ -21,8 +21,25 @@ export interface RepositoryState {
   readonly refs: Ref[];
 }
 
+export interface LogOptions {
+  /** Max number of log entries to retrieve. If not specified, the default is 32. */
+  readonly maxEntries?: number;
+  readonly path?: string;
+}
+
+export interface Commit {
+  readonly hash: string;
+  readonly message: string;
+  readonly parents: string[];
+  readonly authorDate?: Date;
+  readonly authorName?: string;
+  readonly authorEmail?: string;
+  readonly commitDate?: Date;
+}
+
 export interface Repository {
   readonly state: RepositoryState;
+  log(options?: LogOptions): Promise<Commit[]>;
 }
 
 interface GitAPI {

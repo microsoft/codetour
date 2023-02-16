@@ -81,7 +81,7 @@
 
 ## v0.0.44 (02/09/2021)
 
-- Added the `codetour.promptForWorkspaceTours` setting to allow users to supress the notification when opening workspaces with tours
+- Added the `codetour.promptForWorkspaceTours` setting to allow users to suppress the notification when opening workspaces with tours
 - Fixed a bug with replaying directory and content steps
 - Fixed a bug where there was a "flash" after adding the first step to a new tour
 
@@ -143,7 +143,7 @@
 
 ## v0.0.32 (06/01/2020)
 
-- Added a list of well-known views to the step `view` property (e.g. `scm`, `extensions:disabled`) to simpify the authoring process for view steps.
+- Added a list of well-known views to the step `view` property (e.g. `scm`, `extensions:disabled`) to simplify the authoring process for view steps.
 
 ## v0.0.31 (05/31/2020)
 
@@ -184,7 +184,7 @@
 - Added a `Preview Tour` command that allows putting the active tour into preview mode
 - Updated the tour recorder to automatically place steps into edit mode when you start recording
 - The `Save Step` button is now only enabled when recording a step, whose description isn't empty
-- Removed the `Start CodeTour` status bar item, which just added noise to the user's statur bar
+- Removed the `Start CodeTour` status bar item, which just added noise to the user's status bar
 
 ## v0.0.25 (05/03/2020)
 
@@ -214,7 +214,7 @@
 
 - Introduced support for embedding shell commands in a tour step (e.g. `>> npm run compile`), which allows you to add more interactivity to a tour.
 - Added support for including VS Code `command:` links within your tour step comments (e.g. `[Start Tour](command:codetour.startTour)`), in order to automate arbitrary workbench actions.
-- Tours can now be organized within sub-directories of the `.vscode/tours` directory, and can now also be places withtin a root-level `.tours` folder.
+- Tours can now be organized within sub-directories of the `.vscode/tours` directory, and can now also be places within a root-level `.tours` folder.
 - Added the `exportTour` to the API that is exposed by this extension
 
 ## v0.0.19 (04/06/2020)

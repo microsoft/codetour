@@ -32,7 +32,6 @@
   ],
   "activationEvents": [
     "onStartupFinished",
-    "onView:codetour.tours",
     "onNotebookEditor:codetour"
   ],
   "main": "./dist/extension-node.js",
@@ -667,11 +666,11 @@
     "@types/node": "^8.10.66",
     "@types/throttle-debounce": "^2.1.0",
     "@types/vscode": "^1.60.0",
+    "@vscode/vsce": "^2.17.0",
     "debug": "^4.3.4",
     "ts-loader": "^7.0.4",
     "tslint": "^5.8.0",
     "typescript": "^3.1.4",
-    "vsce": "^1.95.0",
     "webpack": "^5.75.0",
     "webpack-cli": "^5.0.1",
     "webpack-merge": "^5.8.0"

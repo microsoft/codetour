@@ -209,28 +209,30 @@ export async function startDefaultTour(
 }
 
 export async function exportTour(tour: CodeTour) {
-  const newTour = {
+  const newTour: Partial<CodeTour> = {
     ...tour
   };
 
-  newTour.steps = await Promise.all(
-    newTour.steps.map(async step => {
-      if (step.contents || step.uri || !step.file) {
-        return step;
-      }
+  if (newTour.steps) {
+    newTour.steps = await Promise.all(
+      newTour.steps.map(async step => {
+        if (step.contents || step.uri || !step.file) {
+          return step;
+        }
 
-      const workspaceRoot = getWorkspaceUri(tour);
-      const stepFileUri = await getStepFileUri(step, workspaceRoot, tour.ref);
-      const contents = await readUriContents(stepFileUri);
+        const workspaceRoot = getWorkspaceUri(tour);
+        const stepFileUri = await getStepFileUri(step, workspaceRoot, tour.ref);
+        const contents = await readUriContents(stepFileUri);
 
-      delete step.markerTitle;
+        delete step.markerTitle;
 
-      return {
-        ...step,
-        contents
-      };
-    })
-  );
+        return {
+          ...step,
+          contents
+        };
+      })
+    );
+  }
 
   delete newTour.id;
   delete newTour.ref;

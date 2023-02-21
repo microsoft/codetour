@@ -28,11 +28,11 @@ export class CodeTourFileSystemProvider implements FileSystemProvider {
   updateTour(tour: CodeTour) {
     const tourUri = Uri.parse(tour.id);
 
-    const newTour = {
+    const newTour: Partial<CodeTour> = {
       ...tour
     };
     delete newTour.id;
-    newTour.steps.forEach(step => {
+    newTour.steps?.forEach(step => {
       delete step.markerTitle;
     });
 

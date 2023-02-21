@@ -7,7 +7,7 @@ import * as vscode from "vscode";
 import { store } from "../store";
 import { saveTour } from "./commands";
 
-const debouncedSaveTour = debounce(5000, false, saveTour);
+const debouncedSaveTour = debounce(5000, saveTour);
 const changeWatcher = async (e: vscode.TextDocumentChangeEvent) => {
   if (!store.activeEditorSteps) {
     return;

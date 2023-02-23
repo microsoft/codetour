@@ -380,12 +380,12 @@ The `CodeTour` extension contributes the following settings:
 
 In addition to the available commands, the Code Tour extension also contributes the following commands, which are active while you're currently taking a tour:
 
-| Windows/Linux         | macOS               | Description                           |
-| --------------------- | ------------------- | ------------------------------------- |
-| `ctrl+right`          | `cmd+right`         | Move to the next step in the tour     |
-| `ctrl+left`           | `cmd+left`          | Move to the previous step in the tour |
-| `ctrl+down ctrl+down` | `cmd+down cmd+down` | End the current tour                  |
-| `ctrl+up ctrl+up`     | `cmd+up cmd+up`     | Start new tour                        |
+| Windows/Linux  | macOS               | Description                             |
+| -------------- | ------------------- | --------------------------------------- |
+| `ctrl+k j`     | `cmd+right`         | Move to the next step in the tour       |
+| `ctrl+k l`     | `cmd+left`          | Move to the previous step in the tour   |
+| `ctrl+k k`     | `cmd+down cmd+down` | End the current tour, if one is started |
+| `ctrl+k k`     | `cmd+up cmd+up`     | Start a tour, if one is not started     |
 
 ## Extension API
 

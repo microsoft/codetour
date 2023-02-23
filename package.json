@@ -608,26 +608,26 @@
     "keybindings": [
       {
         "command": "codetour.previousTourStep",
-        "when": "codetour:inTour && !textInputFocus && !terminalFocus",
-        "key": "ctrl+left",
+        "when": "codetour:inTour && !terminalFocus",
+        "key": "ctrl+k j",
         "mac": "cmd+left"
       },
       {
         "command": "codetour.nextTourStep",
-        "when": "codetour:inTour && !textInputFocus && !terminalFocus",
-        "key": "ctrl+right",
+        "when": "codetour:inTour && !terminalFocus",
+        "key": "ctrl+k l",
         "mac": "cmd+right"
       },
       {
         "command": "codetour.endTour",
-        "when": "codetour:inTour && !textInputFocus && !terminalFocus",
-        "key": "ctrl+down ctrl+down",
+        "when": "codetour:inTour && !terminalFocus",
+        "key": "ctrl+k k",
         "mac": "cmd+down cmd+down"
       },
       {
         "command": "codetour.startTour",
-        "when": "!textInputFocus && !terminalFocus",
-        "key": "ctrl+up ctrl+up",
+        "when": "!codetour:inTour && !terminalFocus",
+        "key": "ctrl+k k",
         "mac": "cmd+up cmd+up"
       }
     ],

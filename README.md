@@ -382,10 +382,10 @@ In addition to the available commands, the Code Tour extension also contributes 
 
 | Windows/Linux  | macOS               | Description                             |
 | -------------- | ------------------- | --------------------------------------- |
-| `ctrl+k j`     | `cmd+right`         | Move to the next step in the tour       |
-| `ctrl+k l`     | `cmd+left`          | Move to the previous step in the tour   |
-| `ctrl+k k`     | `cmd+down cmd+down` | End the current tour, if one is started |
-| `ctrl+k k`     | `cmd+up cmd+up`     | Start a tour, if one is not started     |
+| `ctrl+k j`     | `cmd+k j`           | Move to the next step in the tour       |
+| `ctrl+k l`     | `cmd+k l`           | Move to the previous step in the tour   |
+| `ctrl+k k`     | `cmd+k k`           | End the current tour, if one is started |
+| `ctrl+k k`     | `cmd+k k`           | Start a tour, if one is not started     |
 
 ## Extension API
 

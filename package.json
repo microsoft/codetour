@@ -610,25 +610,25 @@
         "command": "codetour.previousTourStep",
         "when": "codetour:inTour && !terminalFocus",
         "key": "ctrl+k j",
-        "mac": "cmd+left"
+        "mac": "cmd+k j"
       },
       {
         "command": "codetour.nextTourStep",
         "when": "codetour:inTour && !terminalFocus",
         "key": "ctrl+k l",
-        "mac": "cmd+right"
+        "mac": "cmd+k l"
       },
       {
         "command": "codetour.endTour",
         "when": "codetour:inTour && !terminalFocus",
         "key": "ctrl+k k",
-        "mac": "cmd+down cmd+down"
+        "mac": "cmd+k k"
       },
       {
         "command": "codetour.startTour",
         "when": "!codetour:inTour && !terminalFocus",
         "key": "ctrl+k k",
-        "mac": "cmd+up cmd+up"
+        "mac": "cmd+k k"
       }
     ],
     "languages": [

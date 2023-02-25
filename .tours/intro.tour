@@ -1,18 +1,18 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "🏃 Getting Started",
+  "title": "Getting Started",
   "steps": [
     {
-      "description": "### 📌 Intro\n\nHey 👋 Welcome to CodeTour! CodeTour is a VS Code extension that allows you to record and play back walkthroughs of your codebases. The CodeTour codebase itself is comprised of two main components:\n\n* **Recorder:** Allows a repo maintainer/member to create a tour using a visual experience\n* **Player:** Allows members of the repo to view a recorded tour\n\n![Overview](https://raw.githubusercontent.com/microsoft/codetour/main/overview.drawio.svg)"
+      "description": "### Intro\n\nHey Welcome to CodeTour! CodeTour is a VS Code extension that allows you to record and play back walkthroughs of your codebases. The CodeTour codebase itself is comprised of two main components:\n\n* **Recorder:** Allows a repo maintainer/member to create a tour using a visual experience\n* **Player:** Allows members of the repo to view a recorded tour\n\n![Overview](https://raw.githubusercontent.com/microsoft/codetour/main/overview.drawio.svg)"
     },
     {
       "file": "src/player/index.ts",
-      "description": "### 🎥 Tour Player\n\nThe CodeTour player is what defines the experience that end-users get, when actually taking a guided walkthrough. It includes various UX components:\n\n* 🕳️ [Gutter decorator](./src/player/decorator.ts) - Displays the \"CodeTour\" icon next to lines that are associated with a tour\n* 📊 [Status bar indicator](./src/player/status.ts) - Indicates the current tour and step\n* 🌳 [Tree view](./src/player/tree/index.ts) - Provides an at-a-glance view of the tours within the opened workspace",
+      "description": "### Tour Player\n\nThe CodeTour player is what defines the experience that end-users get, when actually taking a guided walkthrough. It includes various UX components:\n\n* [Gutter decorator](./src/player/decorator.ts) - Displays the \"CodeTour\" icon next to lines that are associated with a tour\n* [Status bar indicator](./src/player/status.ts) - Indicates the current tour and step\n* [Tree view](./src/player/tree/index.ts) - Provides an at-a-glance view of the tours within the opened workspace",
       "line": 436
     },
     {
       "file": "src/recorder/index.ts",
-      "description": "### 📹 Tour Recorder\n\nThe CodeTour recorder is how a repo maintainer can create new walkthroughs of the codebase. The recorder is made up of a few components:\n\n* 💭 [Comment UX](./src/recorder/commands.ts) - Enables attaching new steps to lines of code, directories, etc.\n* 📋 [Completion provider](./src/recorder/completionProvider.ts) - Provides completion support for authoring command links",
+      "description": "### Tour Recorder\n\nThe CodeTour recorder is how a repo maintainer can create new walkthroughs of the codebase. The recorder is made up of a few components:\n\n* [Comment UX](./src/recorder/commands.ts) - Enables attaching new steps to lines of code, directories, etc.\n* [Completion provider](./src/recorder/completionProvider.ts) - Provides completion support for authoring command links",
       "line": 4
     }
   ],

@@ -32,6 +32,7 @@ import {
   getStepLabel,
   getTourTitle
 } from "../utils";
+// import { isAccessibilitySupportOn } from "./a11yhelpers";
 import { registerCodeStatusModule } from "./codeStatus";
 import { registerPlayerCommands } from "./commands";
 import { registerDecorators } from "./decorator";
@@ -247,8 +248,8 @@ async function renderCurrentStep() {
   let line = step.line
     ? step.line - 1
     : step.selection
-      ? step.selection.end.line - 1
-      : undefined;
+    ? step.selection.end.line - 1
+    : undefined;
 
   if (step.file && line === undefined) {
     const stepPattern = step.pattern || getActiveStepMarker();
@@ -271,6 +272,11 @@ async function renderCurrentStep() {
   const range = new Range(line!, 0, line!, 0);
   let label = `Step #${currentStep + 1} of ${currentTour!.steps.length}`;
 
+  // EXAMPLE of how to use this helper in various pieces of the CodeTour UI
+  // if (isAccessibilitySupportOn()) {
+  //   label += "Accessibility support is on!";
+  // }
+
   if (currentTour.title) {
     const title = getTourTitle(currentTour);
     label += ` (${title})`;
@@ -290,7 +296,17 @@ async function renderCurrentStep() {
 
   const showNavigation = hasPreviousStep || hasNextStep || isFinalStep;
   if (!store.isEditing && showNavigation) {
-    content += "\n\n---\n";
+    let lineAndFileInfoLabel = `This step is on line ${line} in file ${step.file}`;
+    lineAndFileInfoLabel =
+      line &&
+      line !== 2000 &&
+      step.file &&
+      !content.includes(lineAndFileInfoLabel)
+        ? lineAndFileInfoLabel
+        : ``;
+
+    content =
+      "\n\n---\n" + lineAndFileInfoLabel + "\n\n---\n" + content + "\n\n---\n";
 
     if (hasPreviousStep) {
       const stepLabel = getStepLabel(
@@ -450,16 +466,16 @@ export function registerPlayerModule(context: ExtensionContext) {
     () => [
       store.activeTour
         ? [
-          store.activeTour.step,
-          store.activeTour.tour.title,
-          store.activeTour.tour.steps.map(step => [
-            step.title,
-            step.description,
-            step.line,
-            step.directory,
-            step.view
-          ])
-        ]
+            store.activeTour.step,
+            store.activeTour.tour.title,
+            store.activeTour.tour.steps.map(step => [
+              step.title,
+              step.description,
+              step.line,
+              step.directory,
+              step.view
+            ])
+          ]
         : null
     ],
     () => {

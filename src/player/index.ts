@@ -298,21 +298,18 @@ async function renderCurrentStep() {
   const showNavigation = hasPreviousStep || hasNextStep || isFinalStep;
   if (!store.isEditing && showNavigation) {
     if (isAccessibilitySupportOn()) {
-      let lineAndFileInfoLabel = `This step is on line ${step.line} in file ${step.file}`;
-      lineAndFileInfoLabel =
-        step.line &&
-        step.line !== 2000 &&
-        step.file &&
-        !content.includes(lineAndFileInfoLabel)
-          ? lineAndFileInfoLabel
+      const lineAndFileInfoLabel =
+        step.line && step.file
+          ? `This step is on line ${step.line} in file ${step.file}`
           : ``;
 
-      content =
-        "\n\n---\n" +
-        lineAndFileInfoLabel +
-        "\n\n---\n" +
-        content +
-        "\n\n---\n";
+      content = lineAndFileInfoLabel
+        ? "\n\n---\n" +
+          lineAndFileInfoLabel +
+          "\n\n---\n" +
+          content +
+          "\n\n---\n"
+        : content;
     }
 
     if (hasPreviousStep) {

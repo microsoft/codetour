@@ -44,7 +44,7 @@ const COMMANDS = [
   },
   {
     label: "Start tour",
-    detail: 'Starts another tour using it\'s title (e.g. "Status Bar")',
+    detail: 'Starts another tour using its title (e.g. "Status Bar")',
     insertText: new vscode.SnippetString('codetour.startTourByTitle?["')
       .appendPlaceholder("tourTitle")
       .appendText('"]')

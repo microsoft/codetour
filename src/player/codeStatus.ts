@@ -13,6 +13,7 @@ export async function registerCodeStatusModule() {
 
   let statusDisposable: vscode.Disposable;
   onDidStartTour(async ([tour, stepNumber]) => {
+    // Another option: call `makeInfoAnnouncement` here
     const disposeable = await extension.exports.updateStatus({
       emoji: "🗺️",
       message: `CodeTour: ${tour.title} (#${stepNumber + 1} of ${

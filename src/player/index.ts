@@ -301,7 +301,7 @@ async function renderCurrentStep() {
       const lineAndFileInfoLabel =
         step.line && step.file
           ? `This step is on line ${step.line} in file ${step.file}`
-          : ``;
+          : '';
 
       content = lineAndFileInfoLabel
         ? "\n\n---\n" +

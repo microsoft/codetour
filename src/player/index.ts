@@ -32,7 +32,7 @@ import {
   getStepLabel,
   getTourTitle
 } from "../utils";
-// import { isAccessibilitySupportOn } from "./a11yhelpers";
+import { isAccessibilitySupportOn } from "./a11yhelpers";
 import { registerCodeStatusModule } from "./codeStatus";
 import { registerPlayerCommands } from "./commands";
 import { registerDecorators } from "./decorator";
@@ -288,6 +288,7 @@ async function renderCurrentStep() {
     store.isRecording && store.isEditing
       ? CommentMode.Editing
       : CommentMode.Preview;
+
   let content = step.description;
 
   let hasPreviousStep = currentStep > 0;
@@ -296,7 +297,20 @@ async function renderCurrentStep() {
 
   const showNavigation = hasPreviousStep || hasNextStep || isFinalStep;
   if (!store.isEditing && showNavigation) {
-    content += "\n\n---\n";
+    if (isAccessibilitySupportOn()) {
+      const lineAndFileInfoLabel =
+        step.line && step.file
+          ? `This step is on line ${step.line} in file ${step.file}`
+          : '';
+
+      content = lineAndFileInfoLabel
+        ? "\n\n---\n" +
+          lineAndFileInfoLabel +
+          "\n\n---\n" +
+          content +
+          "\n\n---\n"
+        : content;
+    }
 
     if (hasPreviousStep) {
       const stepLabel = getStepLabel(

@@ -296,17 +296,7 @@ async function renderCurrentStep() {
 
   const showNavigation = hasPreviousStep || hasNextStep || isFinalStep;
   if (!store.isEditing && showNavigation) {
-    let lineAndFileInfoLabel = `This step is on line ${line} in file ${step.file}`;
-    lineAndFileInfoLabel =
-      line &&
-      line !== 2000 &&
-      step.file &&
-      !content.includes(lineAndFileInfoLabel)
-        ? lineAndFileInfoLabel
-        : ``;
-
-    content =
-      "\n\n---\n" + lineAndFileInfoLabel + "\n\n---\n" + content + "\n\n---\n";
+    content += "\n\n---\n";
 
     if (hasPreviousStep) {
       const stepLabel = getStepLabel(

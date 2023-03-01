@@ -408,10 +408,10 @@ async function renderCurrentStep() {
       }
 
       try {
+        console.log("Executing command", name, JSON.stringify(args));
         await commands.executeCommand(name, ...args);
-      } catch {
-        // Silently fail, since it's unclear if the
-        // command was critical to the step or not.
+      } catch (e) {
+        window.showErrorMessage(`An error has occurred: ${e}`);
       }
     }
   }

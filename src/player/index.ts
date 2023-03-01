@@ -397,9 +397,9 @@ async function renderCurrentStep() {
   }
 
   if (step.commands) {
-    step.commands.forEach(async command => {
+    for (const command of step.commands) {
       let name = command,
-        args: any[] = [];
+      args: any[] = [];
 
       if (command.includes("?")) {
         const parts = command.split("?");
@@ -413,7 +413,7 @@ async function renderCurrentStep() {
         // Silently fail, since it's unclear if the
         // command was critical to the step or not.
       }
-    });
+    }
   }
 }
 

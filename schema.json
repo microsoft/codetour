@@ -37,24 +37,33 @@
             "description": "Directory path (relative to the workspace root) that the step is associated with."
           },
           "view": {
-            "type": "string",
-            "enum": [
-              "debug",
-              "debug:breakpoints",
-              "debug:callstack",
-              "debug:variables",
-              "debug:watch",
-              "explorer",
-              "extensions",
-              "extensions:disabled",
-              "extensions:enabled",
-              "output",
-              "problems",
-              "scm",
-              "search",
-              "terminal"
-            ],
-            "description": "The view ID (e.g. gistpad.gists) that this step is associated with."
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "debug",
+                  "debug:breakpoints",
+                  "debug:callstack",
+                  "debug:variables",
+                  "debug:watch",
+                  "explorer",
+                  "extensions",
+                  "extensions:disabled",
+                  "extensions:enabled",
+                  "output",
+                  "problems",
+                  "scm",
+                  "search",
+                  "terminal"
+                ],
+                "description": "The view ID (e.g. gistpad.gists) that this step is associated with."
+              },
+              {
+                "type": "string",
+                "minLength": 1,
+                "description": "The view ID (e.g. gistpad.gists) that this step is associated with."
+              }
+            ]
           },
           "uri": {
             "type": "string",

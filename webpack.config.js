@@ -8,6 +8,10 @@ const config = {
     vscode: "commonjs vscode"
   },
   resolve: {
+    fallback: {
+      os: require.resolve("os-browserify/browser"),
+      path: require.resolve("path-browserify")
+    },
     extensions: [".ts", ".js", ".json"]
   },
   node: {

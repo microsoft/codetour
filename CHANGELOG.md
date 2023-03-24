@@ -4,8 +4,9 @@
 - Automatically set the "pattern" record mode when you create a new tour, and select `None` for the git ref
 - Added support for opening a `*.tour` file in the VS Code notebook editor (Insiders only)
 
-## v0.0.59 (03/24/2022)
+## v0.0.59 (03/24/2023)
 
+- A tour step can now run multiple commands
 - Tours are now written to the `CodeTour: Custom Tour Directory` directory, when that property is set
 - Fixed a performance issue with large codebases
 

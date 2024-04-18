@@ -387,13 +387,16 @@ export function registerRecorderCommands() {
         .get("recordMode");
 
       if (mode === "pattern") {
-        const contents = vscode.window.activeTextEditor?.document
-          .lineAt(thread.range.start)
+        const fileEditors = vscode.window.visibleTextEditors.filter(
+          editor => editor.document && editor.document.uri.scheme === 'file'
+        );
+        const contents = fileEditors?.[0]?.document
+          .lineAt(thread.range.start.line)
           .text.trim();
 
         const pattern =
           "^[^\\S\\n]*" + contents!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const match = vscode.window.activeTextEditor?.document
+        const match = fileEditors?.[0]?.document
           .getText()
           .match(new RegExp(pattern, "gm"));
 
@@ -654,7 +657,7 @@ export function registerRecorderCommands() {
         prompt: `Enter the title for this tour step`,
         value: step.title || ""
       });
-      
+
       if (typeof response === "undefined") {
         return;
       } else if (response) {
@@ -662,11 +665,11 @@ export function registerRecorderCommands() {
       } else {
         delete step.title;
       }
-      
+
       saveTour(node.tour);
     }
   );
-  
+
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.changeTourStepIcon`,
     async (node: CodeTourStepNode) => {
@@ -675,7 +678,7 @@ export function registerRecorderCommands() {
         prompt: `Enter the icon for this tour step`,
         value: step.icon || ""
       });
-      
+
       if (typeof response === "undefined") {
         return;
       } else if (response) {
@@ -712,8 +715,8 @@ export function registerRecorderCommands() {
     async (node: CodeTourNode) => {
       const workspaceRoot =
         store.activeTour &&
-        store.activeTour.tour.id === node.tour.id &&
-        store.activeTour.workspaceRoot
+          store.activeTour.tour.id === node.tour.id &&
+          store.activeTour.workspaceRoot
           ? store.activeTour.workspaceRoot
           : workspace.getWorkspaceFolder(vscode.Uri.parse(node.tour.id))?.uri;
 

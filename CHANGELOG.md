@@ -1,6 +1,7 @@
 ## v0.0.61 (08/06/25)
 
-- Fix the display name that's used when dragging the `CodeTour` view into another panel
+- Introduced a codelens that allows starting a tour from an associated line of code
+- Fixed the display name that's used when dragging the `CodeTour` view into another panel
 
 ## v0.0.60 (08/06/25)
 

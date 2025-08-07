@@ -113,7 +113,11 @@ export function registerRecorderCommands() {
     workspaceRoot?: vscode.Uri
   ) {
     if (!workspaceRoot) {
-      workspaceRoot = workspace.workspaceFolders![0].uri;
+      if (!workspace.workspaceFolders || workspace.workspaceFolders.length === 0) {
+        vscode.window.showErrorMessage("You must have a workspace folder open to create a tour.");
+        return;
+      }
+      workspaceRoot = workspace.workspaceFolders[0].uri;
 
       if (workspace.workspaceFolders!.length > 1) {
         const items: WorkspaceQuickPickItem[] = workspace.workspaceFolders!.map(
@@ -388,7 +392,7 @@ export function registerRecorderCommands() {
 
       if (mode === "pattern") {
         const contents = vscode.window.activeTextEditor?.document
-          .lineAt(thread.range.start)
+          .lineAt(thread.range!.start)
           .text.trim();
 
         const pattern =
@@ -404,10 +408,10 @@ export function registerRecorderCommands() {
           step.pattern = pattern;
         } else {
           // TODO: Try to get smarter about how to handle this.
-          step.line = thread.range.start.line + 1;
+          step.line = thread.range!.start.line + 1;
         }
       } else {
-        step.line = thread.range.start.line + 1;
+        step.line = thread.range!.start.line + 1;
       }
 
       store.activeTour!.step++;
@@ -654,7 +658,7 @@ export function registerRecorderCommands() {
         prompt: `Enter the title for this tour step`,
         value: step.title || ""
       });
-      
+
       if (typeof response === "undefined") {
         return;
       } else if (response) {
@@ -662,11 +666,11 @@ export function registerRecorderCommands() {
       } else {
         delete step.title;
       }
-      
+
       saveTour(node.tour);
     }
   );
-  
+
   vscode.commands.registerCommand(
     `${EXTENSION_NAME}.changeTourStepIcon`,
     async (node: CodeTourStepNode) => {
@@ -675,7 +679,7 @@ export function registerRecorderCommands() {
         prompt: `Enter the icon for this tour step`,
         value: step.icon || ""
       });
-      
+
       if (typeof response === "undefined") {
         return;
       } else if (response) {
@@ -712,8 +716,8 @@ export function registerRecorderCommands() {
     async (node: CodeTourNode) => {
       const workspaceRoot =
         store.activeTour &&
-        store.activeTour.tour.id === node.tour.id &&
-        store.activeTour.workspaceRoot
+          store.activeTour.tour.id === node.tour.id &&
+          store.activeTour.workspaceRoot
           ? store.activeTour.workspaceRoot
           : workspace.getWorkspaceFolder(vscode.Uri.parse(node.tour.id))?.uri;
 

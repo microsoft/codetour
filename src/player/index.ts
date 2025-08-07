@@ -54,9 +54,13 @@ const TOUR_REFERENCE_PATTERN =
   /(?:\[(?<linkTitle>[^\]]+)\])?\[(?=\s*[^\]\s])(?<tourTitle>[^\]#]+)?(?:#(?<stepNumber>\d+))?\](?!\()/gm;
 const FILE_REFERENCE_PATTERN = /(\!)?(\[[^\]]+\]\()(\.[^\)]+)(?=\))/gm;
 const CODE_FENCE_PATTERN = /```[^\n]+\n(.+)\n```/gms;
+const ENV_VAR_PATTERN = /\{\{([A-Z_][A-Z0-9_]*)\}\}/g;
 
 export function generatePreviewContent(content: string) {
   return content
+    .replace(ENV_VAR_PATTERN, (_, varName) => {
+      return process.env[varName] || `{{${varName}}}`;
+    })
     .replace(SHELL_SCRIPT_PATTERN, (_, script) => {
       const args = encodeURIComponent(JSON.stringify([script]));
       const s = `> [${script}](command:codetour.sendTextToTerminal?${args} "Run \\"${script.replace(
@@ -128,7 +132,8 @@ export class CodeTourComment implements Comment {
     const body =
       mode === CommentMode.Preview ? generatePreviewContent(content) : content;
 
-    this.body = new MarkdownString(body);
+    this.body = new MarkdownString(body, true);
+    this.body.supportHtml = true;
     this.body.isTrusted = true;
   }
 }
@@ -137,7 +142,7 @@ let controller: CommentController | null;
 
 export async function focusPlayer() {
   const currentThread = store.activeTour!.thread!;
-  showDocument(currentThread.uri, currentThread.range);
+  showDocument(currentThread.uri, currentThread.range!);
 }
 
 export async function startPlayer() {
@@ -247,8 +252,8 @@ async function renderCurrentStep() {
   let line = step.line
     ? step.line - 1
     : step.selection
-    ? step.selection.end.line - 1
-    : undefined;
+      ? step.selection.end.line - 1
+      : undefined;
 
   if (step.file && line === undefined) {
     const stepPattern = step.pattern || getActiveStepMarker();
@@ -277,6 +282,7 @@ async function renderCurrentStep() {
   }
 
   store.activeTour!.thread = controller!.createCommentThread(uri, range, []);
+  store.activeTour!.thread.label = " ";
 
   const mode =
     store.isRecording && store.isEditing
@@ -399,7 +405,7 @@ async function renderCurrentStep() {
   if (step.commands) {
     for (const command of step.commands) {
       let name = command,
-      args: any[] = [];
+        args: any[] = [];
 
       if (command.includes("?")) {
         const parts = command.split("?");
@@ -418,7 +424,7 @@ async function renderCurrentStep() {
 }
 
 async function showDocument(uri: Uri, range: Range, selection?: Selection) {
-  const document =
+  const editor =
     window.visibleTextEditors.find(
       editor => editor.document.uri.toString() === uri.toString()
     ) || (await window.showTextDocument(uri, { preserveFocus: true }));
@@ -427,10 +433,10 @@ async function showDocument(uri: Uri, range: Range, selection?: Selection) {
   // to documents which are already open.
 
   if (selection) {
-    document.selection = selection;
+    editor.selection = selection;
   }
 
-  document.revealRange(range, TextEditorRevealType.InCenter);
+  editor.revealRange(range, TextEditorRevealType.InCenter);
 }
 
 export function registerPlayerModule(context: ExtensionContext) {
@@ -450,16 +456,16 @@ export function registerPlayerModule(context: ExtensionContext) {
     () => [
       store.activeTour
         ? [
-            store.activeTour.step,
-            store.activeTour.tour.title,
-            store.activeTour.tour.steps.map(step => [
-              step.title,
-              step.description,
-              step.line,
-              step.directory,
-              step.view
-            ])
-          ]
+          store.activeTour.step,
+          store.activeTour.tour.title,
+          store.activeTour.tour.steps.map(step => [
+            step.title,
+            step.description,
+            step.line,
+            step.directory,
+            step.view
+          ])
+        ]
         : null
     ],
     () => {

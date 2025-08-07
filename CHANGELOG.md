@@ -1,8 +1,9 @@
-## Upcoming
+## v0.0.60 (08/06/25)
 
-- Automatically updating a tour file as the associated code changes
-- Automatically set the "pattern" record mode when you create a new tour, and select `None` for the git ref
-- Added support for opening a `*.tour` file in the VS Code notebook editor (Insiders only)
+- Step descriptions can now include basic HTML (e.g. `<strong>`, `<details>`)
+- Step descriptions can now reference environment variables via the `{{var}}` syntax
+- The comment threads no longer display the `Start discussion` message at the top
+- Fixed a bug where the toast notification wasn't properly showing for new workspaces that include tours
 
 ## v0.0.59 (03/24/2023)
 

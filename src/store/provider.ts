@@ -106,6 +106,9 @@ async function discoverMainTours(
 
 async function readTourDirectory(uri: vscode.Uri): Promise<CodeTour[]> {
   try {
+    // Check if directory exists first to avoid ENOENT errors
+    await vscode.workspace.fs.stat(uri);
+    
     const tourFiles = await vscode.workspace.fs.readDirectory(uri);
     const tours = await Promise.all(
       tourFiles.map(async ([file, type]) => {

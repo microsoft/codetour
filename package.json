@@ -3,7 +3,7 @@
   "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
-  "version": "0.0.59",
+  "version": "0.0.60",
   "author": {
     "name": "Microsoft Corporation"
   },
@@ -18,7 +18,7 @@
   "license": "MIT",
   "icon": "images/icon.png",
   "engines": {
-    "vscode": "^1.60.0"
+    "vscode": "^1.102.0"
   },
   "categories": [
     "Other"
@@ -664,8 +664,8 @@
   "devDependencies": {
     "@types/node": "^18.14.0",
     "@types/throttle-debounce": "^5.0.0",
-    "@types/vscode": "^1.60",
-    "@vscode/vsce": "^2.17.0",
+    "@types/vscode": "^1.102.0",
+    "@vscode/vsce": "^3.6.0",
     "debug": "^4.3.4",
     "eslint": "^8.34.0",
     "ts-loader": "^9.4.2",

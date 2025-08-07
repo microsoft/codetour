@@ -162,7 +162,7 @@ export async function promptForTour(
   workspaceRoot: Uri = getWorkspaceKey(),
   tours: CodeTour[] = store.tours
 ): Promise<boolean> {
-  const key = `${EXTENSION_NAME}:${workspaceRoot}`;
+  const key = `${EXTENSION_NAME}:${workspaceRoot.toString()}`;
   if (
     tours.length > 0 &&
     !globalState.get(key) &&
@@ -170,7 +170,7 @@ export async function promptForTour(
     workspace
       .getConfiguration(EXTENSION_NAME)
       .get("promptForWorkspaceTours", true) &&
-    !isCodeSwingWorkspace(workspaceRoot)
+    !(await isCodeSwingWorkspace(workspaceRoot))
   ) {
     globalState.update(key, true);
 

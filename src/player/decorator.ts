@@ -69,9 +69,8 @@ function registerHoverProvider() {
       const hovers = tourSteps.map(([tour, _, stepNumber]) => {
         const args = encodeURIComponent(JSON.stringify([tour.id, stepNumber]));
         const command = `command:codetour._startTourById?${args}`;
-        return `CodeTour: ${tour.title} (Step #${
-          stepNumber + 1
-        }) &nbsp;[Start Tour](${command} "Start Tour")\n`;
+        return `CodeTour: ${tour.title} (Step #${stepNumber + 1
+          }) &nbsp;[Start Tour](${command} "Start Tour")\n`;
       });
 
       const content = new vscode.MarkdownString(hovers.join("\n"));
@@ -105,6 +104,56 @@ function clearDecorations(editor: vscode.TextEditor) {
 }
 
 let disposables: vscode.Disposable[] = [];
+let codeLensProviderDisposable: vscode.Disposable | undefined;
+let codeLensChangeEmitter: vscode.EventEmitter<void> | undefined;
+
+function registerCodeLensProvider() {
+  codeLensChangeEmitter = new vscode.EventEmitter<void>();
+
+  return vscode.languages.registerCodeLensProvider("*", {
+    onDidChangeCodeLenses: codeLensChangeEmitter.event,
+    provideCodeLenses: async (
+      document: vscode.TextDocument,
+      token: vscode.CancellationToken
+    ): Promise<vscode.CodeLens[]> => {
+      if (!store.showMarkers) {
+        return [];
+      }
+
+      const editor = vscode.window.visibleTextEditors.find(
+        e => e.document.uri.toString() === document.uri.toString()
+      );
+
+      if (!editor || DISABLED_SCHEMES.includes(document.uri.scheme)) {
+        return [];
+      }
+
+      const tourSteps = await getTourSteps(editor);
+
+      return tourSteps
+        .filter(([tour, , stepNumber]) => {
+          // Don't show codelens for the currently active step
+          if (store.activeTour &&
+            store.activeTour.tour.id === tour.id &&
+            store.activeTour.step === stepNumber) {
+            return false;
+          }
+          return true;
+        })
+        .map(([tour, , stepNumber, line]) => {
+          const range = new vscode.Range(line!, 0, line!, 0);
+          const command: vscode.Command = {
+            title: `Start CodeTour: ${tour.title} (Step ${stepNumber + 1})`,
+            command: "codetour._startTourById",
+            arguments: [tour.id, stepNumber]
+          };
+
+          return new vscode.CodeLens(range, command);
+        });
+    }
+  });
+}
+
 export async function registerDecorators() {
   reaction(
     () => [
@@ -118,6 +167,11 @@ export async function registerDecorators() {
         if (hoverProviderDisposable === undefined) {
           hoverProviderDisposable = registerHoverProvider();
           disposables.push(hoverProviderDisposable);
+        }
+
+        if (codeLensProviderDisposable === undefined) {
+          codeLensProviderDisposable = registerCodeLensProvider();
+          disposables.push(codeLensProviderDisposable);
         }
 
         disposables.push(
@@ -136,7 +190,20 @@ export async function registerDecorators() {
 
         disposables.forEach(disposable => disposable.dispose());
         hoverProviderDisposable = undefined;
+        codeLensProviderDisposable = undefined;
+        codeLensChangeEmitter?.dispose();
+        codeLensChangeEmitter = undefined;
         disposables = [];
+      }
+    }
+  );
+
+  // React to activeTour changes to refresh CodeLenses
+  reaction(
+    () => store.activeTour,
+    () => {
+      if (codeLensChangeEmitter) {
+        codeLensChangeEmitter.fire();
       }
     }
   );

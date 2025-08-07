@@ -1,3 +1,7 @@
+## v0.0.61 (08/06/25)
+
+- Fix the display name that's used when dragging the `CodeTour` view into another panel
+
 ## v0.0.60 (08/06/25)
 
 - Step descriptions can now include basic HTML (e.g. `<strong>`, `<details>`)

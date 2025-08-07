@@ -3,7 +3,7 @@
   "displayName": "CodeTour",
   "description": "VS Code extension that allows you to record and playback guided tours of codebases, directly within the editor",
   "publisher": "vsls-contrib",
-  "version": "0.0.60",
+  "version": "0.0.61",
   "author": {
     "name": "Microsoft Corporation"
   },
@@ -589,7 +589,9 @@
         {
           "id": "codetour.tours",
           "name": "CodeTour",
-          "when": "workspaceFolderCount != 0 || codetour:inTour"
+          "contextualTitle": "CodeTour",
+          "when": "workspaceFolderCount != 0 || codetour:inTour",
+          "icon": "$(map)"
         }
       ]
     },

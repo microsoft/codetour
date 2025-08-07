@@ -60,6 +60,11 @@
           "default": true,
           "description": "Specifies whether or not to show tour markers in the editor gutter."
         },
+        "codetour.adjustOnInsertCodeSnippet": {
+          "type": "boolean",
+          "default": true,
+          "description": "Specifies whether or not to adjust tour step line numbers when a snippet is inserted."
+        },
         "codetour.customTourDirectory": {
           "type": "string",
           "default": null,

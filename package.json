@@ -64,6 +64,16 @@
           "type": "string",
           "default": null,
           "description": "Specifies a custom location to use when discovering tours."
+        },
+        "codetour.sortBy": {
+          "type": "string",
+          "enum": [
+            "title",
+            "dateModified",
+            "dateCreated"
+          ],
+          "default": "title",
+          "description": "Specifies how to sort tours in the Start Tour dialog."
         }
       }
     },

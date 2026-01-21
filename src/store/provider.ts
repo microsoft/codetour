@@ -54,10 +54,52 @@ export async function discoverTours(): Promise<void> {
     })
   );
 
+  const flatTours = tours.flat();
+  const sortBy = vscode.workspace
+    .getConfiguration(EXTENSION_NAME)
+    .get<string>("sortBy", "title");
+
+  // Pre-fetch file stats for date-based sorting
+  const tourStats = new Map<string, vscode.FileStat>();
+  if (sortBy === "dateModified" || sortBy === "dateCreated") {
+    await Promise.all(
+      flatTours.map(async tour => {
+        try {
+          const stat = await vscode.workspace.fs.stat(vscode.Uri.parse(tour.id));
+          tourStats.set(tour.id, stat);
+        } catch {
+          // Ignore errors - will fall back to title sorting for this tour
+        }
+      })
+    );
+  }
+
+  const sortFn = (a: CodeTour, b: CodeTour) => {
+    switch (sortBy) {
+      case "dateModified": {
+        const aStat = tourStats.get(a.id);
+        const bStat = tourStats.get(b.id);
+        if (aStat && bStat) {
+          return bStat.mtime - aStat.mtime; // newest first
+        }
+        return a.title.localeCompare(b.title);
+      }
+      case "dateCreated": {
+        const aStat = tourStats.get(a.id);
+        const bStat = tourStats.get(b.id);
+        if (aStat && bStat) {
+          return bStat.ctime - aStat.ctime; // newest first
+        }
+        return a.title.localeCompare(b.title);
+      }
+      default:
+        return a.title.localeCompare(b.title);
+    }
+  };
+
   runInAction(() => {
-    store.tours = tours
-      .flat()
-      .sort((a, b) => a.title.localeCompare(b.title))
+    store.tours = flatTours
+      .sort(sortFn)
       .filter(tour => !tour.when || jexl.evalSync(tour.when, TOUR_CONTEXT));
 
     if (store.activeTour) {

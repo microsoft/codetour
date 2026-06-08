@@ -1,0 +1,63 @@
+name: Apply README typo fixes
+
+on:
+  push:
+    branches:
+      - docs/fix-readme-typos
+
+permissions:
+  contents: write
+
+jobs:
+  fix-readme:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Correct README typos
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("README.md")
+          text = path.read_text()
+          replacements = {
+              "then following one of the following guides": "then follow one of the following guides",
+              "an introductory or intermediate explanations": "introductory or intermediate explanations",
+              "it's current set of steps": "its current set of steps",
+              "friendly/recognizeable": "friendly/recognizable",
+              "highlight a span a code": "highlight a span of code",
+              "change it's title": "change its title",
+              "tour title's": "tour titles",
+              "following benefis": "following benefits",
+              "then it's final step": "then its final step",
+              "then it's first step": "then its first step",
+              "you can open it's `*.tour` file": "you can open its `*.tour` file",
+              "only displayed for Linux users": "displayed only for Linux users",
+              "entirely seperate tour": "entirely separate tour",
+              "seperated by a `#`": "separated by a `#`",
+              "special `>>` synax": "special `>>` syntax",
+              "it will generates": "it will generate",
+              "end-users default browser": "end-user's default browser",
+              "run the butestild task": "run the test task",
+              "versioned seperately": "versioned separately",
+              "This let's you": "This lets you",
+              "intro explaination": "introductory explanation",
+              "This wll allow": "This will allow",
+              "regardless if the have": "regardless of whether they have",
+              "publically accessible": "publicly accessible",
+              "programatic way": "programmatic way",
+              "running on macoS": "running on macOS",
+          }
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f"Expected text not found: {old}")
+              text = text.replace(old, new)
+          path.write_text(text)
+          PY
+          rm .github/workflows/fix-readme-typos.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md .github/workflows/fix-readme-typos.yml
+          git commit -m "docs: fix README typos"
+          git push

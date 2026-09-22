@@ -1,0 +1,149 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Schema for CodeTour tour files",
+  "type": "object",
+  "required": ["title", "steps"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Specifies the title of the code tour."
+    },
+    "description": {
+      "type": "string",
+      "description": "Specifies an optional description for the code tour."
+    },
+    "ref": {
+      "type": "string",
+      "description": "Indicates the git ref (branch/commit/tag) that this tour associate with."
+    },
+    "isPrimary": {
+      "type": "boolean",
+      "description": "Specifies whether the tour represents the primary tour for this codebase."
+    },
+    "steps": {
+      "type": "array",
+      "description": "Specifies the list of steps that are included in the code tour.",
+      "default": [],
+      "items": {
+        "type": "object",
+        "required": ["description"],
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "File path (relative to the workspace root) that the step is associated with."
+          },
+          "directory": {
+            "type": "string",
+            "description": "Directory path (relative to the workspace root) that the step is associated with."
+          },
+          "view": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "debug",
+                  "debug:breakpoints",
+                  "debug:callstack",
+                  "debug:variables",
+                  "debug:watch",
+                  "explorer",
+                  "extensions",
+                  "extensions:disabled",
+                  "extensions:enabled",
+                  "output",
+                  "problems",
+                  "scm",
+                  "search",
+                  "terminal"
+                ],
+                "description": "The view ID (e.g. gistpad.gists) that this step is associated with."
+              },
+              {
+                "type": "string",
+                "minLength": 1,
+                "description": "The view ID (e.g. gistpad.gists) that this step is associated with."
+              }
+            ]
+          },
+          "uri": {
+            "type": "string",
+            "description": "Absolute URI that is associated with the step."
+          },
+          "line": {
+            "type": "number",
+            "description": "Line number that the step is associated with."
+          },
+          "pattern": {
+            "type": "string",
+            "description": "A regular expression to associate the step with. This is only considered when the line property isn't set, and allows you to associate steps with line content as opposed to ordinal."
+          },
+          "title": {
+            "type": "string",
+            "description": "An optional title for the step."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the step."
+          },
+          "selection": {
+            "type": "object",
+            "required": ["start", "end"],
+            "description": "Text selection that's associated with the step.",
+            "properties": {
+              "start": {
+                "type": "object",
+                "required": ["line", "character"],
+                "description": "Starting position (line, column) of the text selection range.",
+                "properties": {
+                  "line": {
+                    "type": "number",
+                    "description": "Line number (1-based) that the text selection begins on."
+                  },
+                  "character": {
+                    "type": "number",
+                    "description": "Column number (1-based) that the text selection begins on."
+                  }
+                }
+              },
+              "end": {
+                "type": "object",
+                "required": ["line", "character"],
+                "description": "Ending position (line, column) of the text selection range.",
+                "properties": {
+                  "line": {
+                    "type": "number",
+                    "description": "Line number (1-based) that the text selection ends on."
+                  },
+                  "character": {
+                    "type": "number",
+                    "description": "Column number (1-based) that the text selection end on."
+                  }
+                }
+              }
+            }
+          },
+          "commands": {
+            "type": "array",
+            "description": "Specifies an array of command URIs that will be executed when this step is navigated to.",
+            "default": [],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "stepMarker": {
+      "type": "string",
+      "description": "Specifies the 'marker' that indicates a line of code represents a step for this tour."
+    },
+    "nextTour": {
+      "type": "string",
+      "description": "Specifies the title of the tour that is meant to follow this tour."
+    },
+    "when": {
+      "type": "string",
+      "description": "Specifies the condition that must be met before this tour is shown. The value of this property is a string that is evaluated as JavaScript."
+    }
+  }
+}

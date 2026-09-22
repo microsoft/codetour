@@ -1,0 +1,45 @@
+{
+  "name": "codetour-mcp",
+  "version": "0.1.0",
+  "description": "Local MCP server that deterministically validates and persists AI-generated CodeTour Project Tours and Changes Tours",
+  "license": "MIT",
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/codetour",
+    "directory": "packages/mcp-server"
+  },
+  "bin": {
+    "codetour-mcp": "dist/src/cli.js"
+  },
+  "main": "dist/src/server.js",
+  "files": [
+    "dist/src",
+    "dist/package.json",
+    "dist/schema.json",
+    "schema.json",
+    "README.md",
+    "LICENSE.txt"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test dist/test/*/*.test.js",
+    "start": "node dist/src/cli.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "ajv": "^6.12.6",
+    "safe-regex2": "^5.1.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.0"
+  }
+}

@@ -373,6 +373,13 @@ export function registerRecorderCommands() {
 
       const tour = store.activeTour!.tour;
       const thread = store.activeTour!.thread;
+      // A file Tour step must be anchored to a line in a file. If the
+      // comment thread carries no source range, there is no location to
+      // record, so fail instead of writing a broken step.
+      const range = thread.range;
+      if (!range) {
+        throw new Error("A file Tour step requires a source range.");
+      }
 
       const workspaceRoot = getActiveWorkspacePath();
       const file = getRelativePath(workspaceRoot, thread!.uri.path);
@@ -391,7 +398,7 @@ export function registerRecorderCommands() {
           editor => editor.document && editor.document.uri.scheme === "file"
         );
         const contents = fileEditors?.[0]?.document
-          .lineAt(thread.range.start.line)
+          .lineAt(range.start.line)
           .text.trim();
 
         const pattern =
@@ -407,10 +414,10 @@ export function registerRecorderCommands() {
           step.pattern = pattern;
         } else {
           // TODO: Try to get smarter about how to handle this.
-          step.line = thread.range.start.line + 1;
+          step.line = range.start.line + 1;
         }
       } else {
-        step.line = thread.range.start.line + 1;
+        step.line = range.start.line + 1;
       }
 
       store.activeTour!.step++;

@@ -40,6 +40,9 @@ outbound signal — fired after every view-model change the adapter must paint.
   render lands.
 - `pressKey(event): ReaderViewModel` — handle one key input, ask-mode capture
   included.
+- `wouldConsume(event): boolean` — whether the reader consumes the key: the
+  adapter asks before its preventDefault and forwards only consumed keys
+  to `pressKey`. Both run the same reader-side translation, once.
 - `resize(columns, rows): ReaderViewModel` — a geometry change: re-render and
   restore the clamped scroll offset.
 - `toggleVoice(): ReaderViewModel` — the unmodified-`v` voice toggle.
@@ -59,8 +62,12 @@ adapter repaints from `getState()` whenever `onViewChange` fires.
 The reader owns reading behavior only; everything environmental is injected
 from the composition root (`runTerminalTour` in `src/cli/terminal.ts`):
 
-- **Speech engine** (`SpeechEngine`): the Step Narration engine seam — the
-  platform's system speech in production. The reader keeps only the policy.
+- **Narration controller** (`NarrationController`, `src/cli/narration/`): the
+  Step Narration engine seam — the entry point composes it over the
+  platform's system speech and hands the controller to the reader. The
+  enabled state, the cut and replace of utterances and the generation race
+  protection live in the controller; the reader keeps only the policy
+  (ADR 0029).
 - **Conversation responder** (`ConversationResponder`): the agent answering
   Tour Step Conversation questions, adapted from the Step Chat support
   seams. Absent by design: the reader stays fully usable without an agent.
@@ -86,10 +93,14 @@ from the composition root (`runTerminalTour` in `src/cli/terminal.ts`):
 or superseded render changes nothing here)
 
 - `tourTitle` — untruncated; the adapter fits it to `layout.titleWidth`.
-- `stepCount` — `"step n/N"`, or `"step 0/0"` for a Tour without steps.
+- `stepCount` — the reading position as numbers: the displayed Step's
+  `index` (0-based) and the Tour's `count`. The adapter formats the
+  `"step n/N"` counter — `"step 0/0"` for a Tour without steps.
 - `emptyMessage` — set only on the empty paths; painted instead of a Step.
-- `anchorText` — the full untruncated anchor: the Step's target plus its
-  `" · diff"` suffix. The adapter tails a long path.
+  Both paths carry the same frozen text, `"Tour has no steps. Press q to quit."`.
+- `anchor` — the Step's anchor, carried structured: its untruncated `target`
+  (path or URI, line included) and the `diff` flag whose `" · diff"` suffix
+  the adapter derives when painting. A long path is tailed by the adapter.
 - `stepTitle` — the Step's title or its `"Step n"` fallback.
 - `descriptionHtml` — the sanitized, terminal-rendered description HTML.
 
@@ -106,16 +117,28 @@ unavailable), and the raw unwrapped `lines`. Wrapping and diff row coloring
 are painting.
 
 **Tour Step Conversation** (`conversation`) — the panel title, its `meta`
-(`"no agent"`, `"ready"` or `"n exchanges"`), `hasResponder`, the agent's
+(`"no agent"`, `"ready"` or `"n exchanges"` — a display fragment the panel
+head paints verbatim; restructuring it would churn the paint layer
+disproportionately, a stated decision), `hasResponder`, the agent's
 `providerName` (the adapter lowercases it for the role line), the active
 Step's `suggestions` in order (keys 1-9 ask them), the Step's `exchanges`
-(`ChatExchange`: question, streamed answer, pending/error flags, tool lines),
-and `responding` while an answer streams.
+(`StepConversationExchange`, raw and unpainted from the shared store of
+ADR 0031: question, streamed `answer`, the latest `activity` line, the
+`toolUses` keyed by call, and the `pending`/`interrupted`/`failed` flags),
+and `responding` while the Step's answer streams — `q`/Escape interrupt it
+and only a second press quits. The exchange lifecycle (store, blocking,
+history, interruption, failure wording) lives in
+`src/agent/stepConversations.ts`; the adapter paints the tool lines
+(`⚙ refused kind: title`), the activity line, the answer states (streaming
+plain text, settled Markdown, `failed` as the error class, an interrupted
+answer keeps its streamed part plus an "Answer interrupted." line).
 
 **Composer** (`composer`) — `mode` (`"idle"`, `"asking"`, `"responding"`,
 `"unavailable"` without an agent), the full `draft`, the exact `hint` line,
-and the `prompt` content before fitting (the draft plus its `▌` caret, or the
-idle notices). The adapter tails the draft so the caret stays visible.
+and the `prompt` notices before fitting — the idle, responding and
+unavailable texts; empty while asking, where the adapter paints the draft
+with its `▌` caret, tailed so the caret stays visible. The caret and its
+truncation are painting: the view model never carries them.
 
 **Status line** (`status`) — see the next section.
 
@@ -131,13 +154,17 @@ nonblocking `warning` and clears on the next handed utterance (ADR 0029).
 **Scroll** (`scroll`) — see "Scroll and resize semantics".
 
 **Layout and rows** — `layout`, the pure cell budget from
-`src/cli/terminalLayout.ts` (columns, rail/chat/text/code/title widths,
-`compactHints`), and `rows`, the terminal height. One geometry input for the
-adapter's truncation decisions; the view model never carries terminal cells.
+`src/cli/terminalLayout.ts` (columns, rail/conversation/text/code/title/composer
+widths, the status line's `statusRightWidth`, `compactHints`), and `rows`,
+the terminal height. One geometry input for the adapter's truncation
+decisions; the view model never carries terminal cells.
 
 **Fatal** (`fatal`) — the render error that ended the session, when one
-occurred. The adapter restores the screen, repaints the previous view model,
-then prints the diagnostic after the restore (ADR 0025).
+occurred: its verbatim `message` and its `name`, the typed error's class
+name (e.g. `TerminalStepRenderError`) — the boundary is DOM-free, so the
+identity crosses as a string. The adapter restores the screen, repaints
+the previous view model, then prints the message after the restore
+(ADR 0025).
 
 ## Status line segments and precedence
 
@@ -154,16 +181,20 @@ survives truncation:
 3. The agent's provider name, lowercased, when an agent is installed.
 4. The exchange count (`"n exchanges"`), when nonzero.
 
-The adapter joins the segments with `" · "` and fits them into the budget
-`max(30, columns - (compactHints ? 48 : 72))`, cutting from the right. The
-reader emits the segments; only the join and cut are painting.
+The adapter joins the segments with `" · "` and fits them into
+`layout.statusRightWidth` — the layout module computes the budget: the mode
+chip and key hints consume their width first (72 columns spelled out, 48
+compact), and the right side, which yields first, never drops below 30
+columns — cutting from the right. The reader emits the segments; only the
+join and cut are painting.
 
 ## Key inputs
 
 The adapter maps its key events to `ReaderKeyEvent` (`key`, `ctrl`, `meta`,
-`alt`) and calls `pressKey`. The same pure `translateKey` function tells the
-adapter whether a key was consumed at all: an `"unhandled"` action must be
-passed through to the host untouched.
+`alt`) and asks `wouldConsume` first: an unhandled key is passed through
+to the host untouched (no preventDefault), a consumed one is forwarded to
+`pressKey`. The pure `translateKey` behind both runs reader-side, once —
+the adapter never reassembles the key state from the view model.
 
 In ask mode the prompt owns the keyboard: every printable key appends to the
 draft, `Enter` submits the trimmed question, `Escape` cancels, `Backspace`
@@ -177,24 +208,26 @@ deletes. In reading mode:
 - `a` enters ask mode when an agent is installed and no answer streams;
 - digits `1`-`9` ask the matching suggested question of the active Step,
   ignored while an answer streams;
-- `q` (or `Escape`) quits.
+- `q` (or `Escape`) interrupts the Step's answer in flight while one
+  streams (ADR 0031), and quits the reader otherwise.
 
 ## Scroll and resize semantics
 
 The reader owns the scroll state; the adapter applies the offsets and
 measures the geometry. `scroll` carries the Step-box position
 (`stepScrollTop`), its viewport and content heights
-(`stepViewportRows`/`stepContentRows`), the conversation panel's position
-and extents (`chatScrollTop`/`chatViewportRows`/`chatContentRows`), and
-`chatPinned` — true for the whole session: the panel pins to its bottom after
-every chat paint and streaming delta.
+(`stepViewportRows`/`stepContentRows`), and the conversation panel's
+position and extents (`conversationScrollTop`/`conversationViewportRows`/`conversationContentRows`).
+The panel pins to its bottom after every conversation paint and streaming delta —
+unconditionally, for the whole session: the offset is module state, settled
+against the reported extents.
 
 The protocol, per paint:
 
 1. The adapter paints the view model.
 2. It reports the measured geometry through `onExtentsMeasured` — the
    Step-box `stepViewportRows`/`stepContentRows` are required; the panel's
-   `chatViewportRows`/`chatContentRows` are optional and, when absent,
+   `conversationViewportRows`/`conversationContentRows` are optional and, when absent,
    leave the panel's scroll state untouched.
 3. The reader clamps its offsets against the fresh extents (a pinned panel
    sits at its bottom; a shrunk Step box clamps its offset inside it) and

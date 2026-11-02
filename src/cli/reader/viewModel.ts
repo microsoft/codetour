@@ -17,6 +17,45 @@ export interface ReaderRailItem {
   active: boolean;
 }
 
+/**
+ * The Tour Step Conversation state the reader's decisions share: whether the
+ * ask prompt owns the keyboard, an answer is streaming, and an agent is
+ * installed to answer at all. Key dispatch, the status line and the composer
+ * all consume the same triple, so it travels as one unit (spec #93).
+ */
+export interface ConversationState {
+  /** The ask prompt owns the keyboard. */
+  asking: boolean;
+  /** True while the displayed Step's answer is streaming (ADR 0031). */
+  responding: boolean;
+  /** True when an agent is installed to answer questions. */
+  hasResponder: boolean;
+}
+
+/**
+ * The Step's anchor, carried structured: the target the adapter paints and
+ * the diff flag whose " · diff" suffix the adapter derives when painting
+ * (ADR 0025). The view model never carries painted anchor text.
+ */
+export interface ReaderAnchor {
+  /** The untruncated target: the Step's file, URI, directory or view, its line included. */
+  target: string;
+  /** True for a diff Step: the adapter paints the " · diff" suffix. */
+  diff: boolean;
+}
+
+/**
+ * The reading position of the wordmark bar's Step counter: the numbers the
+ * adapter formats into "step n/N" — or "step 0/0" for a Tour without
+ * steps. The view model carries no preformatted display string (spec #93).
+ */
+export interface ReaderStepCount {
+  /** The displayed Step's index, 0-based; 0 for a Tour without steps. */
+  index: number;
+  /** The Tour's total number of Steps. */
+  count: number;
+}
+
 /** The slice of the rail that keeps the active Step visible (ADR 0028). */
 export interface ReaderRailWindow {
   items: ReaderRailItem[];
@@ -40,26 +79,39 @@ export interface ReaderSourceSection {
 /** The composer under the Tour Step Conversation panel. */
 export interface ReaderComposer {
   mode: "idle" | "asking" | "responding" | "unavailable";
-  /** The full question draft; the adapter tails it to keep the caret visible. */
+  /** The full question draft; the adapter tails it and paints the caret. */
   draft: string;
   /** The exact hint line under the prompt. */
   hint: string;
-  /** Prompt content before the adapter's fit: the draft with its caret, or the idle notices. */
+  /**
+   * The prompt notices before the adapter's fit: the idle, responding and
+   * unavailable texts. Empty while asking — the adapter paints the draft
+   * with its `▌` caret, a truncation the view model never carries.
+   */
   prompt: string;
 }
 
 /** The right-hand Tour Step Conversation panel (ADR 0026). */
 export interface ReaderConversation {
   title: string;
-  /** "no agent" | "ready" | "n exchanges" — computed exactly as the reader paints it today. */
+  /**
+   * A display fragment, deliberately: one of "no agent" | "ready" |
+   * "n exchanges", formatted exactly as the panel head paints it.
+   * Unlike `stepCount` the label is a one-word status the paint layer
+   * sets verbatim, so restructuring it would churn the paint
+   * disproportionately — a conscious trade documented here (spec #93).
+   */
   meta: string;
   hasResponder: boolean;
   /** The agent's provider name, for the role line; the adapter lowercases it. */
   providerName: string | undefined;
   /** Suggested questions of the active Step, in order; keys 1-9 ask them. */
   suggestions: string[];
+  /** The raw, unpainted exchanges of the displayed Step, from the shared
+   * store (ADR 0031); the adapter paints tool uses, activity and states. */
   exchanges: readonly StepConversationExchange[];
-  /** True while an answer is streaming. */
+  /** True while the displayed Step's answer is streaming: new asks on it are
+   * blocked and `q`/Escape interrupt it (ADR 0031). */
   responding: boolean;
 }
 
@@ -94,13 +146,11 @@ export interface ReaderScrollState {
   /** Total scrollable height of the Step box, reported by the adapter after each paint. */
   stepContentRows: number;
   /** The conversation panel's scroll offset, owned by the module (spec #93). */
-  chatScrollTop: number;
+  conversationScrollTop: number;
   /** The conversation panel's visible rows, as the adapter measured them. */
-  chatViewportRows: number;
+  conversationViewportRows: number;
   /** The conversation panel's total height, reported by the adapter after each paint. */
-  chatContentRows: number;
-  /** True while the panel pins to its bottom after every chat paint and delta. */
-  chatPinned: boolean;
+  conversationContentRows: number;
 }
 
 /** The scroller extents the adapter measures after painting a view model. */
@@ -111,13 +161,22 @@ export interface ReaderExtents {
    * The conversation panel's measured extents. Optional: a report about the
    * Step box alone leaves the panel's scroll state untouched.
    */
-  chatViewportRows?: number;
-  chatContentRows?: number;
+  conversationViewportRows?: number;
+  conversationContentRows?: number;
 }
 
-/** A render error that ended the session; the adapter prints it after restoring the screen. */
+/**
+ * A render error that ended the session; the adapter prints it after
+ * restoring the screen (ADR 0025). The boundary is DOM-free, so the error
+ * object itself cannot cross it: the view model carries the typed error's
+ * identity as its class `name` next to the verbatim `message`, a conscious
+ * contract (spec #93) — an adapter branches or logs on the kind without
+ * ever holding the error.
+ */
 export interface ReaderFatal {
   message: string;
+  /** The thrown error's class name; "Error" for a non-Error thrown value. */
+  name: string;
 }
 
 /** Everything a rendering adapter needs to paint one instant of a reading session. */
@@ -133,12 +192,12 @@ export interface ReaderViewModel {
 
   /** The Tour title, untruncated; the adapter fits it to the wordmark bar. */
   tourTitle: string;
-  /** "step n/N", or "step 0/0" for a Tour without steps. */
-  stepCount: string;
+  /** The displayed Step's index and the Tour's Step count; the adapter formats the counter. */
+  stepCount: ReaderStepCount;
   /** The article text of the empty paths, painted instead of a Step. */
   emptyMessage: string | undefined;
-  /** The full untruncated anchor text: target plus its " · diff" suffix. */
-  anchorText: string;
+  /** The Step's anchor, structured; the adapter derives its painted suffix. */
+  anchor: ReaderAnchor;
   /** The Step title or its "Step n" fallback. */
   stepTitle: string;
   /** The sanitized description HTML the pure content module produced. */

@@ -2,17 +2,20 @@ import * as assert from "node:assert/strict";
 import { test } from "node:test";
 import type { CodeTour, CodeTourStep } from "../../store";
 import type { StepChatAnswerEvents, StepChatRequest } from "../../agent/stepChatContract";
-import type { ConversationResponder, CommitFileReader, DescriptionRenderer, SpeechEngine, StepContextResolver } from "./collaborators";
+import { NarrationController } from "../narration/NarrationController";
+import type { NarrationEngine } from "../narration/SystemSpeech";
+import type { ConversationResponder, CommitFileReader, DescriptionRenderer, StepContextResolver } from "./collaborators";
 import { createReader, type TourReader } from "./reader";
 import type { ReaderViewModel } from "./viewModel";
 
 /**
  * The reading interface of the terminal Tour reader (spec #93). Every test
  * drives the interface in-process and asserts on the view model only: no
- * PTY, no VT bytes, no DOM — the collaborators (speech engine, conversation
- * responder, description renderer, Step context resolver) are fakes at the
- * module boundary, the same determinism the NarrationController tests
- * achieve with a fake engine.
+ * PTY, no VT bytes, no DOM — the collaborators (the narration controller
+ * composed over a fake engine, the conversation responder, the description
+ * renderer, the Step context resolver) are fakes at the module boundary,
+ * the same determinism the NarrationController tests achieve with a fake
+ * engine.
  */
 
 const flush = (): Promise<void> => new Promise(resolve => setImmediate(resolve));
@@ -25,7 +28,7 @@ function tourWith(steps: CodeTourStep[], tour: Partial<CodeTour> = {}): CodeTour
  * A scripted speech engine: the test decides when each utterance settles.
  * Nothing in these tests relies on audible output or a speech subprocess.
  */
-class FakeSpeechEngine implements SpeechEngine {
+class FakeSpeechEngine implements NarrationEngine {
   readonly spoken: string[] = [];
   cancellations = 0;
   disposed = false;
@@ -90,6 +93,7 @@ class FakeDescriptionRenderer {
 class FakeResponder implements ConversationResponder {
   readonly providerName = "Fake";
   readonly requests: StepChatRequest[] = [];
+  cancellations = 0;
   disposed = false;
   /** The answer the next question resolves with; the test can override it. */
   nextAnswer: (request: StepChatRequest, events?: StepChatAnswerEvents) => Promise<string> =
@@ -100,7 +104,6 @@ class FakeResponder implements ConversationResponder {
     return this.nextAnswer(request, events);
   }
 
-  cancellations = 0;
   cancel(): void {
     this.cancellations++;
   }
@@ -138,7 +141,8 @@ function harness(
   const reader = createReader({
     tour: tourWith(steps, options.tour),
     root: "/workspace",
-    speechEngine: speech,
+    // The engine seam, composed as the entry point composes it (spec #93).
+    speech: new NarrationController({ engine: speech }),
     descriptionRenderer: descriptions.render,
     resolveStepContext: options.context ?? (() => ({ kind: "none" })),
     responder: options.responder,
@@ -158,7 +162,7 @@ test("an empty Tour opens on the no-steps message and stays interactive", async 
   assert.equal(state.rendering, false);
   assert.equal(state.finished, false);
   assert.equal(state.tourTitle, "Reader");
-  assert.equal(state.stepCount, "step 0/0");
+  assert.deepEqual(state.stepCount, { index: 0, count: 0 });
   assert.equal(state.emptyMessage, "Tour has no steps. Press q to quit.");
   assert.equal(state.stepTitle, "");
   assert.equal(state.descriptionHtml, "");
@@ -198,14 +202,15 @@ test("opening a Tour renders the first Step and commits the painted reading stat
   assert.equal(state.displayedStep, 0);
   assert.equal(state.rendering, false);
   assert.equal(state.tourTitle, "Reader");
-  assert.equal(state.stepCount, "step 1/2");
+  assert.deepEqual(state.stepCount, { index: 0, count: 2 });
   assert.equal(state.stepTitle, "First");
   assert.equal(state.descriptionHtml, "<p>rendered first</p>");
-  assert.equal(state.anchorText, "src/a.ts:12");
+  assert.equal(state.anchor.target, "src/a.ts:12");
+  assert.equal(state.anchor.diff, false);
   assert.equal(state.emptyMessage, undefined);
 });
 
-test("a Step without a title falls back to its number and its anchor keeps the diff suffix", async () => {
+test("a Step without a title falls back to its number and its anchor carries the diff kind", async () => {
   const { reader, descriptions } = harness(
     [{ description: "Hello", uri: "https://example.test/doc" }],
     { context: () => ({ kind: "diff", label: "src/a.ts (base ↔ head)", text: "+added" }) }
@@ -215,8 +220,10 @@ test("a Step without a title falls back to its number and its anchor keeps the d
   await opening;
   const state = reader.getState();
   assert.equal(state.stepTitle, "Step 1");
-  // The anchor keeps its path whole; the diff suffix is the reader's to add.
-  assert.equal(state.anchorText, "https://example.test/doc · diff");
+  // The anchor travels structured: the target the adapter paints, and the
+  // diff flag whose " · diff" suffix the adapter derives when painting.
+  assert.equal(state.anchor.target, "https://example.test/doc");
+  assert.equal(state.anchor.diff, true);
 });
 
 test("a code Step context becomes the source section with its label stripped", async () => {
@@ -276,7 +283,7 @@ test("navigation moves the target at the keypress and displays it when the rende
   const committed = reader.getState();
   assert.equal(committed.displayedStep, 1);
   assert.equal(committed.currentStep, 1);
-  assert.equal(committed.stepCount, "step 2/2");
+  assert.deepEqual(committed.stepCount, { index: 1, count: 2 });
   assert.equal(committed.stepTitle, "Second");
   assert.equal(committed.rendering, false);
 
@@ -429,7 +436,7 @@ test("a failed Step render keeps the previous screen state and reports the diagn
   assert.equal(state.displayedStep, 0);
   assert.equal(state.stepTitle, "First");
   assert.equal(state.descriptionHtml, "<p>first</p>");
-  assert.equal(state.stepCount, "step 1/2");
+  assert.deepEqual(state.stepCount, { index: 0, count: 2 });
   assert.equal(state.fatal?.message, "render exploded");
   assert.equal(state.finished, true);
   assert.equal(state.rendering, false);
@@ -467,11 +474,41 @@ test("a diff Step without a resolved diff fails the render with the terminal err
   reader.navigateTo(1);
   descriptions.commit(1, "<p>comparison</p>");
   await flush();
+  const fatal = reader.getState().fatal;
   assert.equal(
-    reader.getState().fatal?.message,
+    fatal?.message,
     "CodeTour terminal stopped: Tour 'Reader', step 2 ('Untitled'), Git diff: " +
       "persisted base/head snapshot or file comparison unavailable"
   );
+  // The typed error's identity survives the boundary: the view model keeps
+  // the class name next to the message (spec #93).
+  assert.equal(fatal?.name, "TerminalStepRenderError");
+});
+
+test("a failed render keeps the typed error's identity in the view model", async () => {
+  // The boundary is DOM-free: the error object itself cannot cross it, so
+  // the view model carries the typed error's name for any adapter that must
+  // branch on the failure kind (spec #93).
+  class MissingDiffError extends Error {
+    constructor() {
+      super("diff unavailable");
+      this.name = "MissingDiffError";
+    }
+  }
+  const { reader, descriptions } = harness([
+    { title: "First", description: "Hello" },
+    { title: "Second", description: "World" }
+  ]);
+  const opening = reader.open();
+  descriptions.commit(0, "<p>first</p>");
+  await opening;
+  reader.navigateTo(1);
+  descriptions.fail(1, new MissingDiffError());
+  await flush();
+  const fatal = reader.getState().fatal;
+  assert.ok(fatal);
+  assert.equal(fatal.message, "diff unavailable");
+  assert.equal(fatal.name, "MissingDiffError");
 });
 
 test("pressing q closes the session and releases the collaborators", async () => {
@@ -694,10 +731,63 @@ test("'a' enters ask mode only with an agent installed and no answer streaming",
   const state = withAgent.reader.getState();
   assert.equal(state.composer.mode, "asking");
   assert.equal(state.composer.draft, "");
-  assert.equal(state.composer.prompt, "▌");
+  // The asking mode paints the draft with its caret — adapter painting —
+  // so the view model carries no prompt text while asking (spec #93).
+  assert.equal(state.composer.prompt, "");
   assert.equal(state.composer.hint, "question for this step");
   assert.equal(state.status.mode, "ASK");
   assert.equal(state.status.hints, " enter send · esc cancel");
+});
+
+test("wouldConsume reports exactly the keys pressKey handles", async () => {
+  // The adapter asks before preventDefault: the same reader-side
+  // translation decides both, once (spec #93). The query answers exactly
+  // what dispatching the key would do, in every keyboard mode.
+  const responder = new FakeResponder();
+  const { reader, descriptions } = harness([{ title: "Only", description: "Hello" }], {
+    responder
+  });
+  const opening = reader.open();
+  descriptions.commit(0, "<p>only</p>");
+  await opening;
+
+  // Reading mode on a single-Step Tour: navigation is clamped out, the
+  // scroll and voice keys are consumed, an unrelated key passes through.
+  assert.equal(reader.wouldConsume({ key: "ArrowRight" }), false);
+  assert.equal(reader.wouldConsume({ key: "ArrowLeft" }), false);
+  assert.equal(reader.wouldConsume({ key: "j" }), true);
+  assert.equal(reader.wouldConsume({ key: "v" }), true);
+  // A modified v is not the narration shortcut (spec #79).
+  assert.equal(reader.wouldConsume({ key: "v", ctrl: true }), false);
+  assert.equal(reader.wouldConsume({ key: "x" }), false);
+
+  // Ask mode owns the keyboard: every printable key is draft text, a
+  // non-printable one falls through.
+  reader.pressKey({ key: "a" });
+  assert.equal(reader.wouldConsume({ key: "q" }), true);
+  assert.equal(reader.wouldConsume({ key: "F1" }), false);
+  reader.pressKey({ key: "Escape" });
+
+  // Without an agent the ask key falls through unhandled.
+  const bare = harness([{ title: "Only", description: "Hello" }]);
+  const bareOpening = bare.reader.open();
+  bare.descriptions.commit(0, "<p>only</p>");
+  await bareOpening;
+  assert.equal(bare.reader.wouldConsume({ key: "a" }), false);
+
+  // While an answer streams, q is the stop and a suggestion digit is
+  // ignored (ADR 0031) — the query answers exactly what pressKey would do.
+  let release: (() => void) | undefined;
+  responder.nextAnswer = () => new Promise<string>(resolve => {
+    release = () => resolve("done");
+  });
+  const asking = reader.ask("why?");
+  await flush();
+  assert.equal(reader.wouldConsume({ key: "2" }), false);
+  assert.equal(reader.wouldConsume({ key: "a" }), false);
+  assert.equal(reader.wouldConsume({ key: "q" }), true);
+  release!();
+  await asking;
 });
 
 test("the ask prompt owns the keyboard: every printable key stays draft text", async () => {
@@ -717,7 +807,9 @@ test("the ask prompt owns the keyboard: every printable key stays draft text", a
   reader.pressKey({ key: "ArrowRight" });
   let state = reader.getState();
   assert.equal(state.composer.draft, "vq2");
-  assert.equal(state.composer.prompt, "vq2▌");
+  // The draft is the reader's state; the caret the adapter paints over it
+  // is not view-model content (spec #93).
+  assert.equal(state.composer.prompt, "");
   assert.equal(state.narration.enabled, false);
   assert.equal(state.currentStep, 0);
   assert.equal(state.finished, false);
@@ -755,11 +847,12 @@ test("Enter submits the trimmed question, exits ask mode and dispatches it", asy
   reader.pressKey({ key: "Enter" });
 
   const state = reader.getState();
-  // Ask mode is exited and the answer is already in flight (WAIT mode).
+  // Ask mode is exited and the answer is already in flight (WAIT mode):
+  // the store paints the pending exchange before the agent is contacted
+  // (ADR 0031).
   assert.equal(state.composer.mode, "responding");
   assert.equal(state.composer.draft, "");
   await flush();
-  // The question reaches the agent once the grounding context resolves.
   assert.equal(responder.requests.length, 1);
   assert.equal(responder.requests[0].question, "why");
   // The question is grounded in the Step the reader sees (spec #93).
@@ -770,7 +863,6 @@ test("Enter submits the trimmed question, exits ask mode and dispatches it", asy
     description: "Hello"
   });
   assert.equal(responder.requests[0].workspaceRoot, "/workspace");
-  await flush();
   const done = reader.getState();
   assert.equal(done.composer.mode, "idle");
   assert.equal(done.conversation.exchanges.length, 1);
@@ -809,6 +901,8 @@ test("a question without an agent fails the exchange with the guidance", async (
   await reader.ask("why?");
   const state = reader.getState();
   assert.equal(state.conversation.exchanges.length, 1);
+  // The shared store owns the failure wording (ADR 0031): the reader stays
+  // usable without an agent, and a new question may still restart one.
   assert.deepEqual(state.conversation.exchanges[0], {
     question: "why?",
     answer: "This step's responder is not available. Tour reading stays usable.",
@@ -818,11 +912,11 @@ test("a question without an agent fails the exchange with the guidance", async (
     interrupted: false,
     failed: true
   });
-  // The chat head still reports the no-agent state.
+  // The conversation head still reports the no-agent state.
   assert.equal(state.conversation.meta, "no agent");
 });
 
-test("an answer streams into the exchange, reports activity and completes", async () => {
+test("an answer streams into the exchange, reports tools and completes", async () => {
   const responder = new FakeResponder();
   responder.nextAnswer = async (_request, events) => {
     events?.onActivity?.("thinking");
@@ -842,6 +936,8 @@ test("an answer streams into the exchange, reports activity and completes", asyn
   assert.equal(state.conversation.exchanges.length, 1);
   assert.equal(state.conversation.exchanges[0].pending, false);
   assert.equal(state.conversation.exchanges[0].answer, "Hello");
+  // The store keeps the responder's activity raw (ADR 0031): the adapter
+  // paints it as the exchange's live tool line.
   assert.equal(state.conversation.exchanges[0].activity, "thinking");
   assert.deepEqual(state.conversation.exchanges[0].toolUses, []);
   assert.equal(state.conversation.meta, "1 exchange");
@@ -867,6 +963,7 @@ test("a streaming answer paints WAIT mode and hides the ask hint", async () => {
   assert.equal(state.status.mode, "WAIT");
   assert.equal(state.composer.mode, "responding");
   assert.equal(state.composer.prompt, "answering…");
+  // While an answer streams, q stops it instead of quitting (ADR 0031).
   assert.equal(state.composer.hint, "answer streaming · q stop");
   assert.match(state.status.hints, /q stop/);
   assert.doesNotMatch(state.status.hints, /a ask/);
@@ -904,11 +1001,11 @@ test("one answer is in flight at a time", async () => {
   assert.equal(reader.getState().conversation.responding, false);
 });
 
-test("q first interrupts a streaming answer, then quits once nothing is in flight", async () => {
+test("q and Escape interrupt a streaming answer; a second press quits the reader", async () => {
   let release: (() => void) | undefined;
   const responder = new FakeResponder();
   responder.nextAnswer = () => new Promise<string>(resolve => {
-    release = () => resolve("late completion");
+    release = () => resolve("late");
   });
   const { reader, descriptions } = harness([{ title: "Only", description: "Hello" }], {
     responder
@@ -918,29 +1015,39 @@ test("q first interrupts a streaming answer, then quits once nothing is in fligh
   await opening;
   const asking = reader.ask("why?");
   await flush();
-  // While the answer streams, quitting would lose it: the same key first
-  // interrupts the Step's answer in flight.
-  reader.pressKey({ key: "q" });
-  let state = reader.getState();
-  assert.equal(state.finished, false);
-  assert.equal(state.conversation.responding, false);
+  // While an answer streams, the reading must survive: Escape interrupts
+  // the answer in flight instead of closing the reader, and the responder
+  // cancels its agent exchange (ADR 0031).
+  reader.pressKey({ key: "Escape" });
+  const stopped = reader.getState();
+  assert.equal(stopped.finished, false);
+  assert.equal(stopped.conversation.responding, false);
+  assert.equal(stopped.conversation.exchanges[0].pending, false);
+  assert.equal(stopped.conversation.exchanges[0].interrupted, true);
   assert.equal(responder.cancellations, 1);
-  const stopped = state.conversation.exchanges[0];
-  assert.equal(stopped.pending, false);
-  assert.equal(stopped.interrupted, true);
-  // The late completion of the cancelled answer is ignored.
+  // The status line goes back to offering the quit.
+  assert.match(stopped.status.hints, /q quit/);
+  // The late completion of the stopped answer never overwrites the
+  // interrupted state the reader already sees.
   release!();
   await asking;
-  state = reader.getState();
-  assert.equal(state.conversation.exchanges[0].interrupted, true);
-  assert.equal(state.conversation.exchanges[0].answer, "");
-  // A second q, with nothing in flight, quits.
+  const settled = reader.getState();
+  assert.equal(settled.conversation.exchanges[0].interrupted, true);
+  assert.equal(settled.conversation.exchanges[0].answer, "");
+  // A new question is accepted immediately, and the interrupted exchange
+  // never enters the follow-up history (ADR 0031).
+  responder.nextAnswer = async () => "after stop";
+  await reader.ask("again?");
+  assert.equal(responder.requests[1].history.length, 0);
+  assert.equal(reader.getState().conversation.exchanges[1].answer, "after stop");
+  // With nothing in flight, the same key quits the reader.
   reader.pressKey({ key: "q" });
   await flush();
   assert.equal(reader.getState().finished, true);
 });
 
-test("a failed answer fails the exchange and unlocks asking again", async () => {  const responder = new FakeResponder();
+test("a failed answer fails the exchange and unlocks asking again", async () => {
+  const responder = new FakeResponder();
   responder.nextAnswer = async () => {
     throw new Error("agent went away");
   };
@@ -952,11 +1059,10 @@ test("a failed answer fails the exchange and unlocks asking again", async () => 
   await opening;
   await reader.ask("why?");
   const state = reader.getState();
+  // The store settles the failure wording (ADR 0031); the reading continues.
   assert.equal(state.conversation.exchanges[0].failed, true);
-  assert.equal(
-    state.conversation.exchanges[0].answer,
-    "The answer to this question failed (agent went away). Tour reading stays usable."
-  );
+  assert.equal(state.conversation.exchanges[0].answer,
+    "The answer to this question failed (agent went away). Tour reading stays usable.");
   assert.equal(state.conversation.exchanges[0].pending, false);
   assert.equal(state.conversation.responding, false);
   // A retry is possible: the failed exchange is not history.
@@ -968,16 +1074,16 @@ test("a failed answer fails the exchange and unlocks asking again", async () => 
   assert.equal(responder.requests[1].history.length, 0);
 });
 
-test("the empty Tour reports the bare no-steps message when a resize re-renders it", async () => {
+test("the empty Tour keeps the exact no-steps message when a resize re-renders it", async () => {
   const { reader, descriptions } = harness([]);
   await reader.open();
   assert.equal(reader.getState().emptyMessage, "Tour has no steps. Press q to quit.");
   reader.resize(100, 30);
-  // The render's defensive empty path: the article shows the bare message
-  // and the topbar keeps its startup "step 0/0" counter.
+  // The render's defensive empty path paints the same frozen message —
+  // the reader's visual contract changes nothing for the reader (ADR 0025).
   const state = reader.getState();
-  assert.equal(state.emptyMessage, "This Tour has no steps.");
-  assert.equal(state.stepCount, "step 0/0");
+  assert.equal(state.emptyMessage, "Tour has no steps. Press q to quit.");
+  assert.deepEqual(state.stepCount, { index: 0, count: 0 });
   assert.equal(state.displayedStep, -1);
   assert.equal(state.rendering, false);
   assert.equal(descriptions.requested.length, 0);
@@ -1064,22 +1170,22 @@ test("the conversation panel pins to the bottom of the extents the adapter repor
   // The adapter measures the panel after painting: 5 visible rows of 12.
   reader.onExtentsMeasured({
     stepViewportRows: 3, stepContentRows: 10,
-    chatViewportRows: 5, chatContentRows: 12
+    conversationViewportRows: 5, conversationContentRows: 12
   });
   const scroll = reader.getState().scroll;
-  // The pinning policy is module state: the panel sits at its bottom, the
-  // offset clamped against the reported extents (spec #93).
-  assert.equal(scroll.chatPinned, true);
-  assert.equal(scroll.chatScrollTop, 7);
-  assert.equal(scroll.chatViewportRows, 5);
-  assert.equal(scroll.chatContentRows, 12);
+  // The pinning policy is module state, unconditional for the whole session:
+  // the panel sits at its bottom, the offset clamped against the reported
+  // extents (spec #93).
+  assert.equal(scroll.conversationScrollTop, 7);
+  assert.equal(scroll.conversationViewportRows, 5);
+  assert.equal(scroll.conversationContentRows, 12);
 
   // A panel shorter than its viewport clamps at the top: nothing to scroll.
   reader.onExtentsMeasured({
     stepViewportRows: 3, stepContentRows: 10,
-    chatViewportRows: 8, chatContentRows: 3
+    conversationViewportRows: 8, conversationContentRows: 3
   });
-  assert.equal(reader.getState().scroll.chatScrollTop, 0);
+  assert.equal(reader.getState().scroll.conversationScrollTop, 0);
 });
 
 test("the conversation panel keeps its scroll position while the reader walks the Step", async () => {
@@ -1092,23 +1198,23 @@ test("the conversation panel keeps its scroll position while the reader walks th
   await opening;
   reader.onExtentsMeasured({
     stepViewportRows: 3, stepContentRows: 10,
-    chatViewportRows: 5, chatContentRows: 12
+    conversationViewportRows: 5, conversationContentRows: 12
   });
-  assert.equal(reader.getState().scroll.chatScrollTop, 7);
+  assert.equal(reader.getState().scroll.conversationScrollTop, 7);
 
   // Walking the Step repaints the panel with the new Step's exchanges; the
   // offset is module state, not something the repaint resets to the top.
   reader.navigateTo(1);
   descriptions.commit(1, "<p>second</p>");
   await flush();
-  assert.equal(reader.getState().scroll.chatScrollTop, 7);
+  assert.equal(reader.getState().scroll.conversationScrollTop, 7);
   // The adapter measures the new Step's shorter panel; the pin settles
   // against the reported extents.
   reader.onExtentsMeasured({
     stepViewportRows: 3, stepContentRows: 10,
-    chatViewportRows: 5, chatContentRows: 8
+    conversationViewportRows: 5, conversationContentRows: 8
   });
-  assert.equal(reader.getState().scroll.chatScrollTop, 3);
+  assert.equal(reader.getState().scroll.conversationScrollTop, 3);
 });
 
 test("a question begins a pending exchange before the agent is contacted", async () => {
@@ -1157,9 +1263,9 @@ test("streaming deltas accumulate into the pending exchange and the panel follow
   await opening;
   reader.onExtentsMeasured({
     stepViewportRows: 3, stepContentRows: 10,
-    chatViewportRows: 5, chatContentRows: 8
+    conversationViewportRows: 5, conversationContentRows: 8
   });
-  assert.equal(reader.getState().scroll.chatScrollTop, 3);
+  assert.equal(reader.getState().scroll.conversationScrollTop, 3);
   const asking = reader.ask("why?");
   await flush();
   // The deltas streamed so far are the live answer of the pending exchange.
@@ -1170,9 +1276,9 @@ test("streaming deltas accumulate into the pending exchange and the panel follow
   // extents; the pin follows the new bottom.
   reader.onExtentsMeasured({
     stepViewportRows: 3, stepContentRows: 10,
-    chatViewportRows: 5, chatContentRows: 15
+    conversationViewportRows: 5, conversationContentRows: 15
   });
-  assert.equal(reader.getState().scroll.chatScrollTop, 10);
+  assert.equal(reader.getState().scroll.conversationScrollTop, 10);
   release!();
   await asking;
   const done = reader.getState();
@@ -1180,13 +1286,13 @@ test("streaming deltas accumulate into the pending exchange and the panel follow
   assert.equal(done.conversation.exchanges[0].answer, "Hello");
 });
 
-test("tool uses are keyed by call and the latest activity wins", async () => {
+test("tool uses are stored keyed by call and the latest activity wins", async () => {
   const responder = new FakeResponder();
   responder.nextAnswer = async (_request, events) => {
     events?.onActivity?.("scanning files");
     events?.onToolUse?.({ toolCallId: "1", kind: "edit", title: "src/a.ts", forbidden: false });
-    // The same call reported again with a new status is one use, updated
-    // in place, not two.
+    // The same call reported again with a new status is one entry,
+    // updated in place.
     events?.onToolUse?.({ toolCallId: "1", kind: "edit", title: "src/a.ts", status: "completed", forbidden: false });
     events?.onToolUse?.({ toolCallId: "2", kind: "run", forbidden: true });
     return "done";
@@ -1199,14 +1305,14 @@ test("tool uses are keyed by call and the latest activity wins", async () => {
   await opening;
   await reader.ask("why?");
   const exchange = reader.getState().conversation.exchanges[0];
-  // Tool uses are keyed by call: a forbidden one keeps its kind alone, the
-  // painters prefix it from the structured use, not a prebuilt label.
+  // The store keeps the exchanges raw (ADR 0031): tool uses keyed by call,
+  // forbidden ones included, and the latest activity line wins — an allowed
+  // tool call is a plain line of model activity, a forbidden one leaves the
+  // activity untouched. The adapter paints the lines.
   assert.deepEqual(exchange.toolUses, [
     { toolCallId: "1", kind: "edit", title: "src/a.ts", status: "completed", forbidden: false },
     { toolCallId: "2", kind: "run", forbidden: true }
   ]);
-  // The latest activity wins: the allowed tool call became the live line,
-  // over the earlier plain activity message.
   assert.equal(exchange.activity, "src/a.ts (completed)");
 });
 
@@ -1222,8 +1328,9 @@ test("a completed exchange becomes the history of the Step's next question", asy
   await reader.ask("first?");
   responder.nextAnswer = async () => "second answer";
   await reader.ask("second?");
-  // Only completed, error-free, non-empty answers enter the history the
-  // responder sees — the pending and failed exchanges never do.
+  // Every exchange that completed feeds the follow-up question, empty
+  // answers included; a failed, interrupted or still-pending exchange
+  // never does (ADR 0031) — and the history is per Step.
   assert.deepEqual(responder.requests[0].history, []);
   assert.deepEqual(responder.requests[1].history, [
     { question: "first?", answer: "first answer" }
@@ -1260,6 +1367,7 @@ test("suggestion digits are ignored while an answer streams", async () => {
   await flush();
   assert.equal(responder.requests.length, 2);
   assert.equal(responder.requests[1].question, "Second question");
+  await flush();
 });
 
 test("without an agent the panel keeps its guidance and the Step's suggestions", async () => {
@@ -1279,7 +1387,8 @@ test("without an agent the panel keeps its guidance and the Step's suggestions",
   assert.equal(state.composer.prompt, "no ACP agent");
   assert.equal(state.composer.hint, "no agent on PATH");
   // The suggestion digits still submit without an agent: the exchange
-  // then fails with the guidance, the reader's defense in depth (ADR 0026).
+  // then fails with the store's guidance, the reader's defense in depth
+  // (ADR 0026, ADR 0031).
   reader.pressKey({ key: "1" });
   const after = reader.getState().conversation.exchanges;
   assert.equal(after.length, 1);
@@ -1344,7 +1453,7 @@ function paintHarness(
   const reader = createReader({
     tour: tourWith(steps),
     root: "/workspace",
-    speechEngine: speech,
+    speech: new NarrationController({ engine: speech }),
     descriptionRenderer: descriptions.render,
     resolveStepContext: () => ({ kind: "none" }),
     responder: options.responder,
@@ -1440,7 +1549,7 @@ test("every conversation exchange update notifies the adapter", async () => {
   const reader = createReader({
     tour: tourWith([{ title: "First", description: "Hello" }]),
     root: "/workspace",
-    speechEngine: new FakeSpeechEngine(),
+    speech: new NarrationController({ engine: new FakeSpeechEngine() }),
     descriptionRenderer: descriptions.render,
     resolveStepContext: () => ({ kind: "none" }),
     responder,
@@ -1469,7 +1578,7 @@ test("an async narration warning notifies the adapter", async () => {
   const reader = createReader({
     tour: tourWith([{ title: "First", description: "Hello" }]),
     root: "/workspace",
-    speechEngine: speech,
+    speech: new NarrationController({ engine: speech }),
     descriptionRenderer: descriptions.render,
     resolveStepContext: () => ({ kind: "none" }),
     onViewChange: () => paints.push(reader.getState())
@@ -1489,7 +1598,7 @@ test("a second close awaits the first one's disposal", async () => {
   const reader = createReader({
     tour: tourWith([{ title: "First", description: "Hello" }]),
     root: "/workspace",
-    speechEngine: new FakeSpeechEngine(),
+    speech: new NarrationController({ engine: new FakeSpeechEngine() }),
     descriptionRenderer: new FakeDescriptionRenderer().render,
     resolveStepContext: () => ({ kind: "none" }),
     responder

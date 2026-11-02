@@ -2,10 +2,11 @@ import * as assert from "node:assert/strict";
 import { test } from "node:test";
 import type { CodeTour, CodeTourStep } from "../../store";
 import type { StepChatRequest } from "../../agent/stepChatContract";
+import { NarrationController } from "../narration/NarrationController";
+import type { NarrationEngine } from "../narration/SystemSpeech";
 import type {
   ConversationResponder,
-  DescriptionRenderer,
-  SpeechEngine
+  DescriptionRenderer
 } from "./collaborators";
 import { createReader, type TourReader } from "./reader";
 
@@ -13,10 +14,12 @@ import { createReader, type TourReader } from "./reader";
  * The Step Narration policy of the reading module (spec #93, ticket #96),
  * driven through the reading interface and asserted on the view model and
  * the fake engine only: no CODETOUR_SPEECH_COMMAND subprocess, no PTY, no
- * audio. The engine is scripted — the test decides when each utterance
- * settles — so interrupt-at-keypress, the versioned render-commit policy and
- * the warning lifecycle are all observable without timing tricks, the same
- * determinism the NarrationController tests achieve with a fake engine.
+ * audio. The engine seam is the real NarrationController, composed over a
+ * scripted engine exactly as the entry point composes it over the system
+ * speech — the test decides when each utterance settles, so
+ * interrupt-at-keypress, the versioned render-commit policy and the warning
+ * lifecycle are all observable without timing tricks, the same determinism
+ * the NarrationController tests achieve with a fake engine.
  */
 
 const flush = (): Promise<void> => new Promise(resolve => setImmediate(resolve));
@@ -28,9 +31,9 @@ function tourWith(steps: CodeTourStep[]): CodeTour {
 /**
  * A scripted speech engine: the test settles each utterance itself, so a
  * failure can land while its generation is still current — or after the
- * policy has moved on, which must never surface as a warning.
+ * controller has moved on, which must never surface as a warning.
  */
-class ScriptedSpeechEngine implements SpeechEngine {
+class ScriptedSpeechEngine implements NarrationEngine {
   readonly spoken: string[] = [];
   cancellations = 0;
   disposed = false;
@@ -118,7 +121,8 @@ function harness(steps: CodeTourStep[], responder?: ConversationResponder): Harn
   const reader = createReader({
     tour: tourWith(steps),
     root: "/workspace",
-    speechEngine: speech,
+    // The engine seam, composed as the entry point composes it (spec #93).
+    speech: new NarrationController({ engine: speech }),
     descriptionRenderer: descriptions.render,
     responder,
     // No Git command and no file read ever runs in this suite.
@@ -422,7 +426,7 @@ test("enabling the voice during a navigation never speaks a Step whose render fa
   assert.equal(speech.disposed, true);
 });
 
-test("scrolling and opening the chat never restart the narration", async () => {
+test("scrolling and opening the conversation never restart the narration", async () => {
   const { reader, descriptions, speech } = harness(
     [{ title: "Only", description: "Only spoken" }],
     new StubResponder()
@@ -433,7 +437,7 @@ test("scrolling and opening the chat never restart the narration", async () => {
   reader.pressKey({ key: "v" });
   assert.deepEqual(speech.spoken, ["Only spoken"]);
 
-  // Scrolling repaints the Step box and the chat repaints its panel; neither
+  // Scrolling repaints the Step box and the conversation panel repaints itself; neither
   // may hand a new utterance to the engine or disturb the voice state.
   reader.onExtentsMeasured({ stepViewportRows: 3, stepContentRows: 30 });
   reader.pressKey({ key: "j" });

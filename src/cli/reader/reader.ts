@@ -1,20 +1,20 @@
-import { createSystemSpeech } from "../narration/SystemSpeech";
 import { resolveReadonlyStepContext, type ReadonlyStepContext } from "../stepContext";
 import { renderTerminalDescription, TerminalStepRenderError } from "../terminalContent";
 import { railWindow, terminalLayout, type TerminalLayout } from "../terminalLayout";
 import type { CodeTour, CodeTourStep } from "../../store";
+import type { NarrationController } from "../narration/NarrationController";
 import type {
   CommitFileReader,
   ConversationResponder,
   DescriptionRenderer,
-  SpeechEngine,
   StepContextResolver
 } from "./collaborators";
 import { TourStepConversation } from "./conversation";
-import { NarrationPolicy } from "./narrationPolicy";
+import { NarrationPolicy, type NarrationStep } from "./narrationPolicy";
 import { translateKey, type ReaderKeyEvent } from "./readerInput";
 import { exchangesLabel, statusLine } from "./statusLine";
 import type {
+  ConversationState,
   ReaderComposer,
   ReaderExtents,
   ReaderFatal,
@@ -39,6 +39,12 @@ export interface TourReader {
   navigateTo(step: number): ReaderViewModel;
   /** Handle one key input: ask-mode capture included. */
   pressKey(event: ReaderKeyEvent): ReaderViewModel;
+  /**
+   * Whether the reader consumes `event`: the adapter asks before its
+   * preventDefault and forwards only consumed keys to {@link pressKey}.
+   * Both run the same reader-side translation, once (spec #93).
+   */
+  wouldConsume(event: ReaderKeyEvent): boolean;
   /** A geometry change: re-render and restore the clamped scroll offset. */
   resize(columns: number, rows: number): ReaderViewModel;
   /** The unmodified-`v` voice toggle (ADR 0029). */
@@ -58,8 +64,13 @@ export interface ReaderOptions {
   columns?: number;
   /** Initial terminal height in rows. */
   rows?: number;
-  /** The speech engine of the Step Narration policy; the platform's by default. */
-  speechEngine?: SpeechEngine;
+  /**
+   * The narration controller — the speech engine seam (ADR 0029), composed
+   * over the system speech by the entry point and handed to the reader. The
+   * reader keeps only the policy; the controller owns the engine's enabled
+   * state, its race protection and its disposal.
+   */
+  speech: NarrationController;
   /** The agent answering Tour Step Conversation questions; none by default. */
   responder?: ConversationResponder;
   /** The description renderer; the pure terminal content module by default. */
@@ -110,9 +121,9 @@ class TerminalReader implements TourReader {
   /** The content of the last committed render; a failed or superseded render changes nothing. */
   private painted = {
     tourTitle: "",
-    stepCount: "",
+    stepCount: { index: 0, count: 0 },
     emptyMessage: undefined as string | undefined,
-    anchorText: "",
+    anchor: { target: "", diff: false },
     stepTitle: "",
     descriptionHtml: "",
     source: undefined as ReaderSourceSection | undefined
@@ -127,18 +138,12 @@ class TerminalReader implements TourReader {
   /** The offset a resize render must restore, stamped with its render request. */
   private pendingScrollRestore: { request: number; scrollTop: number } | undefined;
 
-  private chatScrollTop = 0;
-  private chatViewportRows = 0;
-  private chatContentRows = 0;
+  private conversationScrollTop = 0;
+  private conversationViewportRows = 0;
+  private conversationContentRows = 0;
   /** The single disposal promise, returned to every caller of close(). */
   private closing: Promise<void> | undefined;
   private readonly onViewChange: (() => void) | undefined;
-  /**
-   * The chat pinning policy (spec #93): the panel pins to its bottom after
-   * every chat paint and streaming delta, exactly as the reader always has —
-   * the offset is module state, clamped against the reported extents.
-   */
-  private readonly chatPinned = true;
 
   constructor(options: ReaderOptions) {
     this.tour = options.tour;
@@ -151,7 +156,7 @@ class TerminalReader implements TourReader {
     this.resolveStepContext = resolveStepContext;
     this.onViewChange = options.onViewChange;
     this.narration = new NarrationPolicy(
-      options.speechEngine ?? createSystemSpeech(),
+      options.speech,
       () => this.notify()
     );
     this.conversation = new TourStepConversation({
@@ -174,6 +179,12 @@ class TerminalReader implements TourReader {
     const exchanges = this.conversation.exchangesFor(this.current);
     const responding = this.conversation.isResponding(this.current);
     const hasResponder = this.conversation.hasResponder;
+    // The conversation state every status and composer decision shares.
+    const conversation: ConversationState = {
+      asking: this.asking,
+      responding,
+      hasResponder
+    };
     const narrationState = this.narration.state;
     return {
       currentStep: this.current,
@@ -183,7 +194,7 @@ class TerminalReader implements TourReader {
       tourTitle: this.painted.tourTitle,
       stepCount: this.painted.stepCount,
       emptyMessage: this.painted.emptyMessage,
-      anchorText: this.painted.anchorText,
+      anchor: this.painted.anchor,
       stepTitle: this.painted.stepTitle,
       descriptionHtml: this.painted.descriptionHtml,
       rail: this.railWindow(),
@@ -202,15 +213,13 @@ class TerminalReader implements TourReader {
         exchanges,
         responding
       },
-      composer: this.composer(suggestions, responding, hasResponder),
+      composer: this.composer(conversation, suggestions),
       status: statusLine({
-        asking: this.asking,
-        responding,
-        hasResponder,
+        conversation,
         compactHints: this.layout.compactHints,
         narrationEnabled: narrationState.enabled,
         speechWarning: narrationState.warning,
-        providerName: hasResponder ? this.providerName() : undefined,
+        providerName: this.conversation.providerName,
         exchangeCount: exchanges.length
       }),
       narration: narrationState,
@@ -218,10 +227,9 @@ class TerminalReader implements TourReader {
         stepScrollTop: this.stepScrollTop,
         stepViewportRows: this.stepViewportRows,
         stepContentRows: this.stepContentRows,
-        chatScrollTop: this.chatScrollTop,
-        chatViewportRows: this.chatViewportRows,
-        chatContentRows: this.chatContentRows,
-        chatPinned: this.chatPinned
+        conversationScrollTop: this.conversationScrollTop,
+        conversationViewportRows: this.conversationViewportRows,
+        conversationContentRows: this.conversationContentRows
       },
       layout: this.layout,
       rows: this.terminalRows,
@@ -235,7 +243,7 @@ class TerminalReader implements TourReader {
       // its "step 0/0" counter and the no-steps message, and every remaining
       // key keeps working.
       this.painted.tourTitle = this.tour.title;
-      this.painted.stepCount = "step 0/0";
+      this.painted.stepCount = { index: 0, count: 0 };
       this.painted.emptyMessage = "Tour has no steps. Press q to quit.";
       this.notify();
       return;
@@ -256,20 +264,36 @@ class TerminalReader implements TourReader {
   }
 
   pressKey(event: ReaderKeyEvent): ReaderViewModel {
-    const action = translateKey({
-      asking: this.asking,
-      responding: this.conversation.isResponding(this.current),
-      hasResponder: this.conversation.hasResponder,
-      suggestions: this.tour.steps[this.current]?.questions ?? [],
-      currentStep: this.current,
-      stepCount: this.tour.steps.length,
-      pageRows: Math.max(1, this.stepViewportRows)
-    }, event);
+    const action = this.dispatch(event);
     this.applyAction(action);
     // A navigation paints nothing at the keypress: the screen keeps the
     // previous Step until the navigation's render commits (ADR 0025).
     if (action.type !== "navigate") this.notify();
     return this.getState();
+  }
+
+  wouldConsume(event: ReaderKeyEvent): boolean {
+    return this.dispatch(event).type !== "unhandled";
+  }
+
+  /**
+   * The session's single key translation (spec #93): pressKey and the
+   * adapter's consume query both run through it, so the clump of facts a
+   * key depends on is assembled exactly once, reader-side — the adapter
+   * never rebuilds it from the view model.
+   */
+  private dispatch(event: ReaderKeyEvent): ReturnType<typeof translateKey> {
+    return translateKey({
+      conversation: {
+        asking: this.asking,
+        responding: this.conversation.isResponding(this.current),
+        hasResponder: this.conversation.hasResponder
+      },
+      suggestions: this.tour.steps[this.current]?.questions ?? [],
+      currentStep: this.current,
+      stepCount: this.tour.steps.length,
+      pageRows: Math.max(1, this.stepViewportRows)
+    }, event);
   }
 
   resize(columns: number, rows: number): ReaderViewModel {
@@ -297,8 +321,7 @@ class TerminalReader implements TourReader {
     // The policy owns the voice decision; the reader supplies the Step facts
     // it keeps: the displayed Step, the navigation target and the
     // displayed Step's description (ADR 0029).
-    this.narration.toggleVoice(this.displayedStep, this.current,
-      this.tour.steps[this.displayedStep]?.description ?? "");
+    this.narration.toggleVoice(this.narrationStep());
     return this.getState();
   }
 
@@ -307,8 +330,9 @@ class TerminalReader implements TourReader {
     const text = question.trim();
     if (!text) return;
     await this.conversation.ask(this.current, text);
-    // The store notifies every streaming update; the settled view repaints
-    // here, the same final paint the extension's chat does.
+    // The store reports every streaming update through its own callback;
+    // the settled exchange (completed, failed or interrupted) is painted
+    // here, exactly as the pre-#104 reader's settle path did.
     this.notify();
   }
 
@@ -316,22 +340,16 @@ class TerminalReader implements TourReader {
     this.stepViewportRows = extents.stepViewportRows;
     this.stepContentRows = extents.stepContentRows;
     this.clampScroll();
-    if (extents.chatViewportRows !== undefined) {
-      this.chatViewportRows = extents.chatViewportRows;
+    if (extents.conversationViewportRows !== undefined) {
+      this.conversationViewportRows = extents.conversationViewportRows;
     }
-    if (extents.chatContentRows !== undefined) {
-      this.chatContentRows = extents.chatContentRows;
+    if (extents.conversationContentRows !== undefined) {
+      this.conversationContentRows = extents.conversationContentRows;
     }
-    // The freshly painted panel settles against its new extents: a pinned
-    // panel sits at its bottom, any other offset clamps inside them.
-    if (this.chatPinned) {
-      this.chatScrollTop = Math.max(0, this.chatContentRows - this.chatViewportRows);
-    } else {
-      this.chatScrollTop = Math.min(
-        Math.max(0, this.chatScrollTop),
-        Math.max(0, this.chatContentRows - this.chatViewportRows)
-      );
-    }
+    // The pinning policy (spec #93) is unconditional, exactly as the reader
+    // always has: the freshly painted panel settles at its bottom against
+    // its new extents, after every conversation paint and streaming delta.
+    this.conversationScrollTop = Math.max(0, this.conversationContentRows - this.conversationViewportRows);
   }
 
   close(): Promise<void> {
@@ -350,14 +368,12 @@ class TerminalReader implements TourReader {
     if (this.finished) return;
     switch (action.type) {
       case "quit":
-        // While an answer streams, quitting would lose it: the same key
-        // first interrupts the Step's answer in flight, and a second press
-        // quits once nothing is in flight.
-        if (this.conversation.isResponding(this.current)) {
-          this.conversation.stop(this.current);
-        } else {
-          void this.close();
-        }
+        void this.close();
+        break;
+      case "stop-answer":
+        // `q`/Escape during a streaming answer interrupt it; only a second
+        // press quits the reader (ADR 0031).
+        this.conversation.stop(this.current);
         break;
       case "navigate":
         this.navigateTo(action.step);
@@ -420,10 +436,11 @@ class TerminalReader implements TourReader {
     const step = this.tour.steps[this.current];
     if (!step) {
       // The defensive empty path: a Tour without a Step for the current
-      // index shows the bare message and changes nothing else. It is fully
-      // synchronous — nothing is ever in flight.
+      // index shows the frozen no-steps message — the exact text of the
+      // open path, the reader's visual contract (ADR 0025) — and changes
+      // nothing else. It is fully synchronous — nothing is ever in flight.
       const request = ++this.version;
-      this.painted.emptyMessage = "This Tour has no steps.";
+      this.painted.emptyMessage = "Tour has no steps. Press q to quit.";
       // A resize render still restores its scroll offset on this path.
       this.settleScroll(request, false);
       return Promise.resolve();
@@ -452,9 +469,12 @@ class TerminalReader implements TourReader {
       const target = anchor ? anchor + (step.line ? ":" + step.line : "") : "";
       this.painted = {
         tourTitle: this.tour.title,
-        stepCount: "step " + (this.current + 1) + "/" + this.tour.steps.length,
+        stepCount: { index: this.current, count: this.tour.steps.length },
         emptyMessage: undefined,
-        anchorText: target + (context.kind === "diff" ? " · diff" : ""),
+        // The anchor travels structured: the target the adapter paints and
+        // the diff flag whose " · diff" suffix the adapter derives when
+        // painting — the view model never carries painted text (spec #93).
+        anchor: { target, diff: context.kind === "diff" },
         stepTitle: step.title || "Step " + (this.current + 1),
         descriptionHtml,
         source: this.sourceSection(context)
@@ -467,8 +487,7 @@ class TerminalReader implements TourReader {
       // path itself never starts the voice: only a pending navigation want
       // settles here, so a re-render never restarts narration.
       this.displayedStep = this.current;
-      this.narration.onRenderCommitted(this.displayedStep, this.current,
-        this.tour.steps[this.displayedStep]?.description ?? "");
+      this.narration.onRenderCommitted(this.narrationStep());
     } catch (error) {
       await this.fatal(error);
     }
@@ -498,7 +517,10 @@ class TerminalReader implements TourReader {
    */
   private async fatal(error: unknown): Promise<void> {
     this.fatalValue = {
-      message: error instanceof Error ? error.message : String(error)
+      message: error instanceof Error ? error.message : String(error),
+      // The typed error's identity crosses the DOM-free boundary as its
+      // name; the message stays verbatim for display (spec #93).
+      name: error instanceof Error ? error.name : "Error"
     };
     await this.close();
   }
@@ -520,31 +542,39 @@ class TerminalReader implements TourReader {
     };
   }
 
-  private providerName(): string | undefined {
-    return this.conversation.providerName;
+  /**
+   * The Step facts the narration policy decides on (ADR 0029): the displayed
+   * Step, the navigation target and the displayed Step's description.
+   */
+  private narrationStep(): NarrationStep {
+    return {
+      displayedStep: this.displayedStep,
+      currentStep: this.current,
+      description: this.tour.steps[this.displayedStep]?.description ?? ""
+    };
   }
 
-  private composer(
-    suggestions: string[],
-    responding: boolean,
-    hasResponder: boolean
-  ): ReaderComposer {
+  private composer(conversation: ConversationState, suggestions: string[]): ReaderComposer {
     // The prompt and hint orders mirror the composer the reader paints today.
-    const mode = this.asking
+    const { asking, responding, hasResponder } = conversation;
+    const mode = asking
       ? "asking"
       : !hasResponder
         ? "unavailable"
         : responding
           ? "responding"
           : "idle";
-    const prompt = this.asking
-      ? this.draft + "▌"
+    // The asking mode paints the draft with its caret; the caret and its
+    // truncation are the adapter's, so the view model carries the notices
+    // of every other mode and no painted prompt text (spec #93).
+    const prompt = asking
+      ? ""
       : !hasResponder
         ? "no ACP agent"
         : responding
           ? "answering…"
           : "ask about this step…";
-    const hint = this.asking
+    const hint = asking
       ? "question for this step"
       : responding
         ? "answer streaming · q stop"

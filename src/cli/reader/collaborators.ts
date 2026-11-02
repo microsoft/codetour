@@ -10,29 +10,22 @@ import type { ReadonlyStepContext } from "../stepContext";
  */
 
 /**
- * The speech engine of the Step Narration policy (ADR 0029): the existing
- * system speech seam, unchanged. The engine synthesizes one utterance at a
- * time; `cancel` never throws and settles an interrupted utterance.
- */
-export interface SpeechEngine {
-  /** Speak one utterance; settles when it is over (or interrupted). */
-  speak(text: string): Promise<void>;
-  /** Stop the current utterance immediately. */
-  cancel(): void;
-  /** Release the engine's resources; the session is over. */
-  dispose(): void;
-}
-
-/**
- * The agent answering Tour Step Conversation questions (ADR 0026): the ACP
- * session layer in production, adapted from the Step chat support module by
- * the composition root. No agent process is started until the first question.
+ * The agent answering Tour Step Conversation questions (ADR 0026, ADR 0031):
+ * the ACP failover session layer in production — `openTerminalChat`'s
+ * responder over every installed candidate (ADR 0014) — adapted from the
+ * Step chat support module by the composition root. The reader only sees
+ * this port; the conversation lifecycle lives in the shared
+ * `StepConversations` store above the seam. No agent process is started
+ * until the first question.
  */
 export interface ConversationResponder {
   /** Lowercase provider name for the status line and the agent role line. */
   readonly providerName: string | undefined;
   answer(request: StepChatRequest, events?: StepChatAnswerEvents): Promise<string> | string;
-  /** Interrupts the in-flight answer; its late completion is ignored. */
+  /**
+   * Interrupts the in-flight answer, if any; the store's stop calls it and
+   * the cancelled answer's late completion is ignored (ADR 0031).
+   */
   cancel?(): void;
   /** Release the responder's agent resources; the session is over. */
   dispose?(): Promise<void> | void;

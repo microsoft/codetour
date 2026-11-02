@@ -1,40 +1,62 @@
-import { prepareNarrationText } from "../narration/prepareText";
-import type { SpeechEngine } from "./collaborators";
+import type { NarrationController } from "../narration/NarrationController";
 import type { ReaderNarrationState } from "./viewModel";
 
 /**
- * The home of the Step Narration policy (ADR 0029): the five crossing
- * closure variables of the old reader — last narrated Step, displayed Step,
- * pending narration, speech warning and the version/commit bookkeeping they
- * interact with — become one cohesive unit the reading state machine reports
- * to. The Step facts stay the reader's; the policy owns what the voice does
- * with them. The engine is the injected speech seam the foundation ticket
- * defined: nothing here starts a process or touches a terminal.
+ * The Step facts the Step Narration policy decides on (ADR 0029): the Step a
+ * committed render actually displays, the navigation target at the keypress,
+ * and the displayed Step's description. They travel as one unit so the
+ * reader's call sites and the policy's entry points share one shape.
+ */
+export interface NarrationStep {
+  /** The Step a committed render actually displays. */
+  displayedStep: number;
+  /** The navigation target; a render may still be in flight for it. */
+  currentStep: number;
+  /** The displayed Step's description, the only text the voice ever speaks. */
+  description: string;
+}
+
+/**
+ * The home of the Step Narration policy (ADR 0029): the reading decisions
+ * around the voice — the last narrated Step, the pending narration want of a
+ * navigation, and the speech warning display — become one cohesive unit the
+ * reading state machine reports to. The engine seam is the NarrationController
+ * the entry point composes over the system speech: the enabled state, the
+ * cut and replace of utterances and the generation race protection live in
+ * the controller, once. The policy never re-implements them; nothing here
+ * starts a process or touches a terminal.
  */
 export class NarrationPolicy {
-  private enabled = false;
   private speakingValue = false;
   private warningValue: string | undefined;
   private lastNarratedStepValue = -1;
   private pendingNarrationValue = false;
-  /**
-   * Race protection over the engine: every handed utterance is stamped, and
-   * any outcome of an older attempt — completion or failure — is ignored, so
-   * rapid navigation with a slow engine can never overlap or resume stale
-   * speech.
-   */
-  private generation = 0;
-  private disposed = false;
 
   constructor(
-    private readonly engine: SpeechEngine,
+    private readonly controller: NarrationController,
     /** Notified when state changes asynchronously — an engine failure surfacing as a warning. */
     private readonly onChange?: () => void
-  ) {}
+  ) {
+    // The display half of the policy: the controller hands an utterance to
+    // the engine or fails one, and what the reader shows of it is decided
+    // here (ADR 0029).
+    controller.attach({
+      onSpeaking: () => {
+        this.speakingValue = true;
+        // A narration was handed to the engine: an earlier warning is obsolete.
+        this.warningValue = undefined;
+      },
+      onWarning: message => {
+        this.speakingValue = false;
+        this.warningValue = message;
+        this.onChange?.();
+      }
+    });
+  }
 
   get state(): ReaderNarrationState {
     return {
-      enabled: this.enabled,
+      enabled: this.controller.isEnabled(),
       speaking: this.speakingValue,
       warning: this.warningValue,
       lastNarratedStep: this.lastNarratedStepValue,
@@ -50,7 +72,10 @@ export class NarrationPolicy {
    */
   onNavigate(): void {
     this.pendingNarrationValue = true;
-    this.interrupt();
+    // The display shows no speech from the moment the cut happens; the
+    // controller owns the cut itself. An earlier warning survives it.
+    this.speakingValue = false;
+    this.controller.interrupt();
   }
 
   /**
@@ -59,16 +84,12 @@ export class NarrationPolicy {
    * here and a failed render never commits, so neither narrates anything;
    * the pending want survives until a later render displays the Step.
    */
-  onRenderCommitted(
-    displayedStep: number,
-    currentStep: number,
-    description: string
-  ): void {
-    if (this.disposed || !this.pendingNarrationValue || displayedStep !== currentStep) {
+  onRenderCommitted(step: NarrationStep): void {
+    if (!this.pendingNarrationValue || step.displayedStep !== step.currentStep) {
       return;
     }
     this.pendingNarrationValue = false;
-    this.narrateDisplayedStep(displayedStep, description, false);
+    this.narrate(step.displayedStep, step.description, false);
   }
 
   /**
@@ -78,30 +99,17 @@ export class NarrationPolicy {
    * a navigation is still rendering, in which case the pending deferral
    * speaks it only if that render commits.
    */
-  toggleVoice(displayedStep: number, currentStep: number, description: string): void {
-    this.setEnabled(!this.enabled);
-    if (this.enabled && displayedStep === currentStep) {
-      this.narrateDisplayedStep(displayedStep, description, true);
+  toggleVoice(step: NarrationStep): void {
+    const enabled = !this.controller.isEnabled();
+    this.controller.setEnabled(enabled);
+    if (!enabled) {
+      // The engine cut the speech; the display stops showing it.
+      this.speakingValue = false;
+      return;
     }
-  }
-
-  /** Turning the voice off cuts the current speech immediately. */
-  private setEnabled(enabled: boolean): void {
-    if (this.enabled === enabled) return;
-    this.enabled = enabled;
-    if (!enabled) this.interrupt();
-  }
-
-  /**
-   * Stop the current speech without starting a new one. The reader
-   * interrupts at the navigation keypress, so the previous Step's voice is
-   * cut while the next Step is still rendering. An earlier warning survives:
-   * only a handed utterance makes it obsolete.
-   */
-  private interrupt(): void {
-    this.generation++;
-    this.speakingValue = false;
-    this.engine.cancel();
+    if (step.displayedStep === step.currentStep) {
+      this.narrate(step.displayedStep, step.description, true);
+    }
   }
 
   /**
@@ -109,44 +117,15 @@ export class NarrationPolicy {
    * diffs, anchors, questions or ACP exchanges. A redisplayed Step never
    * speaks twice unless the toggle explicitly re-reads it.
    */
-  private narrateDisplayedStep(
-    displayedStep: number,
-    description: string,
-    reread: boolean
-  ): void {
-    if (!this.enabled || this.disposed || displayedStep < 0) return;
+  private narrate(displayedStep: number, description: string, reread: boolean): void {
+    if (!this.controller.isEnabled() || displayedStep < 0) return;
     if (!reread && displayedStep === this.lastNarratedStepValue) return;
     this.lastNarratedStepValue = displayedStep;
-    this.speak(description);
-  }
-
-  /** Hand one prepared description to the engine (ADR 0029). */
-  private speak(description: string): void {
-    this.generation++;
-    const generation = this.generation;
-    this.engine.cancel();
-    // An empty description produces no audio: the voice never invents a
-    // summary.
-    const text = prepareNarrationText(description);
-    if (!text) return;
-    // A narration was handed to the engine: an earlier warning is obsolete.
-    this.speakingValue = true;
-    this.warningValue = undefined;
-    void this.engine.speak(text).catch(error => {
-      // Only the current generation's failures are the reader's problem.
-      if (this.disposed || !this.enabled || generation !== this.generation) return;
-      this.speakingValue = false;
-      this.warningValue = "Narration failed: " +
-        (error instanceof Error ? error.message : String(error));
-      this.onChange?.();
-    });
+    this.controller.onStepChanged(description);
   }
 
   /** Stop speech and release the engine's subprocess; the session is over. */
   dispose(): void {
-    if (this.disposed) return;
-    this.disposed = true;
-    this.interrupt();
-    this.engine.dispose();
+    void this.controller.dispose();
   }
 }

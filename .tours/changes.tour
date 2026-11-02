@@ -82,7 +82,7 @@
     },
     {
       "title": "Controlling narration across navigation",
-      "description": "The narration controller owns the enabled state and cancels/replaces speech as the active Step changes. The reader commits narration only for a successfully displayed Step, preventing a delayed callback from speaking stale navigation state; coverage is in `src/cli/narration/NarrationController.test.ts` and `src/cli/reader/readerNarration.test.ts`.",
+      "description": "The narration controller is the reader's speech engine seam: it owns the enabled state, cuts and replaces speech, and keeps the generation race protection so a slow engine can never resume stale speech. The reading module keeps only the policy — narration commits only for the Step a render actually displays, and a navigation's want defers until its render lands; coverage is in `src/cli/narration/NarrationController.test.ts` and `src/cli/reader/readerNarration.test.ts`.",
       "file": "src/cli/narration/NarrationController.ts",
       "pattern": "onStepChanged\\(description: string\\): void",
       "display": "diff"

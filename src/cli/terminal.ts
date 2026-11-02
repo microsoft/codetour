@@ -1,12 +1,13 @@
 import type { CodeTour } from "../store";
 import { escapeHtml, renderMarkdownToHtml } from "../player/markdown";
+import { NarrationController } from "./narration/NarrationController";
 import { createSystemSpeech } from "./narration/SystemSpeech";
 import { palette } from "./palette";
 import { commitFileReader, openTerminalChat } from "./stepChatSupport";
 import { fit, tail } from "./terminalLayout";
 import { createReader, type TourReader } from "./reader/reader";
 import type { ConversationResponder } from "./reader/collaborators";
-import { translateKey } from "./reader/readerInput";
+import type { ReaderKeyEvent } from "./reader/readerInput";
 import type { ReaderViewModel } from "./reader/viewModel";
 
 /**
@@ -15,9 +16,9 @@ import type { ReaderViewModel } from "./reader/viewModel";
  * scroll — lives in the reading module (`src/cli/reader`); this file keeps
  * only what paints: the CSS and palette (ADR 0027), the chrome DOM, the
  * alternate-screen request and restore (ADR 0025), the keyboard capture
- * translated into reader key inputs, the debounced resize listener with
- * measured extents reported back, the Step-box and conversation-panel
- * scrollers, and the line wrapping and fit/tail truncation of the pure
+ * mapped to reader key inputs behind the reader's consume query, the
+ * debounced resize listener with measured extents reported back, the
+ * Step-box and conversation-panel scrollers, and the line wrapping and fit/tail truncation of the pure
  * layout module (ADR 0028). The adapter owns no reading behavior.
  */
 
@@ -51,10 +52,10 @@ function wrapLine(line: string, width: number, indent: string): string[] {
 /**
  * The renderer runs in a dedicated terminal process. The entry point
  * composes the session: it validates the TTY, attaches TermDOM, wires the
- * injected collaborators (the conversation responder from the Step Chat
- * support seams, the speech engine from the narration modules) into the
- * reader, and hands the reader to this adapter. Only TermDOM owns the
- * terminal DOM and input; the reading state machine lives in the module.
+ * injected collaborators — the conversation responder from the Step Chat
+ * support seams, the narration controller composed over the system speech —
+ * into the reader, and hands the reader to this adapter. Only TermDOM owns
+ * the terminal DOM and input; the reading state machine lives in the module.
  */
 export async function runTerminalTour(tour: CodeTour, root: string): Promise<void> {
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
@@ -86,12 +87,17 @@ export async function runTerminalTour(tour: CodeTour, root: string): Promise<voi
 
   // The composition root (spec #93): the ACP session layer stays behind the
   // Step Chat support seams and is adapted to the reader's responder port;
-  // no agent process is started until the first question.
+  // no agent process is started until the first question. Since #104 the
+  // session is the ordered failover of ADR 0014 over every installed
+  // candidate, and the reading module runs the conversation through the
+  // shared StepConversations store above this seam (ADR 0031).
   const chat = openTerminalChat(root);
   const responder: ConversationResponder | undefined = chat.responder
     ? {
       providerName: chat.provider?.name,
       answer: (request, events) => chat.responder!.answer(request, events),
+      // A stop interrupts the in-flight answer (ADR 0031): the failover
+      // responder cancels its active candidate.
       cancel: () => chat.responder!.cancel?.(),
       dispose: () => chat.dispose()
     }
@@ -103,13 +109,16 @@ export async function runTerminalTour(tour: CodeTour, root: string): Promise<voi
     root,
     columns: Math.floor(window.innerWidth || 80),
     rows: Math.floor(window.innerHeight || 24),
-    speechEngine: createSystemSpeech(),
+    // The speech stack is untouched (spec #93): the entry point composes the
+    // narration controller over the system speech and hands the controller —
+    // the engine seam — to the reader, which keeps only the policy.
+    speech: new NarrationController({ engine: createSystemSpeech() }),
     responder,
     readCommitFile: commitFileReader(root),
     // The adapter paints exactly when the reader says its view model moved.
     onViewChange: () => surface?.paint()
   });
-  surface = new TermDomSurface({ term, document, reader, tour });
+  surface = new TermDomSurface({ term, document, reader });
   surface.listen(window, document);
   await reader.open();
   const fatal = reader.getState().fatal;
@@ -126,7 +135,6 @@ interface TermDomSurfaceOptions {
   term: TermDomHost;
   document: Document;
   reader: TourReader;
-  tour: CodeTour;
 }
 
 /**
@@ -137,16 +145,15 @@ class TermDomSurface {
   private readonly term: TermDomHost;
   private readonly document: Document;
   private readonly reader: TourReader;
-  private readonly tour: CodeTour;
 
   private readonly tourTitle: HTMLElement;
   private readonly stepCount: HTMLElement;
   private readonly rail: HTMLElement;
   private readonly article: HTMLElement;
   private readonly aside: HTMLElement;
-  private readonly chatTitle: HTMLElement;
-  private readonly chatMeta: HTMLElement;
-  private readonly chatBody: HTMLElement;
+  private readonly conversationTitle: HTMLElement;
+  private readonly conversationMeta: HTMLElement;
+  private readonly conversationBody: HTMLElement;
   private readonly composerText: HTMLElement;
   private readonly composerHint: HTMLElement;
   private readonly mode: HTMLElement;
@@ -160,7 +167,6 @@ class TermDomSurface {
     this.term = options.term;
     this.document = options.document;
     this.reader = options.reader;
-    this.tour = options.tour;
 
     const { document } = this;
     const layout = this.reader.getState().layout;
@@ -186,15 +192,15 @@ class TermDomSurface {
       // The fullscreen root is pinned to the viewport, so the document scroller
       // never repaints: the Step scrolls inside its own box instead (ADR 0025).
       `.content { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; padding: 1ch 2ch 2ch; }`,
-      // The Step chat lives in its own right-hand panel, like an editor sidebar:
+      // The Tour Step Conversation lives in its own right-hand panel, like an editor sidebar:
       // it keeps its scroll position while the reader walks the Step (ADR 0026).
-      `.chat { flex: none; box-sizing: border-box; border-left: 1px solid ${palette.border}; background-color: ${palette.panel}; display: flex; flex-direction: column; min-height: 0; }`,
-      `.chat-head { display: flex; justify-content: space-between; padding: 0 1ch; margin-top: 1ch; }`,
-      `.chat-title { color: ${palette.primary}; font-weight: bold; }`,
-      `.chat-meta { color: ${palette.muted}; }`,
-      `.chat-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 1ch; }`,
-      `.chat-suggestions { list-style: none; margin: 1ch 0; padding: 0; }`,
-      `.chat-suggestion { white-space: pre-wrap; }`,
+      `.conversation { flex: none; box-sizing: border-box; border-left: 1px solid ${palette.border}; background-color: ${palette.panel}; display: flex; flex-direction: column; min-height: 0; }`,
+      `.conversation-head { display: flex; justify-content: space-between; padding: 0 1ch; margin-top: 1ch; }`,
+      `.conversation-title { color: ${palette.primary}; font-weight: bold; }`,
+      `.conversation-meta { color: ${palette.muted}; }`,
+      `.conversation-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 1ch; }`,
+      `.conversation-suggestions { list-style: none; margin: 1ch 0; padding: 0; }`,
+      `.conversation-suggestion { white-space: pre-wrap; }`,
       `.sugg-key { color: ${palette.primary}; font-weight: bold; }`,
       `.role { font-weight: bold; margin-top: 1ch; }`,
       `.role-user { color: ${palette.info}; }`,
@@ -263,17 +269,17 @@ class TermDomSurface {
     const article = document.createElement("article");
     article.className = "content";
     const aside = document.createElement("aside");
-    aside.className = "chat";
-    aside.style.width = layout.chatWidth + "ch";
-    const chatTitle = document.createElement("div");
-    chatTitle.className = "chat-title";
-    const chatMeta = document.createElement("div");
-    chatMeta.className = "chat-meta";
-    const chatHead = document.createElement("div");
-    chatHead.className = "chat-head";
-    chatHead.append(chatTitle, chatMeta);
-    const chatBody = document.createElement("div");
-    chatBody.className = "chat-body";
+    aside.className = "conversation";
+    aside.style.width = layout.conversationWidth + "ch";
+    const conversationTitle = document.createElement("div");
+    conversationTitle.className = "conversation-title";
+    const conversationMeta = document.createElement("div");
+    conversationMeta.className = "conversation-meta";
+    const conversationHead = document.createElement("div");
+    conversationHead.className = "conversation-head";
+    conversationHead.append(conversationTitle, conversationMeta);
+    const conversationBody = document.createElement("div");
+    conversationBody.className = "conversation-body";
     const composer = document.createElement("div");
     composer.className = "composer";
     const composerPrompt = document.createElement("span");
@@ -286,14 +292,14 @@ class TermDomSurface {
     const composerHint = document.createElement("div");
     composerHint.className = "composer-hint";
     composer.append(composerLine, composerHint);
-    aside.append(chatHead, chatBody, composer);
+    aside.append(conversationHead, conversationBody, composer);
     body.append(rail, article, aside);
     this.rail = rail;
     this.article = article;
     this.aside = aside;
-    this.chatTitle = chatTitle;
-    this.chatMeta = chatMeta;
-    this.chatBody = chatBody;
+    this.conversationTitle = conversationTitle;
+    this.conversationMeta = conversationMeta;
+    this.conversationBody = conversationBody;
     this.composerText = composerText;
     this.composerHint = composerHint;
 
@@ -334,32 +340,18 @@ class TermDomSurface {
       }, 100);
     });
     document.addEventListener("keydown", (event: KeyboardEvent) => {
-      const view = this.reader.getState();
-      // The same pure translation the reader applies decides whether the
-      // terminal keeps the key: an unhandled one is never preventDefaulted.
-      const action = translateKey({
-        asking: view.composer.mode === "asking",
-        responding: view.conversation.responding,
-        hasResponder: view.conversation.hasResponder,
-        suggestions: view.conversation.suggestions,
-        currentStep: view.currentStep,
-        stepCount: this.tour.steps.length,
-        // One screenful of the Step box, in the scroller's own units.
-        pageRows: Math.max(1, view.scroll.stepViewportRows)
-      }, {
+      const key: ReaderKeyEvent = {
         key: event.key,
         ctrl: event.ctrlKey,
         meta: event.metaKey,
         alt: event.altKey
-      });
-      if (action.type === "unhandled") return;
+      };
+      // The reader translates, once: the adapter asks whether the key is
+      // consumed and forwards it — an unhandled key is never
+      // preventDefaulted, the terminal sees it untouched.
+      if (!this.reader.wouldConsume(key)) return;
       event.preventDefault();
-      this.reader.pressKey({
-        key: event.key,
-        ctrl: event.ctrlKey,
-        meta: event.metaKey,
-        alt: event.altKey
-      });
+      this.reader.pressKey(key);
     });
   }
 
@@ -377,24 +369,28 @@ class TermDomSurface {
     }
     const layout = view.layout;
     this.tourTitle.textContent = fit(view.tourTitle, layout.titleWidth);
-    this.stepCount.textContent = view.stepCount;
+    // The counter is a painting decision: the view model carries the
+    // numbers, the adapter formats "step n/N" (spec #93).
+    this.stepCount.textContent = view.stepCount.count === 0
+      ? "step 0/0"
+      : "step " + (view.stepCount.index + 1) + "/" + view.stepCount.count;
     this.rail.style.width = layout.railWidth + "ch";
     this.rail.style.display = layout.railWidth ? "block" : "none";
-    this.aside.style.width = layout.chatWidth + "ch";
+    this.aside.style.width = layout.conversationWidth + "ch";
     this.paintRail(view);
     this.paintArticle(view);
-    this.paintChat(view);
+    this.paintConversation(view);
     this.paintStatus(view);
     this.reader.onExtentsMeasured({
       stepViewportRows: this.article.clientHeight,
       stepContentRows: this.article.scrollHeight,
-      chatViewportRows: this.chatBody.clientHeight,
-      chatContentRows: this.chatBody.scrollHeight
+      conversationViewportRows: this.conversationBody.clientHeight,
+      conversationContentRows: this.conversationBody.scrollHeight
     });
     // The reader owns the scroll offsets; the scrollers are the adapter's.
     const settled = this.reader.getState();
     this.article.scrollTop = settled.scroll.stepScrollTop;
-    this.chatBody.scrollTop = settled.scroll.chatScrollTop;
+    this.conversationBody.scrollTop = settled.scroll.conversationScrollTop;
   }
 
   /** Release the reader's collaborators, then restore the alternate screen. */
@@ -462,14 +458,14 @@ class TermDomSurface {
     // The anchor keeps its path whole; the kind suffix is the first thing
     // to go when the Step column is tight, since the source head repeats
     // it. A long path keeps its file name and line: tail, not fit.
-    const suffix = view.source?.kind === "diff" ? " · diff" : "";
-    const target = suffix && view.anchorText.endsWith(suffix)
-      ? view.anchorText.slice(0, -suffix.length)
-      : view.anchorText;
-    const shownAnchor = view.anchorText.length <= layout.textWidth
-      ? view.anchorText
-      : tail(target, layout.textWidth);
-    const label = target ? '<p class="anchor">' + escapeHtml(shownAnchor) + "</p>" : "";
+    const anchorText = view.anchor.target +
+      (view.anchor.diff ? " · diff" : "");
+    const shownAnchor = anchorText.length <= layout.textWidth
+      ? anchorText
+      : tail(view.anchor.target, layout.textWidth);
+    const label = view.anchor.target
+      ? '<p class="anchor">' + escapeHtml(shownAnchor) + "</p>"
+      : "";
     this.article.innerHTML = label + '<div class="role role-agent">▌ codetour</div>' +
       "<h1>" + escapeHtml(view.stepTitle) + "</h1>" +
       view.descriptionHtml;
@@ -514,40 +510,42 @@ class TermDomSurface {
   }
 
   /** The conversation panel: head, suggestions, exchanges, composer (ADR 0026). */
-  private paintChat(view: ReaderViewModel): void {
+  private paintConversation(view: ReaderViewModel): void {
     const { document } = this;
     const conversation = view.conversation;
     const layout = view.layout;
-    this.chatTitle.textContent = conversation.title;
-    this.chatMeta.textContent = conversation.meta;
+    this.conversationTitle.textContent = conversation.title;
+    this.conversationMeta.textContent = conversation.meta;
     const width = layout.composerWidth;
-    // The caret stays visible over a long draft: tail, not fit.
+    // The caret stays visible over a long draft: tail, not fit. The caret
+    // and its truncation are painting — the adapter owns them, and the view
+    // model carries only the draft and the idle notices (spec #93).
     const prompt = view.composer.mode === "asking"
       ? tail(view.composer.draft, width - 1) + "▌"
       : view.composer.prompt;
     this.composerText.textContent = " " + fit(prompt, width);
     this.composerHint.textContent = view.composer.hint;
-    this.chatBody.replaceChildren();
+    this.conversationBody.replaceChildren();
     if (!conversation.hasResponder) {
       const unavailable = document.createElement("p");
       unavailable.className = "answer-pending";
       unavailable.textContent =
         "No ACP agent is installed (Vibe, Copilot CLI, Codex or Claude Code).";
-      this.chatBody.appendChild(unavailable);
+      this.conversationBody.appendChild(unavailable);
     }
     if (conversation.suggestions.length) {
       const list = document.createElement("ol");
-      list.className = "chat-suggestions";
+      list.className = "conversation-suggestions";
       conversation.suggestions.forEach((question, index) => {
         const item = document.createElement("li");
-        item.className = "chat-suggestion";
+        item.className = "conversation-suggestion";
         const key = document.createElement("span");
         key.className = "sugg-key";
         key.textContent = (index + 1) + " ";
         item.append(key, document.createTextNode(question));
         list.appendChild(item);
       });
-      this.chatBody.appendChild(list);
+      this.conversationBody.appendChild(list);
     }
     for (const exchange of conversation.exchanges) {
       const block = document.createElement("div");
@@ -562,6 +560,9 @@ class TermDomSurface {
       agent.className = "role role-agent";
       agent.textContent = "▌ " + (conversation.providerName ?? "agent").toLowerCase();
       block.append(asker, question, agent);
+      // The stored exchanges are raw (ADR 0031): tool uses and the latest
+      // activity line are painted here, exactly as the extension's conversation view
+      // paints its own copy of the store's view.
       for (const tool of exchange.toolUses) {
         const use = document.createElement("p");
         use.className = "tool";
@@ -595,7 +596,7 @@ class TermDomSurface {
         }
       }
       block.appendChild(answer);
-      this.chatBody.appendChild(block);
+      this.conversationBody.appendChild(block);
     }
   }
 
@@ -606,7 +607,8 @@ class TermDomSurface {
     this.hints.textContent = view.status.hints;
     // The status line is one row shared with the key hints: the right side
     // yields first, and its first segments are the ones that must survive.
+    // The budget itself lives in the layout module, testable there (ADR 0028).
     this.statusRight.textContent = fit(view.status.rightSegments.join(" · "),
-      Math.max(30, layout.columns - (layout.compactHints ? 48 : 72)));
+      layout.statusRightWidth);
   }
 }

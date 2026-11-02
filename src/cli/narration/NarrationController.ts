@@ -1,35 +1,52 @@
 import { prepareNarrationText } from "./prepareText";
 import type { NarrationEngine } from "./SystemSpeech";
 
-export interface NarrationControllerOptions {
-  /** The local OS speech adapter; a fake makes narration deterministically testable. */
-  engine: NarrationEngine;
+/**
+ * The display hooks of the reading module's narration policy (ADR 0029): the
+ * policy owns what the reader shows of the engine — the speech warning and
+ * the speaking state — and attaches them to the controller, the engine seam,
+ * once the entry point has composed the reader over it.
+ */
+export interface NarrationDisplay {
   /**
    * One nonblocking report per failed narration attempt (spec #79): the
    * reader shows it and stays usable, the Tour is never aborted.
    */
-  onWarning?: (message: string) => void;
+  onWarning(message: string): void;
   /** A narration was handed to the engine; earlier warnings are obsolete. */
-  onSpeaking?: () => void;
+  onSpeaking(): void;
+}
+
+export interface NarrationControllerOptions {
+  /** The local OS speech adapter; a fake makes narration deterministically testable. */
+  engine: NarrationEngine;
 }
 
 /**
  * The speech state of the terminal reader's optional narration (spec #79):
  * enabled state, cancellation, replacement of speech and race protection.
- * The controller owns the engine — TermDOM never touches the synthesizer —
+ * The controller is the engine seam of the reading module (spec #93) — it
+ * owns the speech engine, the reader's policy owns the reading decisions —
  * and nothing here knows Step indices: the reader narrates on real Step
  * changes only, and supplies the currently displayed description itself.
  *
  * Race protection is a generation counter: every attempt is stamped, and any
  * outcome of an older attempt — completion or failure — is ignored, so rapid
  * navigation with a slow engine can never overlap or resume stale speech.
+ * It lives here alone; the reading policy never re-implements it.
  */
 export class NarrationController {
   private enabled = false;
   private generation = 0;
   private disposed = false;
+  private display: NarrationDisplay | undefined;
 
   constructor(private readonly options: NarrationControllerOptions) {}
+
+  /** The reading policy attaches its display hooks; the seam reports through them. */
+  attach(display: NarrationDisplay): void {
+    this.display = display;
+  }
 
   isEnabled(): boolean {
     return this.enabled;
@@ -67,11 +84,11 @@ export class NarrationController {
     this.options.engine.cancel();
     const text = prepareNarrationText(description);
     if (!text) return;
-    this.options.onSpeaking?.();
+    this.display?.onSpeaking();
     void this.options.engine.speak(text).catch(error => {
       // Only the current generation's failures are the reader's problem.
       if (this.disposed || !this.enabled || generation !== this.generation) return;
-      this.options.onWarning?.("Narration failed: " +
+      this.display?.onWarning("Narration failed: " +
         (error instanceof Error ? error.message : String(error)));
     });
   }

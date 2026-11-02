@@ -6,8 +6,8 @@ test("a wide terminal shows the Step rail without crowding the Step", () => {
   const layout = terminalLayout(120);
   assert.equal(layout.railWidth, RAIL_WIDTH);
   assert.equal(layout.compactHints, false);
-  // The Step, its rail and the chat panel all fit inside the terminal.
-  assert.ok(layout.railWidth + layout.chatWidth + layout.textWidth <= 120);
+  // The Step, its rail and the conversation panel all fit inside the terminal.
+  assert.ok(layout.railWidth + layout.conversationWidth + layout.textWidth <= 120);
   assert.ok(layout.textWidth >= 40);
   assert.ok(layout.codeWidth <= layout.textWidth);
   assert.ok(layout.titleWidth > 0 && layout.composerWidth > 0);
@@ -37,13 +37,23 @@ test("the layout never goes below the reader's minimum width", () => {
   assert.ok(layout.codeWidth >= 20);
 });
 
-test("the chat panel keeps a readable width at every terminal size", () => {
+test("the conversation panel keeps a readable width at every terminal size", () => {
   for (const columns of [60, 80, 100, 120, 200]) {
     const layout = terminalLayout(columns);
-    assert.ok(layout.chatWidth >= 36, "chat too narrow at " + columns);
-    assert.ok(layout.chatWidth <= 48, "chat too wide at " + columns);
+    assert.ok(layout.conversationWidth >= 36, "conversation too narrow at " + columns);
+    assert.ok(layout.conversationWidth <= 48, "conversation too wide at " + columns);
     assert.ok(layout.textWidth >= 20, "Step too narrow at " + columns);
   }
+});
+
+test("the status line's right budget follows the hint variant and never drops below 30", () => {
+  // The spelled-out hints consume 72 columns, the compact ones 48; the
+  // right side yields its cells first (ADR 0028).
+  assert.equal(terminalLayout(120).statusRightWidth, 120 - 72);
+  assert.equal(terminalLayout(119).statusRightWidth, 119 - 48);
+  assert.equal(terminalLayout(80).statusRightWidth, 80 - 48);
+  // Below the usable minimum width the right side keeps its floor budget.
+  assert.equal(terminalLayout(30).statusRightWidth, 30);
 });
 
 test("fit truncates a label to the cells it may occupy", () => {

@@ -1,9 +1,5 @@
 import type { CodeTour } from "../../store";
-import {
-  StepConversations,
-  type StepConversationExchange,
-  type StepConversationView
-} from "../../agent/stepConversations";
+import { StepConversations, type StepConversationExchange } from "../../agent/stepConversations";
 import { buildStepChatContext } from "../stepChatSupport";
 import type { CommitFileReader, ConversationResponder, StepContextResolver } from "./collaborators";
 
@@ -18,20 +14,23 @@ export interface TourStepConversationOptions {
 }
 
 /**
- * The Tour Step Conversation of the reader (ADR 0026, ADR 0031): a thin
- * reading-module face over the shared StepConversations store, keyed by Step.
- * The lifecycle — one answer in flight per Step, streaming, interruption that
- * ignores a late completion, history rules, failures that never disturb the
- * reading — lives in the store above the responder seam, exactly as in the
- * extension's chat; this class only supplies the reader's grounding (the
- * displayed Step's context, built once at question time) and notifies the
- * adapter on every update.
+ * The reader's Tour Step Conversation (ADR 0026): per-Step exchanges kept in
+ * memory until the Tour ends. The lifecycle itself — the store, the blocking
+ * of a question while its conversation's previous answer is in progress, the
+ * follow-up history of completed exchanges, the interruption of an answer in
+ * flight with its late completion ignored, the failure messages and the
+ * release of the responder's agent resources — lives in the shared
+ * `StepConversations` store above the responder seam, exactly as in the
+ * extension's conversation view (ADR 0031). This module keeps only what grounds a
+ * question in the Step the reader displays.
  */
 export class TourStepConversation {
-  private readonly exchanges: StepConversations;
+  private readonly store = new StepConversations();
 
   constructor(private readonly options: TourStepConversationOptions) {
-    this.exchanges = new StepConversations(options.responder);
+    if (options.responder) {
+      this.store.setResponder(options.responder);
+    }
   }
 
   get hasResponder(): boolean {
@@ -43,63 +42,58 @@ export class TourStepConversation {
     return this.options.responder?.providerName;
   }
 
-  /** The Step's conversation, straight from the shared store. */
-  private view(step: number): StepConversationView {
-    return this.exchanges.view(String(step));
-  }
-
-  /** True while the Step's latest question is still being answered. */
-  isResponding(step: number): boolean {
-    return this.view(step).responding;
-  }
-
+  /** The Step's exchanges, raw and unpainted, straight from the shared store. */
   exchangesFor(step: number): readonly StepConversationExchange[] {
-    return this.view(step).exchanges;
+    return this.store.view(String(step)).exchanges;
+  }
+
+  /** True while the Step's previous answer is still streaming. */
+  isResponding(step: number): boolean {
+    return this.store.view(String(step)).responding;
   }
 
   /**
-   * Ask one Step's question. The store owns the lifecycle: the question is
-   * blocked while the Step's previous answer is still in progress, the answer
-   * streams into the pending exchange, and an interruption or a failure
-   * settles it without disturbing the reading. Nothing happens for a missing
-   * Step.
+   * Ask one Step's question. The store owns the lifecycle: the question
+   * appears immediately as a pending exchange, a question asked while the
+   * Step's previous answer is still in progress never reaches the responder,
+   * and the answer streams into the exchange through `onChange`. Nothing
+   * happens for a missing Step.
    */
-  async ask(step: number, question: string): Promise<void> {
-    const { tour, root, resolveStepContext, readCommitFile } = this.options;
-    const notify = this.options.onChange;
+  ask(step: number, question: string): Promise<void> {
+    const { tour, root, resolveStepContext, readCommitFile, onChange } = this.options;
     const stepData = tour.steps[step];
-    if (!stepData) return;
-    await this.exchanges.ask(
+    if (!stepData) return Promise.resolve();
+    // The grounding context is built once, at question time, from the Step
+    // the reader sees — captured faithfully to the display (ADR 0021).
+    return this.store.ask(
       String(step),
       question,
       {
-        // The grounding context is built once, at question time, from the
-        // Step the reader sees; the store awaits it, so a stop during the
-        // capture is honored.
-        context: () => buildStepChatContext(
-          tour,
-          stepData,
-          resolveStepContext(root, tour, stepData),
-          readCommitFile
-        ),
+        context: () => buildStepChatContext(tour, stepData,
+          resolveStepContext(root, tour, stepData), readCommitFile),
         workspaceRoot: root
       },
-      notify
-    );
+      onChange
+    ).then(() => undefined);
   }
 
   /**
-   * Interrupts the Step's answer in flight: the stopped exchange keeps
-   * whatever already streamed, marked as interrupted, and the late
-   * completion of the cancelled answer is ignored. Stopping with no answer
-   * in flight changes nothing.
+   * Interrupt the Step's answer in flight: the stopped exchange keeps
+   * whatever already streamed, marked interrupted, and its late completion
+   * is ignored. A new question is accepted immediately. Stopping with no
+   * answer in flight changes nothing (ADR 0031).
    */
   stop(step: number): void {
-    this.exchanges.stop(String(step));
+    this.store.stop(String(step));
+    this.options.onChange?.();
   }
 
-  /** Release the responder's agent resources; the session is over. */
-  async dispose(): Promise<void> {
-    await this.options.responder?.dispose?.();
+  /**
+   * Release the responder's agent resources through the store; the session
+   * is over.
+   */
+  dispose(): Promise<void> {
+    this.store.setResponder(undefined);
+    return Promise.resolve();
   }
 }

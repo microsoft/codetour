@@ -1,10 +1,12 @@
+import type { ConversationState } from "./viewModel";
+
 /**
  * The keyboard of the reader, translated once into logical actions the
- * state machine applies (spec #93). Pure: the adapter maps its key events
- * to {@link ReaderKeyEvent} and can reuse {@link translateKey} to know
- * whether a key was consumed (`"unhandled"` means: pass it through to the
- * terminal untouched, no preventDefault). The reader applies the returned
- * action to its own state.
+ * state machine applies (spec #93). Pure: the reader assembles the facts a
+ * key depends on and runs {@link translateKey} through its single dispatch
+ * — the same call that answers the adapter's `wouldConsume` query
+ * (`"unhandled"` means: pass it through to the terminal untouched, no
+ * preventDefault). The reader applies the returned action to its own state.
  */
 
 /** One key input, the logical shape of the adapter's keyboard event. */
@@ -17,9 +19,8 @@ export interface ReaderKeyEvent {
 
 /** The reading facts a key dispatch depends on. */
 export interface ReaderKeyState {
-  asking: boolean;
-  responding: boolean;
-  hasResponder: boolean;
+  /** The conversation state the dispatch depends on (spec #93). */
+  conversation: ConversationState;
   /** Suggested questions of the active Step, in order; keys 1-9 ask them. */
   suggestions: string[];
   currentStep: number;
@@ -31,6 +32,7 @@ export interface ReaderKeyState {
 export type ReaderKeyAction =
   | { type: "unhandled" }
   | { type: "quit" }
+  | { type: "stop-answer" }
   | { type: "enter-ask-mode" }
   | { type: "ask-suggestion"; question: string }
   | { type: "navigate"; step: number }
@@ -46,22 +48,28 @@ export type ReaderKeyAction =
  * owns the keyboard first, then the reading-mode keys in their fixed order.
  */
 export function translateKey(state: ReaderKeyState, event: ReaderKeyEvent): ReaderKeyAction {
-  if (state.asking) {
+  const { asking, responding, hasResponder } = state.conversation;
+  if (asking) {
     if (event.key === "Enter") return { type: "submit-draft" };
     if (event.key === "Escape") return { type: "cancel-draft" };
     if (event.key === "Backspace") return { type: "draft-backspace" };
     if (event.key.length === 1) return { type: "draft-append", text: event.key };
     return { type: "unhandled" };
   }
-  if (event.key === "q" || event.key === "Escape") return { type: "quit" };
-  if (event.key === "a" && state.hasResponder && !state.responding) {
+  // While an answer streams, the reading must survive: `q` and Escape
+  // interrupt the Step's answer in flight instead of quitting the reader,
+  // and a second press quits once nothing is in flight (ADR 0031).
+  if (event.key === "q" || event.key === "Escape") {
+    return responding ? { type: "stop-answer" } : { type: "quit" };
+  }
+  if (event.key === "a" && hasResponder && !responding) {
     return { type: "enter-ask-mode" };
   }
   if (/^[1-9]$/.test(event.key)) {
     const question = state.suggestions[Number(event.key) - 1];
     // A digit without its suggestion, or while an answer streams, falls
     // through unhandled — the terminal sees the key.
-    if (question !== undefined && !state.responding) {
+    if (question !== undefined && !responding) {
       return { type: "ask-suggestion", question };
     }
     return { type: "unhandled" };

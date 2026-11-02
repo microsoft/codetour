@@ -3,15 +3,14 @@
  * Step conversation its right-hand panel (ADR 0026), and the Step rail only
  * appears when the terminal is wide enough to leave the Step readable.
  *
- * Widths are whole terminal cells, borders included: the rail and the chat
- * panel are laid out with `box-sizing: border-box`.
+ * Widths are whole terminal cells, borders included: the rail and the conversation panel are laid out with `box-sizing: border-box`.
  */
 export interface TerminalLayout {
   columns: number;
   /** Total columns of the Step rail, its right border included; 0 when hidden. */
   railWidth: number;
   /** Total columns of the conversation panel, its left border included. */
-  chatWidth: number;
+  conversationWidth: number;
   /** Columns available to the rendered Step description. */
   textWidth: number;
   /** Columns available to a source or diff row inside its box. */
@@ -24,39 +23,54 @@ export interface TerminalLayout {
   composerWidth: number;
   /** True when the long status hints would not fit next to the panel. */
   compactHints: boolean;
+  /**
+   * Columns available to the status line's right segments: the mode chip and
+   * the key hints consume their budget first, and the right side — which
+   * yields before the hints do — never drops below its floor.
+   */
+  statusRightWidth: number;
 }
 
 /** Below this width the rail would eat more than it explains. */
 const RAIL_MIN_COLUMNS = 100;
 /** Total columns of the Step rail, border included. */
 export const RAIL_WIDTH = 26;
-const CHAT_MIN_COLUMNS = 36;
-const CHAT_MAX_COLUMNS = 48;
+const CONVERSATION_MIN_COLUMNS = 36;
+const CONVERSATION_MAX_COLUMNS = 48;
 /** The reader refuses to lay out below a usable 60-column screen. */
 const MIN_COLUMNS = 60;
 /** Above this width the status line can afford the spelled-out key hints. */
 const WIDE_HINTS_COLUMNS = 120;
+/** Columns the status line's left side consumes with the compact hints. */
+const STATUS_HINTS_COMPACT_WIDTH = 48;
+/** Columns the status line's left side consumes with the spelled-out hints. */
+const STATUS_HINTS_WIDE_WIDTH = 72;
+/** The status line's right side never drops below this budget. */
+const STATUS_RIGHT_MIN_WIDTH = 30;
 
 export function terminalLayout(columns: number): TerminalLayout {
   const width = Math.max(MIN_COLUMNS, Math.floor(columns));
-  const chatWidth = Math.min(CHAT_MAX_COLUMNS,
-    Math.max(CHAT_MIN_COLUMNS, Math.floor(width * 0.37)));
+  const conversationWidth = Math.min(CONVERSATION_MAX_COLUMNS,
+    Math.max(CONVERSATION_MIN_COLUMNS, Math.floor(width * 0.37)));
   const railWidth = width >= RAIL_MIN_COLUMNS ? RAIL_WIDTH : 0;
+  const compactHints = width < WIDE_HINTS_COLUMNS;
   return {
     columns: width,
     railWidth,
-    chatWidth,
+    conversationWidth,
     // The Step pays 2 cells of padding on each side; a source box pays its
     // own border and padding on top of that.
-    textWidth: Math.max(20, width - railWidth - chatWidth - 6),
-    codeWidth: Math.max(20, width - railWidth - chatWidth - 8),
+    textWidth: Math.max(20, width - railWidth - conversationWidth - 6),
+    codeWidth: Math.max(20, width - railWidth - conversationWidth - 8),
     // The wordmark bar holds the brand, the separator, the Step count and
     // some slack; the rail marker takes 4 cells before the Step title, and the
     // composer prompt, its space, the panel border, margins and padding take 9.
     titleWidth: Math.max(8, width - 26),
     railLabelWidth: Math.max(4, railWidth - 7),
-    composerWidth: Math.max(4, chatWidth - 9),
-    compactHints: width < WIDE_HINTS_COLUMNS
+    composerWidth: Math.max(4, conversationWidth - 9),
+    compactHints,
+    statusRightWidth: Math.max(STATUS_RIGHT_MIN_WIDTH,
+      width - (compactHints ? STATUS_HINTS_COMPACT_WIDTH : STATUS_HINTS_WIDE_WIDTH))
   };
 }
 

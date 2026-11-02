@@ -57,8 +57,10 @@ function controller(): {
   const engine = new FakeEngine();
   const warnings: string[] = [];
   const speaking = { started: 0 };
-  const control = new NarrationController({
-    engine,
+  const control = new NarrationController({ engine });
+  // The reading policy attaches its display hooks once composed over the
+  // controller, the engine seam; the test plays the policy's role.
+  control.attach({
     onWarning: message => warnings.push(message),
     onSpeaking: () => speaking.started++
   });

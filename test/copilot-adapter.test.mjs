@@ -271,7 +271,16 @@ async function withRealCli(root, run) {
   } finally {
     if (previousCli === undefined) delete process.env.CODETOUR_CLI; else process.env.CODETOUR_CLI = previousCli;
     if (previousOutput === undefined) delete process.env.CODETOUR_TEST_HTML_OUTPUT; else process.env.CODETOUR_TEST_HTML_OUTPUT = previousOutput;
-    rmSync(root, {recursive:true, force:true, maxRetries:50, retryDelay:100});
+    try {
+      rmSync(root, {recursive:true, force:true, maxRetries:50, retryDelay:100});
+    } catch (error) {
+      // The detached reader keeps the workspace as its cwd, and Windows
+      // refuses to delete a directory a process still sits in, even after
+      // retries. The relayed resolution is the contract under test here, not
+      // the temporary workspace's cleanliness, so an ephemeral runner may
+      // keep the directory instead of failing the passing assertions.
+      if (process.platform !== "win32") throw error;
+    }
   }
 }
 
@@ -280,7 +289,7 @@ test("a requested Tour title is resolved through the CLI contract", async () => 
   await withRealCli(root, async output => {
     const messages = [];
     await runCodeTourCommand({capabilities:{}, log: async message => messages.push(message)}, "Second Tour", root);
-    for (let i = 0; i < 100 && !existsSync(output); i++) await delay(50);
+    for (let i = 0; i < 100 && !(existsSync(output) && readFileSync(output, "utf8")); i++) await delay(50);
     assert.ok(existsSync(output), messages.join("\n"));
     assert.match(readFileSync(output, "utf8"), /Second Tour/);
     assert.match(messages.join("\n"), /Starting CodeTour: Second Tour \(html\)/);
@@ -292,7 +301,7 @@ test("a Tour title resolving by file name goes through the CLI contract", async 
   await withRealCli(root, async output => {
     const messages = [];
     await runCodeTourCommand({capabilities:{}, log: async message => messages.push(message)}, "b", root);
-    for (let i = 0; i < 100 && !existsSync(output); i++) await delay(50);
+    for (let i = 0; i < 100 && !(existsSync(output) && readFileSync(output, "utf8")); i++) await delay(50);
     assert.ok(existsSync(output), messages.join("\n"));
     assert.match(readFileSync(output, "utf8"), /Second Tour/);
   });
@@ -325,7 +334,7 @@ test("a workspace with a single Tour resolves it without Tour elicitation", asyn
       ui:{select: async () => { selections++; return "Read"; }},
       log: async message => messages.push(message)};
     await runCodeTourCommand(session, "", root);
-    for (let i = 0; i < 100 && !existsSync(output); i++) await delay(50);
+    for (let i = 0; i < 100 && !(existsSync(output) && readFileSync(output, "utf8")); i++) await delay(50);
     assert.ok(existsSync(output), messages.join("\n"));
     assert.match(readFileSync(output, "utf8"), /Sole Tour/);
     assert.equal(selections, 1, "only the Read-or-generate choice is elicited");
@@ -342,7 +351,7 @@ test("an elicited choice resolves duplicate Tour titles by identity", async () =
       ui: {select: async (prompt, choices) => prompt === "Read or generate a CodeTour?" ? "Read" : choices[1]},
       log: async message => messages.push(message)};
     await runCodeTourCommand(session, "", root);
-    for (let i = 0; i < 100 && !existsSync(output); i++) await delay(50);
+    for (let i = 0; i < 100 && !(existsSync(output) && readFileSync(output, "utf8")); i++) await delay(50);
     assert.ok(existsSync(output), messages.join("\n"));
     const html = readFileSync(output, "utf8");
     assert.match(html, /Second duplicate/);

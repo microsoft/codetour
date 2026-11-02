@@ -4,6 +4,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, realpathSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const cli = path.resolve("dist/cli.js");
 
@@ -24,8 +25,15 @@ function createTourRepo(tours) {
   return repo;
 }
 
-function expectedIdentity(repo, fileName) {
-  return { id: "file://" + path.join(realpathSync(repo), ".tours", `${fileName}.tour`) };
+// The CLI resolves the identity as the file URL of the discovered Tour path,
+// built from the reader process's own cwd. Spelling that URL here by hand
+// breaks on Windows, where the temp path carries the 8.3 short name
+// (C:\Users\RUNNER~1\...) while libuv's cwd resolves the canonical long path
+// (C:\Users\runneradmin\...). Canonicalise both sides through the filesystem
+// instead; realpathSync.native is required because plain realpathSync does
+// not expand 8.3 short names on Windows, leaving the two sides unequal.
+function expectedTourFile(repo, fileName) {
+  return realpathSync.native(path.join(repo, ".tours", `${fileName}.tour`));
 }
 
 test("--internal-resolve-tour resolves an exact title to the Tour identity as JSON", () => {
@@ -36,7 +44,7 @@ test("--internal-resolve-tour resolves an exact title to the Tour identity as JS
     assert.equal(result.stderr, "");
     const resolved = JSON.parse(result.stdout);
     assert.equal(resolved.title, "First Tour");
-    assert.deepEqual({ id: resolved.id }, expectedIdentity(repo, "a"));
+    assert.equal(realpathSync.native(fileURLToPath(resolved.id)), expectedTourFile(repo, "a"));
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
@@ -49,7 +57,7 @@ test("--internal-resolve-tour falls back to the Tour file name without the exten
     assert.equal(result.status, 0, result.stderr);
     const resolved = JSON.parse(result.stdout);
     assert.equal(resolved.title, "Second Tour");
-    assert.deepEqual({ id: resolved.id }, expectedIdentity(repo, "b"));
+    assert.equal(realpathSync.native(fileURLToPath(resolved.id)), expectedTourFile(repo, "b"));
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
@@ -62,7 +70,7 @@ test("--internal-resolve-tour without a title resolves a workspace with a single
     assert.equal(result.status, 0, result.stderr);
     const resolved = JSON.parse(result.stdout);
     assert.equal(resolved.title, "Sole Tour");
-    assert.deepEqual({ id: resolved.id }, expectedIdentity(repo, "only"));
+    assert.equal(realpathSync.native(fileURLToPath(resolved.id)), expectedTourFile(repo, "only"));
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }

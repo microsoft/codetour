@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import * as assert from "node:assert/strict";
-import { fit, railWindow, RAIL_WIDTH, tail, terminalLayout } from "./terminalLayout";
+import { fit, railWindow, RAIL_WIDTH, tail, terminalLayout, wrapLine } from "./terminalLayout";
 
 test("a wide terminal shows the Step rail without crowding the Step", () => {
   const layout = terminalLayout(120);
@@ -64,9 +64,13 @@ test("fit truncates a label to the cells it may occupy", () => {
   assert.equal(fit("abc", 3), "abc");
 });
 
-test("fit never splits a surrogate pair", () => {
+test("fit never splits a surrogate pair and counts a wide glyph for its cells", () => {
   assert.equal(fit("ab😀cd", 3), "ab…");
-  assert.equal(fit("ab😀cd", 4), "ab😀…");
+  // The emoji paints two cells, so it cannot join the ellipsis inside a
+  // four-cell budget; the cut happens before it instead of overflowing.
+  assert.equal(fit("ab😀cd", 4), "ab…");
+  assert.equal(fit("ab😀cd", 6), "ab😀cd");
+  assert.equal(fit("中文abc", 6), "中文a…");
 });
 
 test("tail keeps the end of a typed question so the caret stays visible", () => {
@@ -74,7 +78,25 @@ test("tail keeps the end of a typed question so the caret stays visible", () => 
   assert.equal(tail("abcdef", 4), "…def");
   assert.equal(tail("abcd", 4), "abcd");
   assert.equal(tail("abc", 0), "");
-  assert.equal(tail("ab😀cd", 4), "…😀cd");
+  // The emoji's two cells do not fit next to the ellipsis in four cells, so
+  // the tail yields before it rather than painting five cells.
+  assert.equal(tail("ab😀cd", 4), "…cd");
+  assert.equal(tail("中文abc", 4), "…abc");
+});
+
+test("wrapLine splits long rows and keeps continuation rows aligned", () => {
+  assert.deepEqual(wrapLine("abcdefgh", 4, "  "), ["abcd", "  ef", "  gh"]);
+  assert.deepEqual(wrapLine("abcdefghij", 4, "  "), ["abcd", "  ef", "  gh", "  ij"]);
+  assert.deepEqual(wrapLine("short", 10, "  "), ["short"]);
+  assert.deepEqual(wrapLine("", 4, "  "), [""]);
+});
+
+test("wrapLine keeps wide glyphs inside the cell budget", () => {
+  // Six painted cells of CJK glyphs wrap into rows of two glyphs each.
+  assert.deepEqual(wrapLine("中文中文", 4, ""), ["中文", "中文"]);
+  // An emoji counts for two cells, so the split lands after three painted
+  // cells and never in the middle of a surrogate pair.
+  assert.deepEqual(wrapLine("a😀b😀c", 4, ""), ["a😀b", "😀c"]);
 });
 
 test("a short Tour shows every Step in the rail", () => {

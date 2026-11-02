@@ -4,7 +4,7 @@ import { NarrationController } from "./narration/NarrationController";
 import { createSystemSpeech } from "./narration/SystemSpeech";
 import { palette } from "./palette";
 import { commitFileReader, openTerminalChat } from "./stepChatSupport";
-import { fit, tail } from "./terminalLayout";
+import { fit, tail, wrapLine } from "./terminalLayout";
 import { createReader, type TourReader } from "./reader/reader";
 import type { ConversationResponder } from "./reader/collaborators";
 import type { ReaderKeyEvent } from "./reader/readerInput";
@@ -28,25 +28,6 @@ interface TermDomHost {
   dispose(): Promise<void>;
   document: Document;
   window: Window;
-}
-
-/**
- * Split one logical line into rows no wider than `width` cells. Continuation
- * rows start with `indent` so wrapped code stays aligned under its source.
- */
-function wrapLine(line: string, width: number, indent: string): string[] {
-  if (line.length <= width) return [line];
-  const rows: string[] = [];
-  let rest = line;
-  let prefix = "";
-  while (rest.length > width - prefix.length) {
-    const limit = width - prefix.length;
-    rows.push(prefix + rest.slice(0, limit));
-    rest = rest.slice(limit);
-    prefix = indent;
-  }
-  rows.push(prefix + rest);
-  return rows;
 }
 
 /**

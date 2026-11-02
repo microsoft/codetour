@@ -1,3 +1,5 @@
+import stringWidth = require("string-width");
+
 /**
  * The cell budget of the terminal reader. The Step keeps its own scroller, the
  * Step conversation its right-hand panel (ADR 0026), and the Step rail only
@@ -75,28 +77,71 @@ export function terminalLayout(columns: number): TerminalLayout {
 }
 
 /**
- * Truncate `text` to `width` characters, marking the cut with one ellipsis
- * character. Code points are kept whole so an emoji or an astral character is
- * never split; a wide glyph still occupies two terminal cells, as everywhere
- * else in the reader.
+ * Split one logical line into rows no wider than `width` terminal cells.
+ * Continuation rows start with `indent` so wrapped code stays aligned under
+ * its source. Widths are measured in painted cells, not code points, so
+ * emoji and other wide glyphs keep the rows inside their budget.
  */
-export function fit(text: string, width: number): string {
-  if (width <= 0) return "";
-  const chars = Array.from(text);
-  if (chars.length <= width) return text;
-  return width === 1 ? "…" : chars.slice(0, width - 1).join("") + "…";
+export function wrapLine(line: string, width: number, indent: string): string[] {
+  if (stringWidth(line) <= width) return [line];
+  const chars = Array.from(line);
+  const rows: string[] = [];
+  let start = 0;
+  let prefix = "";
+  while (start < chars.length) {
+    let row = prefix;
+    while (start < chars.length && stringWidth(row + chars[start]) <= width) {
+      row += chars[start];
+      start++;
+    }
+    // A glyph wider than the whole row budget cannot be painted; emit the
+    // prefix alone and stop rather than looping forever or losing the row.
+    if (row === prefix) {
+      rows.push(prefix);
+      break;
+    }
+    rows.push(row);
+    prefix = indent;
+  }
+  return rows;
 }
 
 /**
- * Keep the last `width` characters of `text`, marking the cut with one
+ * Truncate `text` to `width` terminal cells, marking the cut with one ellipsis
+ * character. Code points are kept whole so an emoji or an astral character is
+ * never split; a wide glyph counts for its two cells so the truncated label
+ * paints exactly inside its budget.
+ */
+export function fit(text: string, width: number): string {
+  if (width <= 0) return "";
+  if (stringWidth(text) <= width) return text;
+  if (width === 1) return "…";
+  const chars = Array.from(text);
+  let row = "";
+  for (const char of chars) {
+    if (stringWidth(row + char) > width - 1) break;
+    row += char;
+  }
+  return row + "…";
+}
+
+/**
+ * Keep the last `width` terminal cells of `text`, marking the cut with one
  * ellipsis. A prompt uses it so the caret stays visible while a long question
  * is typed.
  */
 export function tail(text: string, width: number): string {
   if (width <= 0) return "";
+  if (stringWidth(text) <= width) return text;
+  if (width === 1) return "…";
   const chars = Array.from(text);
-  if (chars.length <= width) return text;
-  return width === 1 ? "…" : "…" + chars.slice(chars.length - (width - 1)).join("");
+  let row = "";
+  for (let index = chars.length - 1; index >= 0; index--) {
+    const candidate = chars[index] + row;
+    if (stringWidth(candidate) > width - 1) break;
+    row = candidate;
+  }
+  return "…" + row;
 }
 
 /** The slice of the Step rail that keeps the active Step on screen. */

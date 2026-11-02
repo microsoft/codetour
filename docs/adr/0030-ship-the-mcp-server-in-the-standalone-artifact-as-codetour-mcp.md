@@ -37,3 +37,25 @@ and Git remains an external prerequisite for Changes Tours and historical
 snapshots. `codetour mcp` is the stable launch contract for future agent
 adapters. This extends ADR 0006's distribution model to the standalone
 artifact without changing its confinement or transport decisions.
+
+## Extension — 2 November 2026: the single server also serves the generation prompt
+
+`codetour mcp` remains the single launch contract and becomes also the source
+of the generation prompt. The same server now serves the Tour Generator's
+prompt as MCP resources, through the same seam as the critical review
+instructions and composed in the same module as the tool descriptions:
+`codetour://generate/project-tour` is a fixed resource (Project Tours have no
+review mode), and `codetour://generate/changes-tour/{reviewMode}` is a
+resource template resolving exactly `neutral` or `critical`; the critical
+Changes Tour prompt embeds the shared review skill pack served by
+`codetour://review/critical-instructions`. Like the skill resource, the prompt
+text is embedded in the server, so every distribution serves it offline with
+no download.
+
+Each host adapter derives its generation prompt from the served resource over
+stdio and keeps only the conduct of its host: choices, request forwarding and
+reader launching. An adapter no longer carries its own prompt prose; an empty
+or unreachable resource is an explicit error that stops generation, never a
+fallback. No second server artifact is created: the prompts travel in the one
+server already embedded in `dist/cli.js`, so the single-artifact decision, the
+packaging invariants and the size budget above are unchanged.

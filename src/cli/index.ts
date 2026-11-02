@@ -14,6 +14,7 @@ import { resolveReadonlyStepContext } from "./stepContext";
 import { readTourImages } from "./stepImages";
 import { launchTerminalReader } from "./terminalLauncher";
 import { runTerminalTour } from "./terminal";
+import { resolveTourSelection } from "./tourResolution";
 import { fileURLToPath } from "node:url";
 
 interface Arguments { tourName?: string; renderer: "html" | "terminal"; }
@@ -81,42 +82,32 @@ async function discover(root: string): Promise<CodeTour[]> {
 }
 
 async function pickTour(tours: CodeTour[], requested?: string): Promise<CodeTour> {
-  if (tours.length === 0) {
-    throw new Error("No existing Tours found in this Git worktree.");
-  }
-  if (requested) {
-    const matches = tours.filter(tour =>
-      tour.title === requested ||
-      path.basename(fileURLToPath(tour.id), ".tour") === requested
-    );
-    if (matches.length !== 1) {
-      throw new Error("Tour '" + requested + "' not found or ambiguous. Available Tours: " +
-        tours.map(tour => tour.title).join(", "));
+  // Resolution rules (exact title, file-name fallback, unique-Tour
+  // shortcut) live in the shared contract; the interactive prompt below
+  // only handles the case it can serve: no requested title, many Tours.
+  if (!requested && tours.length > 1) {
+    console.log("Select an existing CodeTour:");
+    tours.forEach((tour, index) => console.log("  " + (index + 1) + ". " + tour.title));
+    const answer = await new Promise<string>((resolve, reject) => {
+      const readline = require("readline").createInterface({ input: process.stdin });
+      let answered = false;
+      process.stdout.write("Tour number: ");
+      readline.once("line", (value: string) => {
+        answered = true;
+        resolve(value);
+        readline.close();
+      });
+      readline.once("close", () => {
+        if (!answered) reject(new Error("Tour selection cancelled."));
+      });
+    });
+    const selection = Number(answer);
+    if (!Number.isInteger(selection) || selection < 1 || selection > tours.length) {
+      throw new Error("Invalid Tour selection: " + answer);
     }
-    return matches[0];
+    return tours[selection - 1];
   }
-  if (tours.length === 1) return tours[0];
-
-  console.log("Select an existing CodeTour:");
-  tours.forEach((tour, index) => console.log("  " + (index + 1) + ". " + tour.title));
-  const answer = await new Promise<string>((resolve, reject) => {
-    const readline = require("readline").createInterface({ input: process.stdin });
-    let answered = false;
-    process.stdout.write("Tour number: ");
-    readline.once("line", (value: string) => {
-      answered = true;
-      resolve(value);
-      readline.close();
-    });
-    readline.once("close", () => {
-      if (!answered) reject(new Error("Tour selection cancelled."));
-    });
-  });
-  const selection = Number(answer);
-  if (!Number.isInteger(selection) || selection < 1 || selection > tours.length) {
-    throw new Error("Invalid Tour selection: " + answer);
-  }
-  return tours[selection - 1];
+  return resolveTourSelection(tours, requested);
 }
 
 async function openFileInBrowser(file: string): Promise<void> {
@@ -158,6 +149,17 @@ async function main(): Promise<void> {
   const tours = await discover(root);
   if (args.length === 1 && args[0] === "--internal-list-tours") {
     console.log(JSON.stringify(tours.map(tour => ({id: tour.id, title: tour.title}))));
+    return;
+  }
+  // Non-interactive resolution surface for the Copilot adapter: resolve the
+  // shared selection contract for an optional requested title and print the
+  // resolved identity, or fail with the exact resolution error. No prompt.
+  if (args[0] === "--internal-resolve-tour") {
+    if (args.length > 2) {
+      throw new Error("Only one Tour name is allowed. Usage: codetour --internal-resolve-tour [tour]");
+    }
+    const resolved = resolveTourSelection(tours, args[1]);
+    console.log(JSON.stringify({id: resolved.id, title: resolved.title}));
     return;
   }
   // Only select identities from this workspace's discovered list. Copilot

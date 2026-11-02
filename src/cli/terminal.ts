@@ -1,5 +1,6 @@
 import type { CodeTour } from "../store";
 import { escapeHtml, renderMarkdownToHtml } from "../player/markdown";
+import { StepConversations } from "../agent/stepConversations";
 import { NarrationController } from "./narration/NarrationController";
 import { createSystemSpeech } from "./narration/SystemSpeech";
 import { palette } from "./palette";
@@ -9,8 +10,7 @@ import { fit, railWindow, tail, terminalLayout, type TerminalLayout } from "./te
 import {
   buildStepChatContext,
   commitFileReader,
-  openTerminalChat,
-  StepConversations
+  openTerminalChat
 } from "./stepChatSupport";
 
 /**
@@ -219,13 +219,15 @@ export async function runTerminalTour(tour: CodeTour, root: string): Promise<voi
   let current = 0;
   let finished = false;
   let version = 0;
-  const conversations = new StepConversations();
+  // The conversation lifecycle — store, blocking, history, interruption,
+  // failures — lives in the shared StepConversations module above the
+  // responder seam, exactly as in the extension's chat. This reader keeps
+  // only the way it paints the exchanges.
   const chat = openTerminalChat(root);
+  const conversations = new StepConversations(chat.responder);
   const readCommitFile = commitFileReader(root);
-  let liveAnswer: HTMLElement | undefined;
   let asking = false;
   let draft = "";
-  let responding = false;
   // Optional voice narration (spec #79): off for every session, nothing
   // persisted. The controller owns the speech engine, never TermDOM.
   /** The Step the voice last spoke; only real Step changes narrate again. */
@@ -248,16 +250,29 @@ export async function runTerminalTour(tour: CodeTour, root: string): Promise<voi
     }
   });
 
+  /** The displayed Step's conversation key in the shared store. */
+  function stepKey(): string {
+    return String(current);
+  }
+
+  /** The displayed Step's conversation, straight from the shared store. */
+  function stepConversation() {
+    return conversations.view(stepKey());
+  }
+
   function updateStatus(): void {
-    mode.textContent = asking ? "ASK" : responding ? "WAIT" : "READ";
+    const state = stepConversation();
+    mode.textContent = asking ? "ASK" : state.responding ? "WAIT" : "READ";
     if (asking) {
       hints.textContent = " enter send · esc cancel";
     } else {
       const keys = layout.compactHints
         ? ["←/→ step", "j/k scroll"]
         : ["←/→ previous/next", "j/k scroll", "PgUp/PgDn page"];
-      if (chat.responder && !responding) keys.push("a ask");
-      keys.push("q quit");
+      if (chat.responder && !state.responding) keys.push("a ask");
+      // While an answer streams, quitting would lose it: the same key
+      // first interrupts the answer in flight.
+      keys.push(state.responding ? "q stop" : "q quit");
       hints.textContent = " " + keys.join(" · ");
     }
     const segments: string[] = [];
@@ -266,7 +281,7 @@ export async function runTerminalTour(tour: CodeTour, root: string): Promise<voi
     segments.push(narration.isEnabled() ? "VOICE ON" : "VOICE OFF");
     if (speechWarning) segments.push(speechWarning);
     if (chat.provider) segments.push(chat.provider.name.toLowerCase());
-    const count = conversations.exchanges(current).length;
+    const count = state.exchanges.length;
     if (count) segments.push(exchangesLabel(count));
     // The status line is one row shared with the key hints: the right side
     // yields first, and its first segments are the ones that must survive.
@@ -311,18 +326,19 @@ export async function runTerminalTour(tour: CodeTour, root: string): Promise<voi
   function updateChatPrompt(): void {
     const questions = tour.steps[current]?.questions ?? [];
     const width = layout.composerWidth;
+    const state = stepConversation();
     const text = asking
       ? tail(draft, width - 1) + "▌"
       : !chat.responder
         ? "no ACP agent"
-        : responding
+        : state.responding
           ? "answering…"
           : "ask about this step…";
     composerText.textContent = " " + fit(text, width);
     composerHint.textContent = asking
       ? "question for this step"
-      : responding
-        ? "answer streaming"
+      : state.responding
+        ? "answer streaming · q stop"
         : !chat.responder
           ? "no agent on PATH"
           : questions.length
@@ -374,7 +390,8 @@ export async function runTerminalTour(tour: CodeTour, root: string): Promise<voi
 
   function renderChat(): void {
     chatTitle.textContent = "conversation";
-    const exchanges = conversations.exchanges(current);
+    const state = stepConversation();
+    const exchanges = state.exchanges;
     chatMeta.textContent = !chat.responder
       ? "no agent"
       : exchanges.length
@@ -417,24 +434,37 @@ export async function runTerminalTour(tour: CodeTour, root: string): Promise<voi
       agent.className = "role role-agent";
       agent.textContent = "▌ " + (chat.provider?.name.toLowerCase() ?? "agent");
       block.append(asker, question, agent);
-      for (const tool of exchange.tools) {
+      for (const tool of exchange.toolUses) {
         const use = document.createElement("p");
         use.className = "tool";
-        use.textContent = "⚙ " + tool;
+        use.textContent = "⚙ " + (tool.forbidden ? "refused " : "") +
+          (tool.kind || "tool") + (tool.title ? ": " + tool.title : "");
+        block.appendChild(use);
+      }
+      if (exchange.activity) {
+        const use = document.createElement("p");
+        use.className = "tool";
+        use.textContent = "⚙ " + exchange.activity;
         block.appendChild(use);
       }
       const answer = document.createElement("div");
       answer.className = "answer";
-      if (exchange.error) {
+      if (exchange.failed) {
         answer.classList.add("answer-error");
-        answer.textContent = exchange.error;
+        answer.textContent = exchange.answer;
       } else if (exchange.pending) {
         answer.classList.add("answer-pending");
         // Answers stream as plain text until complete, then as Markdown.
         answer.textContent = exchange.answer || "… answering";
-        liveAnswer = answer;
       } else {
+        // Answers settle as Markdown once complete or interrupted.
         answer.innerHTML = renderMarkdownToHtml(exchange.answer);
+        if (exchange.interrupted) {
+          const stopped = document.createElement("p");
+          stopped.className = "answer-pending";
+          stopped.textContent = "Answer interrupted.";
+          answer.appendChild(stopped);
+        }
       }
       block.appendChild(answer);
       chatBody.appendChild(block);
@@ -446,55 +476,31 @@ export async function runTerminalTour(tour: CodeTour, root: string): Promise<voi
     const step = tour.steps[current];
     const stepIndex = current;
     const text = question.trim();
-    if (!step || !text || responding) return;
-    const exchange = conversations.begin(stepIndex, text);
-    if (!chat.responder) {
-      conversations.fail(stepIndex, exchange,
-        "No ACP agent is installed to answer this question.");
-      renderChat();
-      return;
-    }
-    responding = true;
-    updateStatus();
-    renderChat();
-    try {
-      const answer = await chat.responder.answer({
-        question: text,
-        context: buildStepChatContext(tour, step,
+    if (!step || !text) return;
+    // The shared store owns the lifecycle: a question is blocked while
+    // this Step's previous answer is still in progress, the answer
+    // streams into the exchange, and an interruption or a failure settles
+    // the exchange without disturbing the reading. The final paint comes
+    // from the settled view, like the webview painter's.
+    await conversations.ask(
+      String(stepIndex),
+      text,
+      {
+        context: () => buildStepChatContext(tour, step,
           resolveReadonlyStepContext(root, tour, step), readCommitFile),
-        history: conversations.history(stepIndex),
         workspaceRoot: root
-      }, {
-        onAnswerDelta: delta => {
-          conversations.append(stepIndex, exchange, delta);
-          if (liveAnswer && current === stepIndex) {
-            liveAnswer.textContent = exchange.answer;
-            pinChat();
-          }
-        },
-        onActivity: message => {
-          exchange.tools.push(message);
-          if (current === stepIndex) renderChat();
-        },
-        onToolUse: tool => {
-          const label = (tool.forbidden ? "refused " : "") +
-            (tool.kind || "tool") + (tool.title ? ": " + tool.title : "");
-          if (!exchange.tools.includes(label)) exchange.tools.push(label);
-          if (current === stepIndex) renderChat();
+      },
+      () => {
+        if (current === stepIndex) {
+          renderChat();
+          updateStatus();
         }
-      });
-      conversations.complete(stepIndex, exchange, answer);
-    } catch (error) {
-      conversations.fail(stepIndex, exchange,
-        error instanceof Error ? error.message : String(error));
-    } finally {
-      responding = false;
-      liveAnswer = undefined;
-      if (current === stepIndex) {
-        renderChat();
       }
-      updateStatus();
+    );
+    if (current === stepIndex) {
+      renderChat();
     }
+    updateStatus();
   }
 
   async function render(): Promise<void> {
@@ -667,15 +673,25 @@ export async function runTerminalTour(tour: CodeTour, root: string): Promise<voi
       event.preventDefault();
       return;
     }
-    if (key === "q" || key === "Escape") void close();
-    else if (key === "a" && chat.responder && !responding) {
+    // While an answer streams, the reading must survive: `q` and Escape
+    // interrupt the Step's answer in flight instead of closing the reader,
+    // and a second press quits once nothing is in flight.
+    if (key === "q" || key === "Escape") {
+      if (stepConversation().responding) {
+        conversations.stop(stepKey());
+        renderChat();
+        updateStatus();
+      } else {
+        void close();
+      }
+    } else if (key === "a" && chat.responder && !stepConversation().responding) {
       asking = true;
       draft = "";
       updateStatus();
       updateChatPrompt();
     } else if (/^[1-9]$/.test(key)) {
       const question = tour.steps[current]?.questions?.[Number(key) - 1];
-      if (question && !responding) void ask(question);
+      if (question && !stepConversation().responding) void ask(question);
       else return;
     } else if ((key === "ArrowRight" || key === "n") && current < tour.steps.length - 1) {
       goToStep(current + 1);

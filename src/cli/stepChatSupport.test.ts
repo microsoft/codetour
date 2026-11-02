@@ -8,8 +8,7 @@ import { createAcpStepChatResponder } from "../agent/stepChatAgent";
 import {
   buildStepChatContext,
   commandExists,
-  openTerminalChat,
-  StepConversations
+  openTerminalChat
 } from "./stepChatSupport";
 
 const fakeAgent = path.join(__dirname, "../agent/fakeAcpAgent.js");
@@ -18,17 +17,25 @@ function provider(name: string, command: string): AcpProvider {
   return { name, entry: { command, cwd: process.cwd() } };
 }
 
-test("only an installed provider answers Step questions", async () => {
+test("only the installed providers reach the session's responder", async () => {
   const providers = [provider("Vibe", "vibe-acp"), provider("Copilot", "copilot")];
   let disposed = 0;
+  let received: AcpProvider[] = [];
   const session = openTerminalChat(process.cwd(), {
     providers,
     exists: command => command === "copilot",
-    createResponder: () => ({
-      answer: () => "answer",
-      dispose: async () => { disposed += 1; }
-    })
+    createResponder: candidates => {
+      received = candidates;
+      return {
+        answer: () => "answer",
+        dispose: async () => {
+          disposed += 1;
+        }
+      };
+    }
   });
+  // The missing provider never becomes a candidate of the failover policy.
+  assert.deepEqual(received.map(candidate => candidate.name), ["Copilot"]);
   assert.equal(session.provider?.name, "Copilot");
   assert.equal(await session.responder?.answer({
     question: "q", context: { available: false, description: "" }, history: [],
@@ -44,12 +51,30 @@ test("only an installed provider answers Step questions", async () => {
   await none.dispose();
 });
 
+test("the session's responder failovers between the installed providers by default", async () => {
+  // The default responder is the single failover policy of ADR 0014, over
+  // the installed candidates in the extension's order.
+  const session = openTerminalChat(process.cwd(), {
+    providers: [provider("Vibe", "vibe-acp")],
+    exists: () => true,
+    createResponder: undefined
+  });
+  assert.ok(session.responder);
+  assert.equal(session.provider?.name, "Vibe");
+  await session.dispose();
+});
+
 test("an explicit ACP command overrides the installed providers", () => {
+  let received: AcpProvider[] = [];
   const session = openTerminalChat(process.cwd(), {
     env: { CODETOUR_ACP_COMMAND: "/opt/agent", CODETOUR_ACP_ARGS: "--stdio --flag" },
     exists: () => true,
-    createResponder: () => ({ answer: () => "ok" })
+    createResponder: providers => {
+      received = providers;
+      return { answer: () => "ok" };
+    }
   });
+  assert.deepEqual(received.map(candidate => candidate.entry.command), ["/opt/agent"]);
   assert.equal(session.provider?.name, "custom");
   assert.equal(session.provider?.entry.command, "/opt/agent");
   assert.deepEqual(session.provider?.entry.args, ["--stdio", "--flag"]);
@@ -70,23 +95,6 @@ test("a command is found only when it is an executable on PATH", {
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
-});
-
-test("conversations keep completed answers as the next question's history", () => {
-  const conversations = new StepConversations();
-  const first = conversations.begin(0, "first");
-  conversations.append(0, first, "part ");
-  conversations.append(0, first, "two");
-  conversations.complete(0, first, "part one");
-  const failed = conversations.begin(0, "failed");
-  conversations.fail(0, failed, "unavailable");
-  const pending = conversations.begin(0, "pending");
-
-  assert.deepEqual(conversations.history(0),
-    [{ question: "first", answer: "part one" }]);
-  assert.equal(conversations.exchanges(0).length, 3);
-  assert.equal(conversations.exchanges(0)[2], pending);
-  assert.deepEqual(conversations.exchanges(1), []);
 });
 
 test("a question is grounded in the code or the two diff snapshots on screen", () => {

@@ -1,4 +1,8 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import {
+  McpServer,
+  ResourceTemplate,
+} from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import * as path from "path";
 import { createContext, selectContext } from "./context";
@@ -75,6 +79,43 @@ const CRITICAL_REVIEW_RESOURCE_DESCRIPTION =
   "the CodeTour adaptation of Matt Pocock's code-review skill, the upstream " +
   "skill text (verbatim, MIT), its source revision, and the license. Read " +
   "this resource in full before writing the tour steps.";
+
+// Generation prompt resources (spec #94): the served prompt is generation
+// data addressed to the host agent (the Tour Generator), next to the
+// critical-instructions resource above. The prompt text is embedded here, in
+// the module that owns the tool descriptions, so every distribution serves it
+// offline with no download and the Copilot adapter can drop its hand-written
+// prompt prose.
+
+// URI of the fixed resource serving the Project Tour generation prompt.
+// The Copilot adapter derives its prompt from this resource (spec #94).
+export const PROJECT_TOUR_PROMPT_RESOURCE_URI =
+  "codetour://generate/project-tour";
+const PROJECT_TOUR_PROMPT_RESOURCE_NAME = "project-tour-generation-prompt";
+const PROJECT_TOUR_PROMPT_RESOURCE_DESCRIPTION =
+  "Generation prompt for the create_project_tour tool: the instructions the " +
+  "host agent follows to analyze the workspace and propose a Project Tour. " +
+  "Project Tours have no review mode.";
+
+// URI template of the resource serving the Changes Tour generation prompt.
+// {reviewMode} takes exactly the values \"neutral\" and \"critical\"; the
+// Copilot adapter derives its prompt from this resource (spec #94).
+export const CHANGES_TOUR_PROMPT_RESOURCE_TEMPLATE =
+  "codetour://generate/changes-tour/{reviewMode}";
+const CHANGES_TOUR_PROMPT_RESOURCE_NAME = "changes-tour-generation-prompt";
+const CHANGES_TOUR_PROMPT_RESOURCE_DESCRIPTION =
+  "Generation prompt for the create_changes_tour tool, parameterized by " +
+  "review mode: \"neutral\" asks for a factual explanation of the changes; " +
+  "\"critical\" additionally embeds the shared review skill pack (the one " +
+  `served by ${CRITICAL_REVIEW_RESOURCE_URI}) that must be followed ` +
+  "in full before any analysis or step writing.";
+
+// Mechanism choice (spec #94): the Changes Tour prompt is parameterized by
+// the review mode, so it is served as an MCP resource template rather than
+// one fixed resource per mode: `resources/read` resolves the concrete URI
+// (…/neutral, …/critical) and the server composes the prompt for the
+// requested mode, rejecting any other value. The Project Tour prompt has no
+// parameter, so it is a fixed resource URI.
 
 // Fixed destinations reserved for generated Tours. They are replaced only
 // after complete validation and ignored while detecting a dirty workspace (see
@@ -348,6 +389,81 @@ const changesToolInputSchema = z
   })
   .passthrough();
 
+// Project Tour generation prompt served by the PROJECT_TOUR_PROMPT_RESOURCE_URI
+// resource. It addresses the host agent and cites the tool; it never mentions
+// a review mode, which only exists for Changes Tours.
+function projectTourGenerationPrompt(): string {
+  return [
+    "# CodeTour Project Tour generation prompt",
+    "",
+    "You are the Tour Generator for a CodeTour Project Tour: a guided explanation " +
+      "of this codebase's purpose, structure, and important execution paths for a " +
+      "developer discovering the project.",
+    "",
+    "- Read the relevant source before writing; every explanation and anchor must " +
+      "be supported by the code. Explore the codebase first — the entry points and " +
+      "the main modules, not just file names.",
+    "- Orient the reader first (a directory or no-locator step on where the work " +
+      "lives), then follow one coherent route — entry point, main components, how " +
+      "they collaborate — rather than a flat file listing. One step covers one idea.",
+    "- Anchor each explanation at the code that justifies it (Tour Anchor: file with " +
+      "line, pattern, or selection, a directory for structural orientation, or no " +
+      "locator for general context), preferring a short, stable pattern over a line " +
+      "number so the anchor survives edits.",
+    "- Propose the tour with the `create_project_tour` tool. Rehearse first: call the " +
+      "tool once with dryRun true, correct every reported validation issue, then call " +
+      "again with dryRun omitted to persist the tour.",
+    "- The tour is written to the reserved destination `.tours/project.tour`, or " +
+      "`.tours/<fileName>.tour` when a bare `fileName` is supplied. The full input " +
+      "contract and writing guidance are part of the `create_project_tour` tool " +
+      "description.",
+    "",
+  ].join("\n");
+}
+
+// Changes Tour generation prompt served by the CHANGES_TOUR_PROMPT_RESOURCE_TEMPLATE
+// resource for the requested review mode. Both modes share the contract
+// clauses (Git comparison, Tour Anchors, validation, destination, dryRun);
+// the critical mode additionally embeds the shared review skill pack with the
+// instruction to follow it in full before any analysis or step writing.
+function changesTourGenerationPrompt(reviewMode: "neutral" | "critical"): string {
+  const modeClause =
+    reviewMode === "neutral"
+      ? "- Review mode \"neutral\": explain the changes factually. Do not judge " +
+        "their quality, recommend alternatives, or approve or reject them."
+      : "- Review mode \"critical\": in addition to the factual explanation, " +
+        "integrate code-review findings into the tour, following the embedded " +
+        "review instructions below. Read them in full and follow them integrally " +
+        "before any analysis or writing of tour steps.";
+  return [
+    `# CodeTour Changes Tour generation prompt (review mode: ${reviewMode})`,
+    "",
+    "You are the Tour Generator for a CodeTour Changes Tour: a guided explanation " +
+      "of the intent, implementation, and impact of the committed changes on this " +
+      "branch since it diverged from its base.",
+    "",
+    modeClause,
+    "- Inspect the actual Git comparison before writing: the diff from the " +
+      "merge-base of the base reference to the analyzed head commit, the affected " +
+      "source, and the tests. Base every statement on what the code does, never on " +
+      "commit messages or file names alone.",
+    "- Anchor every explanation at the changed lines it concerns (Tour Anchor, in " +
+      "the head snapshot), and explain each major change: what it does, how it is " +
+      "implemented, and its observable behavioral effect.",
+    "- Propose the tour with the `create_changes_tour` tool. Rehearse first: call " +
+      "the tool once with dryRun true, correct every reported validation issue, " +
+      "then call again with dryRun omitted to persist the tour.",
+    "- The tour is written to the reserved destination `.tours/changes.tour`, or " +
+      "`.tours/<fileName>.tour` when a bare `fileName` is supplied. The full input " +
+      "contract and writing guidance are part of the `create_changes_tour` tool " +
+      "description.",
+    ...(reviewMode === "critical"
+      ? ["", "## Embedded review instructions", "", criticalReviewSkillPack()]
+      : []),
+    "",
+  ].join("\n");
+}
+
 export function createServer(workspaceRoot: string): McpServer {
   const ctx = createContext(workspaceRoot);
   const server = new McpServer(
@@ -375,6 +491,63 @@ export function createServer(workspaceRoot: string): McpServer {
         },
       ],
     })
+  );
+
+  // The Project Tour generation prompt is a fixed resource: it has no
+  // parameter.
+  server.registerResource(
+    PROJECT_TOUR_PROMPT_RESOURCE_NAME,
+    PROJECT_TOUR_PROMPT_RESOURCE_URI,
+    {
+      description: PROJECT_TOUR_PROMPT_RESOURCE_DESCRIPTION,
+      mimeType: "text/markdown",
+    },
+    () => ({
+      contents: [
+        {
+          uri: PROJECT_TOUR_PROMPT_RESOURCE_URI,
+          mimeType: "text/markdown",
+          text: projectTourGenerationPrompt(),
+        },
+      ],
+    })
+  );
+
+  // The Changes Tour generation prompt is parameterized by the review mode,
+  // so it is served as a resource template: resources/read resolves the
+  // concrete URI and the server composes the prompt for the requested mode.
+  server.registerResource(
+    CHANGES_TOUR_PROMPT_RESOURCE_NAME,
+    new ResourceTemplate(CHANGES_TOUR_PROMPT_RESOURCE_TEMPLATE, {
+      list: undefined,
+    }),
+    {
+      description: CHANGES_TOUR_PROMPT_RESOURCE_DESCRIPTION,
+      mimeType: "text/markdown",
+    },
+    (uri, variables) => {
+      const reviewMode = variables.reviewMode;
+      if (
+        typeof reviewMode !== "string" ||
+        (reviewMode !== "neutral" && reviewMode !== "critical")
+      ) {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          `Unknown review mode ${JSON.stringify(reviewMode)}: the Changes Tour ` +
+            `generation prompt resource only supports "neutral" and "critical" ` +
+            `(${CHANGES_TOUR_PROMPT_RESOURCE_TEMPLATE}).`
+        );
+      }
+      return {
+        contents: [
+          {
+            uri: uri.toString(),
+            mimeType: "text/markdown",
+            text: changesTourGenerationPrompt(reviewMode),
+          },
+        ],
+      };
+    }
   );
 
   server.registerTool(

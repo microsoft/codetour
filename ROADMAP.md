@@ -49,9 +49,11 @@ Guider le Tour Generator pour qu’il précise l’intention du lecteur avant de
 - [ ] Traiter l’absence de préférence facultative comme un choix neutre et
   poursuivre avec le comportement standard ; bloquer uniquement si une donnée
   indispensable manque.
-- [ ] Pour une revue critique, le client doit lire
-  `codetour://review/critical-instructions` avant l’appel MCP. En cas d’échec
-  de lecture, arrêter explicitement la génération critique au lieu de produire
+- [ ] Pour une revue critique, un client MCP direct doit lire
+  `codetour://review/critical-instructions` avant l’appel MCP ; l’adaptateur
+  Copilot, lui, lit `codetour://generate/changes-tour/critical`, qui porte le
+  même contrat. En cas d’échec de lecture, arrêter explicitement la génération
+  critique au lieu de produire
   silencieusement un Tour neutre ou de présenter un Tour sans revue comme
   critique. Si aucune source de spécification n’est trouvée, poursuivre avec
   Standards seulement et indiquer exactement :

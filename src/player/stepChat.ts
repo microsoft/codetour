@@ -2,11 +2,16 @@ import { Uri, window, workspace } from "vscode";
 import { ActiveTour } from "../store";
 import { FS_SCHEME } from "../constants";
 import { getStepFileUri } from "../utils";
+import {
+  StepConversations,
+  type StepConversationView
+} from "../agent/stepConversations";
 import { getStepDiff, getStepDiffPath } from "./diff";
 import { renderMarkdownToHtml } from "./markdown";
 
 /**
- * The Tour Step Conversation base (webview chat).
+ * The Tour Step Conversation painter of the Expanded Description View
+ * (webview chat).
  *
  * Message protocol between the webview and the extension:
  *
@@ -27,8 +32,11 @@ import { renderMarkdownToHtml } from "./markdown";
  *   complete. A question is blocked while the step's previous answer is
  *   still in progress.
  *
- * Conversations are kept in memory per tour and step identity, until the
- * reading webview closes; nothing is persisted to disk.
+ * The conversation lifecycle — store, blocking, history, interruption and
+ * failures — lives in the shared StepConversations module above the
+ * responder seam, common to every playback surface. This file only paints
+ * the stored exchanges as sanitized HTML: the webview's own knowledge is
+ * the step context capture, which reads the displayed buffers.
  */
 
 import type {
@@ -53,54 +61,16 @@ export type {
 };
 export { StepChatAgentUnavailableError };
 
-let responder: StepChatResponder | undefined;
+/** The shared conversation store: every surface keeps only its painter. */
+const conversations = new StepConversations();
 
 /** Injects (or removes) the responder answering step chat questions. */
 export function setStepChatResponder(next?: StepChatResponder): void {
-  releaseResponder(responder);
-  responder = next;
+  conversations.setResponder(next);
 }
-
-function releaseResponder(current: StepChatResponder | undefined): void {
-  if (!current) {
-    return;
-  }
-  try {
-    const released = current.dispose?.();
-    if (released) {
-      Promise.resolve(released).catch(() => undefined);
-    }
-  } catch {
-    // Releasing a responder must never disturb the reader.
-  }
-}
-
-interface StoredExchange {
-  question: string;
-  // The raw answer feeds follow-up questions; the HTML feeds the chat.
-  answerMarkdown: string;
-  answerHtml: string;
-  activityHtml?: string;
-  // The forbidden tool calls executed during this answer, keyed by call
-  // and kept up to date while the answer streams.
-  forbiddenTools?: Map<string, StepChatToolUse>;
-  failed: boolean;
-  // True while the responder is still answering this question: the
-  // response-in-progress state of the chat.
-  pending?: boolean;
-  // True when the reader stopped this exchange's answer: its late
-  // completion must never overwrite the interrupted state.
-  interrupted?: boolean;
-}
-
-const conversations = new Map<string, StoredExchange[]>();
 
 function conversationKey(tourId: string, step: number): string {
   return `${tourId}::${step}`;
-}
-
-function getConversation(tourId: string, step: number): StoredExchange[] {
-  return conversations.get(conversationKey(tourId, step)) ?? [];
 }
 
 /** One question with its answer, as the webview renders it. */
@@ -140,31 +110,39 @@ export function getStepChatConversationView(
   tourId: string,
   step: number
 ): StepChatConversationView {
-  const conversation = getConversation(tourId, step);
-  return {
-    exchanges: conversation.map(exchange => ({
-      question: exchange.question,
-      answerHtml: exchange.answerHtml,
-      activityHtml: exchange.activityHtml,
-      forbiddenTools:
-        exchange.forbiddenTools && exchange.forbiddenTools.size > 0
-          ? [...exchange.forbiddenTools.values()]
-          : undefined,
-      failed: exchange.failed || undefined,
-      pending: exchange.pending || undefined,
-      interrupted: exchange.interrupted || undefined
-    })),
-    responding: conversation.some(exchange => exchange.pending === true)
-  };
+  return paint(conversations.view(conversationKey(tourId, step)));
 }
 
 /** Forgets every step conversation; called when the reading webview closes. */
 export function clearStepChatConversations(): void {
   conversations.clear();
-  // The ACP agent resources are released with the conversations; the
-  // responder stays registered and lazily relaunches for a future reading
-  // session.
-  releaseResponder(responder);
+}
+
+/** Paints the shared store's raw conversation as the webview renders it. */
+function paint(view: StepConversationView): StepChatConversationView {
+  return {
+    exchanges: view.exchanges.map(exchange => ({
+      question: exchange.question,
+      // Every displayed answer crosses the shared sanitizer: the
+      // streamed chunks and the settled answer alike.
+      answerHtml: exchange.interrupted
+        ? interruptedAnswerHtml(renderMarkdownToHtml(exchange.answer))
+        : renderMarkdownToHtml(exchange.answer),
+      activityHtml: exchange.activity
+        ? renderMarkdownToHtml(exchange.activity)
+        : undefined,
+      forbiddenTools: exchange.toolUses.filter(tool => tool.forbidden),
+      failed: exchange.failed || undefined,
+      pending: exchange.pending || undefined,
+      interrupted: exchange.interrupted || undefined
+    })),
+    responding: view.responding
+  };
+}
+
+/** The displayed answer of a stopped exchange, with its interruption. */
+function interruptedAnswerHtml(streamedAnswer: string): string {
+  return `${streamedAnswer}<p class="step-chat-interrupted" role="status">Answer interrupted.</p>`;
 }
 
 /**
@@ -293,144 +271,18 @@ export async function askTourStepQuestion(
   onProgress?: (view: StepChatConversationView) => void
 ): Promise<StepChatConversationView> {
   const key = conversationKey(active.tour.id, active.step);
-  const view = (): StepChatConversationView =>
-    getStepChatConversationView(active.tour.id, active.step);
-
-  // A new question cannot be sent while the previous answer is in progress.
-  if (view().responding) {
-    return view();
-  }
-
-  const history: StepChatHistoryEntry[] = getConversation(
-    active.tour.id,
-    active.step
-  )
-    // A failed or interrupted exchange never completed: neither feeds a
-    // follow-up question's history.
-    .filter(exchange => !exchange.failed && !exchange.pending && !exchange.interrupted)
-    .map(exchange => ({
-      question: exchange.question,
-      answer: exchange.answerMarkdown
-    }));
-
-  // The question appears immediately with the response-in-progress state,
-  // before any answer text arrives.
-  const exchange: StoredExchange = {
+  const stored = await conversations.ask(
+    key,
     question,
-    answerMarkdown: "",
-    answerHtml: "",
-    failed: false,
-    pending: true
-  };
-  const conversation = getConversation(active.tour.id, active.step);
-  conversation.push(exchange);
-  conversations.set(key, conversation);
-  onProgress?.(view());
-
-  // The stored exchange is updated in place: the conversation keeps its
-  // order and a refresh never mixes the streamed answer into another step.
-  // The late completion of a stopped exchange is ignored: it never
-  // overwrites the interrupted state the reader already sees.
-  const complete = (final: StoredExchange) => {
-    if (exchange.interrupted) {
-      return;
-    }
-    exchange.answerMarkdown = final.answerMarkdown;
-    exchange.answerHtml = final.answerHtml;
-    exchange.failed = final.failed;
-    exchange.pending = undefined;
-  };
-
-  if (!responder) {
-    complete(
-      failedExchange(
-        question,
-        "This step's responder is not available. Tour reading stays usable."
-      )
-    );
-  } else {
-    let streamed = "";
-    let thought = "";
-    try {
-      const context = await resolveStepContext(active);
-      // Stop can arrive while the displayed context is still being read.
-      if (exchange.interrupted) return view();
-      const answerMarkdown = await responder.answer(
-        {
-          question,
-          context,
-          history,
-          workspaceRoot: active.workspaceRoot?.fsPath ?? ""
-        },
-        {
-          // Every chunk is rendered through the shared sanitizer and
-          // displayed on its own: the answer is readable as it streams.
-          onThoughtDelta: delta => {
-            if (exchange.interrupted) return;
-            thought += delta;
-            exchange.activityHtml = renderMarkdownToHtml(thought);
-            onProgress?.(view());
-          },
-          onActivity: message => {
-            if (exchange.interrupted) return;
-            exchange.activityHtml = renderMarkdownToHtml(message);
-            onProgress?.(view());
-          },
-          // A forbidden tool call is reported to the reader the moment it
-          // runs; an allowed one stays a plain line of model activity.
-          onToolUse: tool => {
-            if (exchange.interrupted) return;
-            if (tool.forbidden) {
-              const tools =
-                exchange.forbiddenTools ?? new Map<string, StepChatToolUse>();
-              tools.set(tool.toolCallId, tool);
-              exchange.forbiddenTools = tools;
-            } else {
-              exchange.activityHtml = renderMarkdownToHtml(
-                `${tool.title ?? tool.kind ?? "Tool"} (${tool.status ?? "in progress"})`
-              );
-            }
-            onProgress?.(view());
-          },
-          onAnswerDelta: (delta: string) => {
-            if (exchange.interrupted) {
-              return;
-            }
-            streamed += delta;
-            exchange.answerHtml = renderMarkdownToHtml(streamed);
-            onProgress?.(view());
-          }
-        }
-      );
-      complete({
-        question,
-        answerMarkdown,
-        answerHtml: renderMarkdownToHtml(answerMarkdown),
-        failed: false
-      });
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : String(error);
-      if (error instanceof StepChatAgentUnavailableError) {
-        complete(
-          failedExchange(
-            question,
-            `${reason} A new question will restart the agent; tour reading stays usable.`
-          )
-        );
-      } else {
-        complete(
-          failedExchange(
-            question,
-            `The answer to this question failed (${reason}). Tour reading stays usable.`
-          )
-        );
-      }
-    }
-  }
-
-  const final = view();
-  onProgress?.(final);
-  return final;
+    {
+      context: () => resolveStepContext(active),
+      workspaceRoot: active.workspaceRoot?.fsPath ?? ""
+    },
+    () => onProgress?.(getStepChatConversationView(active.tour.id, active.step))
+  );
+  const view = paint(stored);
+  onProgress?.(view);
+  return view;
 }
 
 /**
@@ -447,42 +299,7 @@ export function stopTourStepQuestion(
   active: ActiveTour,
   onProgress?: (view: StepChatConversationView) => void
 ): StepChatConversationView {
-  const conversation = getConversation(active.tour.id, active.step);
-  const exchange = [...conversation]
-    .reverse()
-    .find(candidate => candidate.pending === true);
-  if (!exchange) {
-    return getStepChatConversationView(active.tour.id, active.step);
-  }
-
-  // The stopped answer keeps its streamed part, marked as interrupted.
-  exchange.pending = undefined;
-  exchange.interrupted = true;
-  exchange.answerHtml = interruptedAnswerHtml(exchange.answerHtml);
-
-  // The responder cancels its in-flight ACP exchange; a responder without
-  // cancellation still leaves the interrupted state in the chat.
-  try {
-    responder?.cancel?.();
-  } catch {
-    // Stopping must never disturb the reader.
-  }
-
-  const final = getStepChatConversationView(active.tour.id, active.step);
-  onProgress?.(final);
-  return final;
-}
-
-/** The displayed answer of a stopped exchange, with its interruption. */
-function interruptedAnswerHtml(streamedAnswer: string): string {
-  return `${streamedAnswer}<p class="step-chat-interrupted" role="status">Answer interrupted.</p>`;
-}
-
-function failedExchange(question: string, message: string): StoredExchange {
-  return {
-    question,
-    answerMarkdown: "",
-    answerHtml: renderMarkdownToHtml(message),
-    failed: true
-  };
+  const view = paint(conversations.stop(conversationKey(active.tour.id, active.step)));
+  onProgress?.(view);
+  return view;
 }

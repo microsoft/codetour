@@ -10,7 +10,10 @@ export function codeTourMcpServer(cwd = process.cwd()) {
   return {type: "stdio", command: executable, args: [...prefix, "mcp", "--workspace-root", cwd], tools: ["*"], workingDirectory: cwd};
 }
 
-async function criticalInstructions(cwd) {
+// Single stdio MCP client for every resource this extension reads: the
+// generation prompt served by codetour mcp. Timeout and errors are explicit;
+// an empty or unreachable resource rejects so no analysis can start.
+async function servedResource(cwd, uri) {
   const config = codeTourMcpServer(cwd);
   return new Promise((resolve, reject) => {
     const child = spawn(config.command, config.args, {cwd, stdio: ["pipe", "pipe", "pipe"], windowsHide: true});
@@ -26,22 +29,22 @@ async function criticalInstructions(cwd) {
       child.kill();
       if (error) reject(error); else resolve(value);
     };
-    const timer = setTimeout(() => finish(new Error("CodeTour MCP review instructions timed out.")), 15000);
+    const timer = setTimeout(() => finish(new Error(`CodeTour MCP resource ${uri} timed out.`)), 15000);
     const send = message => child.stdin.write(JSON.stringify({jsonrpc: "2.0", ...message}) + "\n");
     child.on("error", error => finish(error));
     child.stdin.on("error", error => finish(error));
     child.stderr.on("data", chunk => {stderr = (stderr + chunk).slice(-4096);});
-    child.once("close", () => finish(new Error(stderr.trim() || "CodeTour MCP closed before providing review instructions.")));
+    child.once("close", () => finish(new Error(stderr.trim() || `CodeTour MCP closed before serving ${uri}.`)));
     lines.on("line", line => {
       try {
         const message = JSON.parse(line);
         if (message.error) throw new Error(message.error.message);
         if (message.id === 1) {
           send({method: "notifications/initialized"});
-          send({id: 2, method: "resources/read", params: {uri: "codetour://review/critical-instructions"}});
+          send({id: 2, method: "resources/read", params: {uri}});
         } else if (message.id === 2) {
           const text = message.result?.contents?.map(item => item.text || "").join("\n");
-          if (!text?.trim()) throw new Error("CodeTour MCP returned empty review instructions.");
+          if (!text?.trim()) throw new Error(`CodeTour MCP returned an empty resource for ${uri}.`);
           finish(null, text);
         }
       } catch (error) { finish(error); }
@@ -143,35 +146,39 @@ export async function runCodeTourCommand(session, raw, cwd = process.cwd()) {
         reviewMode = answer.toLowerCase();
       }
       if (typeof session.send !== "function") throw new Error("This Copilot host cannot send a generation request to its agent.");
-      let prompt = type === "project"
-        ? "Generate a Project Tour of the current Tour Workspace using the registered CodeTour MCP create_project_tour tool."
-        : `Generate a Changes Tour of committed changes on the current branch using the registered CodeTour MCP create_changes_tour tool with reviewMode: "${reviewMode}". Preserve the existing Git comparison, Tour Anchors, validation, destination and dryRun contracts. ${reviewMode === "neutral" ? "Explain changes factually, without adding quality judgments." : ""}`;
-      if (reviewMode === "critical") {
-        const instructions = await criticalInstructions(cwd);
-        prompt += `\nBefore any analysis or drafting, follow these shared CodeTour review instructions, retrieved from codetour://review/critical-instructions:\n\n${instructions}`;
-      }
+      // codetour mcp is the single source of the generation prompt: the
+      // adapter only picks the served resource for the requested run.
+      const uri = type === "project"
+        ? "codetour://generate/project-tour"
+        : `codetour://generate/changes-tour/${reviewMode}`;
+      const prompt = await servedResource(cwd, uri);
       // The slash command has completed its choices; start the requested run now.
       // Enqueue leaves explicit commands waiting for another Enter on CLI 1.0.105.
       await session.send({prompt, mode: "immediate"});
       return;
     }
     const { title, renderer } = parse(input);
-    const tours = JSON.parse(await runCli(["--internal-list-tours"], cwd));
-    if (!tours.length) throw new Error("No existing Tours found in this Git worktree.");
+    // Selection is the CLI's resolution contract; host elicitation only picks
+    // a candidate among many when no title is given. A given title keeps the
+    // CLI resolution with its exact errors relayed as is (unique Tour
+    // shortcut, ambiguity, empty workspace). An elicited candidate launches
+    // the reader by identity, so duplicate titles resolve unambiguously.
     let selected;
     if (title) {
-      const matches = tours.filter(tour => tour.title === title ||
-        path.basename(fileURLToPath(tour.id), ".tour") === title);
-      if (matches.length !== 1) throw new Error(`Tour '${title}' not found or ambiguous. Available: ${tours.map(t => t.title).join(", ")}`);
-      selected = matches[0];
-    } else if (tours.length === 1) selected = tours[0];
-    else {
-      if (!session.capabilities?.ui?.elicitation) throw new Error("Tour selection requires an interactive Copilot session; specify a Tour title.");
-      const labels = tours.map((tour, i) => `${i + 1}. ${tour.title}`);
-      const choice = await session.ui.select("Select a CodeTour", labels);
-      if (choice === null || choice === undefined) return;
-      selected = tours[labels.indexOf(choice)];
-      if (!selected) throw new Error("Invalid Tour selection.");
+      selected = JSON.parse(await runCli(["--internal-resolve-tour", title], cwd));
+    } else {
+      const tours = JSON.parse(await runCli(["--internal-list-tours"], cwd));
+      if (tours.length > 1) {
+        if (!session.capabilities?.ui?.elicitation) throw new Error("Tour selection requires an interactive Copilot session; specify a Tour title.");
+        const labels = tours.map((tour, i) => `${i + 1}. ${tour.title}`);
+        const choice = await session.ui.select("Select a CodeTour", labels);
+        if (choice === null || choice === undefined) return;
+        const chosen = tours[labels.indexOf(choice)];
+        if (!chosen) throw new Error("Invalid Tour selection.");
+        selected = chosen;
+      } else {
+        selected = JSON.parse(await runCli(["--internal-resolve-tour"], cwd));
+      }
     }
     await runCli(["--internal-tour-id", selected.id, "--renderer", renderer], cwd, {detached: true});
     await session.log(`Starting CodeTour: ${selected.title} (${renderer}).`, {level: "info"});

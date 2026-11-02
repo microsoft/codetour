@@ -2,101 +2,50 @@ import { execFileSync } from "node:child_process";
 import { accessSync, constants } from "node:fs";
 import * as path from "node:path";
 import { acpProviders, type AcpProvider } from "../agent/acpProviders";
+import { createFallbackStepChatResponder } from "../agent/fallbackStepChatAgent";
 import type { StepChatContext, StepChatResponder } from "../agent/stepChatContract";
-import { createAcpStepChatResponder } from "../agent/stepChatAgent";
 import type { CodeTour, CodeTourStep } from "../store";
 import type { ReadonlyStepContext } from "./stepContext";
 
-/** One question of the terminal chat, with its streamed answer. */
-export interface ChatExchange {
-  question: string;
-  answer: string;
-  pending: boolean;
-  error?: string;
-  /** Tool calls the agent reported while answering, forbidden ones included. */
-  tools: string[];
-}
-
-/**
- * The in-memory conversations of the terminal reader, kept per Step until the
- * Tour ends. Nothing is written to disk and no progress is persisted.
- */
-export class StepConversations {
-  private readonly byStep = new Map<number, ChatExchange[]>();
-
-  exchanges(step: number): readonly ChatExchange[] {
-    return this.byStep.get(step) ?? [];
-  }
-
-  /** The completed exchanges of a Step, as the responder's prompt history. */
-  history(step: number): { question: string; answer: string }[] {
-    return this.exchanges(step)
-      .filter(exchange => !exchange.pending && !exchange.error && exchange.answer.trim())
-      .map(exchange => ({ question: exchange.question, answer: exchange.answer }));
-  }
-
-  begin(step: number, question: string): ChatExchange {
-    const exchange: ChatExchange = { question, answer: "", pending: true, tools: [] };
-    const exchanges = this.byStep.get(step) ?? [];
-    exchanges.push(exchange);
-    this.byStep.set(step, exchanges);
-    return exchange;
-  }
-
-  private set(step: number, exchange: ChatExchange): void {
-    const exchanges = this.byStep.get(step) ?? [];
-    if (!exchanges.includes(exchange)) exchanges.push(exchange);
-    this.byStep.set(step, exchanges);
-  }
-
-  append(step: number, exchange: ChatExchange, delta: string): void {
-    exchange.answer += delta;
-    this.set(step, exchange);
-  }
-
-  complete(step: number, exchange: ChatExchange, answer: string): void {
-    exchange.answer = answer;
-    exchange.pending = false;
-    this.set(step, exchange);
-  }
-
-  fail(step: number, exchange: ChatExchange, message: string): void {
-    exchange.error = message;
-    exchange.pending = false;
-    this.set(step, exchange);
-  }
-}
-
 export interface TerminalChatSession {
+  /** The first installed candidate, as the panel names the agent. */
   provider?: AcpProvider;
+  /**
+   * The Tour Step Conversation responder: one failover policy over every
+   * installed candidate (ADR 0014), shared with the extension's chat.
+   */
   responder?: StepChatResponder;
   dispose(): Promise<void>;
 }
 
 /**
- * The first installed ACP provider answers Step questions. Nothing is
- * downloaded and no provider is started until the reader asks a question.
+ * The terminal reader's Tour Step Conversation session. Only installed
+ * candidates are tried, in the extension's order, and the ordered failover
+ * between them is the single policy of ADR 0014 — the same one the
+ * extension's chat uses. Nothing is downloaded and no provider is started
+ * until the reader asks a question.
  */
 export function openTerminalChat(
   root: string,
   options: {
     providers?: AcpProvider[];
     exists?: (command: string) => boolean;
-    createResponder?: (provider: AcpProvider) => StepChatResponder;
+    createResponder?: (providers: AcpProvider[]) => StepChatResponder;
     env?: NodeJS.ProcessEnv;
   } = {}
 ): TerminalChatSession {
   const env = options.env ?? process.env;
-  const providers = options.providers ?? configuredProviders(root, env);
-  const provider = providers.find(candidate => (options.exists ?? commandExists)(candidate.entry.command));
-  if (!provider) {
+  const exists = options.exists ?? commandExists;
+  const providers = (options.providers ?? configuredProviders(root, env))
+    .filter(candidate => exists(candidate.entry.command));
+  if (!providers.length) {
     return { dispose: async () => undefined };
   }
   const create = options.createResponder ??
-    ((selected: AcpProvider) => createAcpStepChatResponder(() => selected.entry));
-  const responder = create(provider);
+    ((candidates: AcpProvider[]) => createFallbackStepChatResponder(() => candidates));
+  const responder = create(providers);
   return {
-    provider,
+    provider: providers[0],
     responder,
     async dispose() {
       await responder.dispose?.();

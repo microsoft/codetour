@@ -3,6 +3,18 @@
 All notable changes to CodeTour IA are documented in this file. Entries below
 v0.1.0 document the original microsoft/codetour releases the fork builds on.
 
+## Unreleased
+
+### Changed
+
+- One Tour Step Conversation store above the responder seam, shared by the
+  extension chat and the terminal reader: each surface keeps only the way it
+  paints the exchanges. The interruption now works in the terminal too —
+  `q` or Escape during an answer in flight stops that answer instead of
+  closing the reader — the follow-up history rules no longer differ between
+  surfaces, and the terminal's chat benefits from the ordered ACP provider
+  failover previously extension-only. See ADR 0031.
+
 ## v0.1.2
 
 ### Added

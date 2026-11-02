@@ -745,7 +745,7 @@
     "watch": "webpack --mode development --watch",
     "package": "node scripts/package-extension.js",
     "vscode:prepublish": "npm run build",
-    "test": "npm run build && node scripts/sync-renderer-dep.js && tsc -p tsconfig.test.json && node scripts/run-compiled-tests.js dist/test && npm --prefix packages/description-renderer test && npm --prefix packages/mcp-server test && node --test test/copilot-adapter.test.mjs",
+    "test": "npm run build && node scripts/sync-renderer-dep.js && tsc -p tsconfig.test.json && node scripts/run-compiled-tests.js dist/test && npm --prefix packages/description-renderer test && npm --prefix packages/mcp-server test && node --test test/copilot-adapter.test.mjs test/cli-resolution.test.mjs",
     "cli": "node dist/cli.js",
     "package:standalone": "node scripts/package-standalone.js",
     "test:standalone": "node --test test/standalone-package.test.js"

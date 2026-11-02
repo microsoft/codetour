@@ -226,7 +226,14 @@ test("rapid navigation narrates only the steps actually displayed", {
   // Both right-arrows arrive before any render completes, so the middle Step
   // is never displayed: the voice must skip it, not queue or double anyone.
   // The initial toggle waits for the rendered OFF state instead of guessing
-  // that TermDOM attached within a fixed delay.
+  // that TermDOM attached within a fixed delay. Each key also waits for the
+  // previous utterance to be observable in the log: the reader cuts speech by
+  // killing its subprocess, and a subprocess killed before its first line
+  // leaves no log entry — without this the observation races the cut and the
+  // test confuses "speak was never called" with "the log has not appeared
+  // yet" (issue #83). Waiting on the log is a condition on the real process
+  // boundary, not an arbitrary delay: a Step that must stay silent still
+  // fails the test if it ever logs.
   const { env, log } = speechSession();
   const finalDescription = "THIRDSPOKEN";
   writeFileSync(tourPath, JSON.stringify({ ...TOUR, steps: [
@@ -236,8 +243,8 @@ test("rapid navigation narrates only the steps actually displayed", {
   try {
     session = await readTourUntil([
       { output: "VOICE OFF", key: "v" },
-      { output: "VOICE ON", key: "\u001b[C\u001b[C" },
-      { output: finalDescription, key: "q" }
+      { output: "VOICE ON", key: "\u001b[C\u001b[C", ready: () => log().length === 1 },
+      { output: finalDescription, key: "q", ready: () => log().length === 2 }
     ], env);
   } finally {
     writeFileSync(tourPath, JSON.stringify(TOUR));
@@ -279,7 +286,11 @@ test("scrolling and opening the chat never restart the narration", {
   try {
     session = await readTourUntil([
       { output: "VOICE OFF", key: "v" },
-      { output: "VOICE ON", key: "j" },
+      // The utterance must be observable in the log before the session is
+      // driven further: the reader closes by killing the speech subprocess,
+      // and a subprocess killed before its first line leaves no log entry,
+      // so without this the final log assertion races the cut (issue #83).
+      { output: "VOICE ON", key: "j", ready: () => log().length === 1 },
       { frame: true, key: "a" },
       { output: "ASK", key: "\u001b" },
       { output: "READ", key: "q" }

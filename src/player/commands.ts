@@ -7,6 +7,7 @@ import { COMMAND_PREFIX } from "../constants";
 import { focusPlayer } from "../player";
 import { saveTour } from "../recorder/commands";
 import { CodeTour, store } from "../store";
+import { loadTour } from "../store/tourSchema";
 import {
   endCurrentCodeTour,
   exportTour,
@@ -250,8 +251,7 @@ export function registerPlayerCommands() {
       try {
         const contents = await readUriContents(uri[0]);
 
-        const tour = JSON.parse(contents);
-        tour.id = decodeURIComponent(uri[0].toString());
+        const tour = loadTour(contents, decodeURIComponent(uri[0].toString()));
 
         startCodeTour(tour);
       } catch {

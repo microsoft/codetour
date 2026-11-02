@@ -10,6 +10,7 @@ import {
   workspace
 } from "vscode";
 import { CodeTour, store } from ".";
+import { loadTour } from "./tourSchema";
 import { COMMAND_PREFIX, EXTENSION_NAME, FS_SCHEME, FS_SCHEME_CONTENT } from "../constants";
 import { startPlayer, stopPlayer } from "../player";
 import {
@@ -40,8 +41,7 @@ export const onDidStartTour = _onDidStartTour.event;
 export async function startCodeTourByUri(tourUri: Uri, stepNumber?: number) {
   const bytes = await workspace.fs.readFile(tourUri);
   const contents = new TextDecoder().decode(bytes);
-  const tour = JSON.parse(contents);
-  tour.id = tourUri.toString();
+  const tour = loadTour(contents, tourUri.toString());
 
   startCodeTour(tour, stepNumber);
 }

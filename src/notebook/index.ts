@@ -5,6 +5,7 @@ import * as vscode from "vscode";
 import { EXTENSION_NAME, SMALL_ICON_URL } from "../constants";
 import { renderPreviewDescription } from "../player/description";
 import { CodeTour } from "../store";
+import { parseTourFile } from "../store/tourSchema";
 import { getStepFileUri, getWorkspaceUri } from "../utils";
 
 class CodeTourNotebookProvider implements vscode.NotebookSerializer {
@@ -17,7 +18,7 @@ class CodeTourNotebookProvider implements vscode.NotebookSerializer {
     this.originalContent = content;
     let contents = new TextDecoder().decode(content);
 
-    let tour = <CodeTour>JSON.parse(contents);
+    let tour = parseTourFile(contents) as CodeTour;
     const workspaceRoot = getWorkspaceUri(tour);
     let steps: any[] = [];
 

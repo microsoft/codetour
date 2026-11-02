@@ -3,51 +3,22 @@
 
 import { observable } from "mobx";
 import { CommentThread, Uri } from "vscode";
+import type { CodeTour, CodeTourStep } from "./tourSchema";
 
-export interface CodeTourStepPosition {
-  line: number;
-  character: number;
-}
-
-export interface CodeTourStep {
-  title?: string;
-  description: string;
-  questions?: string[];
-  icon?: string;
-
-  // A step guides the reader to a single type of destination: a file,
-  // a directory, virtual content, a resource, or a VS Code view.
-  file?: string;
-  baseFile?: string;
-  display?: "diff";
-  directory?: string;
-  contents?: string;
-  uri?: string;
-  view?: string;
-
-  // Line and selection narrow the region to show inside a file. Without a
-  // position, the step is presented as an explanation of the whole file.
-  line?: number;
-  selection?: { start: CodeTourStepPosition; end: CodeTourStepPosition };
-
-  commands?: string[];
-
-  pattern?: string;
-  markerTitle?: string;
-}
-
-export interface CodeTour {
-  id: string;
-  title: string;
-  description?: string;
-  steps: CodeTourStep[];
-  ref?: string;
-  baseRef?: string;
-  isPrimary?: boolean;
-  nextTour?: string;
-  stepMarker?: string;
-  when?: string;
-}
+// The tour file format's types derive from the zod schemas: the single source
+// of truth lives in `./tourSchema`, next to the runtime validation.
+export type {
+  CodeTour,
+  CodeTourStep,
+  CodeTourStepPosition,
+  TourFile
+} from "./tourSchema";
+export {
+  CodeTourStepSchema,
+  TourFileSchema,
+  loadTour,
+  parseTourFile
+} from "./tourSchema";
 
 export interface ActiveTour {
   tour: CodeTour;

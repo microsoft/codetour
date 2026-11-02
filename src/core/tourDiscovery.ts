@@ -4,6 +4,7 @@
  */
 import * as jexl from "jexl";
 import type { CodeTour } from "../store";
+import { loadTour } from "../store/tourSchema";
 
 export const MAIN_TOUR_FILES = [".tour", ".vscode/main.tour", "main.tour"];
 export const SUB_TOUR_DIRECTORIES = [".vscode/tours", ".github/tours", ".tours"];
@@ -28,8 +29,7 @@ export async function discoverToursFromRoot<Uri>(
 ): Promise<CodeTour[]> {
   const readTour = async (uri: Uri): Promise<CodeTour | undefined> => {
     try {
-      const tour = JSON.parse(await fs.read(uri)) as CodeTour;
-      tour.id = fs.id(uri);
+      const tour = loadTour(await fs.read(uri), fs.id(uri));
       return tour;
     } catch {
       // Existing CodeTour discovery ignores unreadable/non-Tour files.

@@ -92,6 +92,21 @@ test("CLI errors do not write or launch", () => {
   }
 });
 
+test("the reader entry rejects a non-TTY host without hiding the error", () => {
+  // The TermDOM reader needs an interactive terminal; run() drives the
+  // bundled CLI over pipes, so no TTY is attached. The guard lives at the
+  // entry point — the adapter and the reading module are never reached.
+  const { root } = fixture();
+  try {
+    const tourPath = path.join(root, ".tours", "architecture.tour");
+    const result = run(root, ["--internal-tour", tourPath]);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /TermDOM requires an interactive terminal/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 
 test("standalone HTML shows referenced Git snapshot rather than a dirty worktree", () => {
   const { root } = fixture();

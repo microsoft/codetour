@@ -33,14 +33,14 @@
     },
     {
       "title": "Navigating the TermDOM reader",
-      "description": "The terminal surface renders Tour steps and handles keyboard navigation, scrolling, progress, and completion. The current step is reader state rather than a write to the `.tour` file; coverage is in `src/cli/terminal.test.ts`.",
+      "description": "The terminal surface renders Tour steps and handles keyboard navigation, scrolling, progress, and completion. The current step is reader state rather than a write to the `.tour` file; coverage is in `src/cli/reader/reader.test.ts`, which drives the reading interface in-process.",
       "file": "src/cli/terminal.ts",
       "pattern": "export async function runTerminalTour\\(",
       "display": "diff"
     },
     {
       "title": "Failing explicitly on unsupported content",
-      "description": "The TermDOM path converts supported descriptions for terminal display and raises a typed rendering error when a reached step contains unsupported content. It does not silently skip that step or switch to another renderer; related coverage is in `src/cli/terminalContent.test.ts` and `src/cli/terminal.test.ts`.",
+      "description": "The TermDOM path converts supported descriptions for terminal display and raises a typed rendering error when a reached step contains unsupported content. It does not silently skip that step or switch to another renderer; related coverage is in `src/cli/terminalContent.test.ts` and the in-process reading interface tests in `src/cli/reader/reader.test.ts`.",
       "file": "src/cli/terminalContent.ts",
       "pattern": "renderTerminalDescription",
       "display": "diff"
@@ -61,7 +61,7 @@
     },
     {
       "title": "Launching an independent terminal window",
-      "description": "The terminal launcher opens a separate OS terminal for the TermDOM reader, leaving it independent of the process that requested playback. When a supported graphical terminal host is unavailable, it reports that condition rather than relying on a multiplexer; coverage includes `src/cli/terminal.test.ts` and `test/standalone-terminal-smoke.py`.",
+      "description": "The terminal launcher opens a separate OS terminal for the TermDOM reader, leaving it independent of the process that requested playback. When a supported graphical terminal host is unavailable, it reports that condition rather than relying on a multiplexer; coverage includes the in-process reading interface tests in `src/cli/reader/reader.test.ts` and `test/standalone-terminal-smoke.py`.",
       "file": "src/cli/terminalLauncher.ts",
       "pattern": "export async function launchTerminalReader\\(",
       "display": "diff"
@@ -82,7 +82,7 @@
     },
     {
       "title": "Controlling narration across navigation",
-      "description": "The narration controller owns the enabled state and cancels/replaces speech as the active Step changes. The reader commits narration only for a successfully displayed Step, preventing a delayed callback from speaking stale navigation state; coverage is in `src/cli/narration/NarrationController.test.ts` and `src/cli/narration/readerNarration.test.ts`.",
+      "description": "The narration controller owns the enabled state and cancels/replaces speech as the active Step changes. The reader commits narration only for a successfully displayed Step, preventing a delayed callback from speaking stale navigation state; coverage is in `src/cli/narration/NarrationController.test.ts` and `src/cli/reader/readerNarration.test.ts`.",
       "file": "src/cli/narration/NarrationController.ts",
       "pattern": "onStepChanged\\(description: string\\): void",
       "display": "diff"

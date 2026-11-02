@@ -457,3 +457,19 @@ test("step questions diagnostics expose the offending value in the found style",
     rmrf(root);
   }
 });
+
+test("step questions diagnostics serialize a BigInt questions value without throwing", () => {
+  const root = tempDir();
+  try {
+    const result = validate([{ description: "Step", questions: 10n }], root);
+    assert.deepEqual(
+      result.issues.find((issue) => issue.path === "steps[0].questions"),
+      {
+        path: "steps[0].questions",
+        message: "must be an array of at most 4 non-empty strings; found: 10",
+      }
+    );
+  } finally {
+    rmrf(root);
+  }
+});

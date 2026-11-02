@@ -104,6 +104,10 @@ function diagramNodeCount(source: string): number {
 // expression can hang the server process through catastrophic backtracking
 // when matched against an entire file, so only short, focused patterns are
 // accepted.
+export const MAX_QUESTIONS = 4;
+const QUESTIONS_ARRAY_RULE =
+  `must be an array of at most ${MAX_QUESTIONS} non-empty strings`;
+
 export const MAX_PATTERN_LENGTH = 200;
 
 // Reject active URI schemes in Markdown: a generated description must not be
@@ -352,15 +356,15 @@ function validateStep(
       issues.push({
         path: `${base}.questions`,
         message:
-          `must be an array of at most 4 non-empty strings; ` +
+          `${QUESTIONS_ARRAY_RULE}; ` +
           `found: ${serializeFound(raw.questions)}`,
       });
-    } else if (raw.questions.length > 4) {
+    } else if (raw.questions.length > MAX_QUESTIONS) {
       issues.push({
         path: `${base}.questions`,
         message:
-          `must be an array of at most 4 non-empty strings; ` +
-          `found: ${serializeFound(raw.questions.length)} questions; the limit is 4`,
+          `${QUESTIONS_ARRAY_RULE}; ` +
+          `found: ${serializeFound(raw.questions.length)} questions; the limit is ${MAX_QUESTIONS}`,
       });
     } else {
       const validatedQuestions: string[] = [];

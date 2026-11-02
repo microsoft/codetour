@@ -54,3 +54,7 @@ _Avoid_: Tour chat, workspace chat
 **Step Narration**:
 The optional local text-to-speech rendering of the active Tour Step's description while reading, off by default and never advancing the Tour.
 _Avoid_: Voiceover, audio tour, TTS playback
+
+**Targeted Context**:
+A bounded selection of code symbols and locations relevant to a Tour, offered to the Tour Generator as a substitute for open-ended exploration. Off by default; a Tour Generator without it behaves as if it never existed.
+_Avoid_: Repository Map, optimisation, context map

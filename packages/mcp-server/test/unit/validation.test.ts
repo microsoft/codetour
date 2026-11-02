@@ -410,12 +410,48 @@ test("step questions are optional and preserve up to four contextual prompts", (
   }
 });
 
-test("step questions reject excessive, empty and non-string suggestions", () => {
+test("step questions diagnostics expose the offending value in the found style", () => {
   const root = tempDir();
   try {
-    for (const questions of ["Why?", Array(5).fill("Why?"), [""], ["   "], [42], [null]]) {
+    const cases: Array<{ questions: unknown; path: string; message: string }> = [
+      {
+        questions: "Why?",
+        path: "steps[0].questions",
+        message: 'must be an array of at most 4 non-empty strings; found: "Why?"',
+      },
+      {
+        questions: ["Why?", "Which?", "What?", "Where?", "When?"],
+        path: "steps[0].questions",
+        message:
+          "must be an array of at most 4 non-empty strings; found: 5 questions; the limit is 4",
+      },
+      {
+        questions: [""],
+        path: "steps[0].questions[0]",
+        message: 'must be a non-empty string; found: ""',
+      },
+      {
+        questions: ["   "],
+        path: "steps[0].questions[0]",
+        message: 'must be a non-empty string; found: "   "',
+      },
+      {
+        questions: [42],
+        path: "steps[0].questions[0]",
+        message: "must be a non-empty string; found: 42",
+      },
+      {
+        questions: [null],
+        path: "steps[0].questions[0]",
+        message: "must be a non-empty string; found: null",
+      },
+    ];
+    for (const { questions, path, message } of cases) {
       const result = validate([{ description: "Step", questions }], root);
-      assert.ok(result.issues.some(issue => issue.path.startsWith("steps[0].questions")));
+      assert.deepEqual(
+        result.issues.find((issue) => issue.path === path),
+        { path, message }
+      );
     }
   } finally {
     rmrf(root);

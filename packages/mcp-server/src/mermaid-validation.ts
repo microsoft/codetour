@@ -70,8 +70,9 @@ function canonicalCaption(caption: string | undefined): string | undefined {
 
 // All "found" values in diagnostics are serialized the same way, so quoting
 // and escaping stay consistent across the caption, kind, and syntax messages.
-function serializeFound(value: string | undefined): string {
-  return value === undefined ? "undefined" : JSON.stringify(value);
+// Shared with step validation so non-string values serialize identically.
+export function serializeFound(value: unknown): string {
+  return JSON.stringify(value) ?? "undefined";
 }
 
 // An invalid-syntax fence can be up to 20 KB; the diagnostic embeds only a

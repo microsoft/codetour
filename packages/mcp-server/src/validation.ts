@@ -3,6 +3,7 @@ import * as path from "path";
 import safeRegex from "safe-regex2";
 import { findDiagramFences } from "codetour-description-renderer";
 import { CommitAnchor, normalizeSlashes } from "./git";
+import { serializeFound } from "./mermaid-validation";
 import {
   ChangesParams,
   Issue,
@@ -347,13 +348,28 @@ function validateStep(
 
   let questions: string[] | undefined;
   if (raw.questions !== undefined) {
-    if (!Array.isArray(raw.questions) || raw.questions.length > 4) {
-      issues.push({ path: `${base}.questions`, message: "must be an array of at most 4 non-empty strings" });
+    if (!Array.isArray(raw.questions)) {
+      issues.push({
+        path: `${base}.questions`,
+        message:
+          `must be an array of at most 4 non-empty strings; ` +
+          `found: ${serializeFound(raw.questions)}`,
+      });
+    } else if (raw.questions.length > 4) {
+      issues.push({
+        path: `${base}.questions`,
+        message:
+          `must be an array of at most 4 non-empty strings; ` +
+          `found: ${serializeFound(raw.questions.length)} questions; the limit is 4`,
+      });
     } else {
       const validatedQuestions: string[] = [];
       raw.questions.forEach((question, questionIndex) => {
         if (typeof question !== "string" || !question.trim()) {
-          issues.push({ path: `${base}.questions[${questionIndex}]`, message: "must be a non-empty string" });
+          issues.push({
+            path: `${base}.questions[${questionIndex}]`,
+            message: `must be a non-empty string; found: ${serializeFound(question)}`,
+          });
         } else {
           validatedQuestions.push(question.trim());
         }

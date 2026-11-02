@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTYPE — style du lecteur terminal</title>
+<!--
+  PROTOTYPE (jetable) — trois variantes de style du lecteur terminal CodeTour.
+  Question : « quel habillage pour le mode terminal ? »
+  Ouvrir ce fichier, basculer avec ?variant=A|B|C ou les flèches ← →.
+  Contrainte : tout ce qui est DANS le cadre doit rester faisable en TermDOM
+  (couleurs ANSI, gras, bordures d'une cellule, caractères de dessin) — pas de
+  rayon, d'ombre, de dégradé ni de pixel à l'intérieur du cadre.
+-->
+<style>
+:root{--cell:13px;--row:20px;--ink:#e9e7e1;--page:#08090b}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--page);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column;align-items:center;padding:22px 20px 112px;gap:14px}
+.proto-head{width:108ch;max-width:100%;display:flex;align-items:center;gap:10px}
+.proto-tag{color:#08090b;background:#d9d5c8;padding:2px 7px;font:700 10px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.12em;text-transform:uppercase}
+.proto-title{font:400 12px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.02em;color:#8a8d93}
+.stage{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+.pane{width:108ch;max-width:100%;height:calc(34 * var(--row));background:#0a0a0a;border:1px solid #26282d;overflow:hidden;font:var(--cell)/var(--row) ui-monospace,SFMono-Regular,Menlo,"Cascadia Mono",monospace;font-variant-ligatures:none;color:#eee}
+.caption{width:108ch;max-width:100%;margin:0;font:400 12px/1.7 ui-monospace,Menlo,monospace;color:#82858b}
+.caption b{color:#d9d5c8;font-weight:600}
+.switcher{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);display:flex;align-items:center;gap:4px;padding:5px;background:#f2f0e9;color:#111;box-shadow:0 10px 34px rgba(0,0,0,.55);z-index:10}
+.switcher button{appearance:none;border:0;background:transparent;color:inherit;width:30px;height:30px;font:16px/1 ui-monospace,Menlo,monospace;cursor:pointer;display:grid;place-items:center}
+.switcher button:hover{background:#dedbd0}
+.switcher .label{min-width:190px;text-align:center;font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.04em}
+.switcher .label small{display:block;font:400 10px/1.5 ui-monospace,Menlo,monospace;letter-spacing:.06em;color:#6a685f;margin-top:2px}
+</style>
+<style id="variant-css"></style>
+</head>
+<body>
+<header class="proto-head">
+  <span class="proto-tag">prototype</span>
+  <span class="proto-title">lecteur terminal CodeTour — 3 variantes de style</span>
+</header>
+<main class="stage">
+  <div class="pane" id="pane" aria-live="polite"></div>
+  <p class="caption"><b id="variant-name"></b><span id="variant-note"></span></p>
+</main>
+<nav class="switcher" aria-label="Variante">
+  <button id="prev" aria-label="Variante précédente">←</button>
+  <span class="label" id="label">A · opencode<small>1 / 3</small></span>
+  <button id="next" aria-label="Variante suivante">→</button>
+</nav>
+<script>
+const TOUR_TITLE = "Sérialisation du fallback ACP";
+const STEP_NO = 2;
+const STEP_TOTAL = 11;
+const STEP_TITLE = "La file d'attente partagée";
+const ANCHOR = "src/agent/fallbackStepChatAgent.ts:214";
+const FILE = "fallbackStepChatAgent.ts";
+const P1 = "Avant ce commit, chaque appel à <code>answer</code> lisait et incrémentait directement <code>selected</code> et <code>active</code>. Deux questions simultanées avançaient le même index de fallback : un fournisseur fonctionnel pouvait être sauté.";
+const P2 = "La nouvelle variable <code>pending</code> transforme la sélection, le démarrage, le fallback et le prompt en <b>une seule opération</b> sur la session partagée. Une question annulée pendant son attente ne démarre donc jamais d'agent.";
+const QUESTION = "Pourquoi <code>pending</code> est-il une <code>Promise&lt;void&gt;</code> et non la promesse de réponse ?";
+const ANSWER = "La file ne transporte pas la réponse, elle transporte l'<b>ordre</b>. <code>pending</code> dit seulement « la question suivante attend celle-ci ». La promesse de réponse repart vers l'appelant — d'où le type <code>Promise&lt;void&gt;</code>.";
+const SUGGESTION = "Que se passerait-il si deux questions avançaient selected ?";
+const STEPS = [
+  "Où ça change",
+  "File d'attente",
+  "Sérialisation",
+  "Rejets absorbés",
+  "cancel",
+  "dispose",
+  "fakeAcpAgent",
+  "Test concurrence",
+  "Test annulation",
+  "Test redémarrage",
+  "ADR 0014"
+];
+const DIFF = [
+  ["hunk", "@@ -205,8 +205,11 @@"],
+  ["ctx",  "   pending = Promise.resolve();"],
+  ["del",  "-  answer(q) {"],
+  ["del",  "-    return this.tryProviders(q);"],
+  ["del",  "-  }"],
+  ["add",  "+  answer(q) {"],
+  ["add",  "+    const attempt = ++this.generation;"],
+  ["add",  "+    const answer = this.pending.then("],
+  ["add",  "+      async () => {"],
+  ["add",  "+        if (attempt !== this.generation)"],
+  ["add",  "+          throw new Error(\"interrompu\");"],
+  ["add",  "+        return this.tryProviders(q);"],
+  ["add",  "+      });"],
+  ["add",  "+    this.pending = answer.then(noop, noop);"],
+  ["add",  "+    return answer;"],
+  ["add",  "+  }"]
+];
+
+function esc(text) {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function diffRows(prefix) {
+  return DIFF.map(([kind, text]) =>
+    '<div class="' + (kind === "hunk" ? "hunk" : kind) + '">' +
+    esc(text) + "</div>").join("");
+}
+
+/* ---------------------------------------------------------------- A · opencode */
+const OPENCODE_CSS = `
+#pane{background:#0a0a0a}
+.oc-root{height:100%;display:flex;flex-direction:column;background:#0a0a0a;color:#eeeeee;line-height:20px}
+.oc-top{height:20px;flex:none;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #262626}
+.oc-logo,.oc-brand{color:#fab283;font-weight:700}
+.oc-slash{color:#414141}
+.oc-tour{color:#c9c9c9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46ch}
+.oc-meta{margin-left:auto;color:#8a8a8a;white-space:nowrap}
+.oc-meta b{color:#fab283}
+.oc-key{color:#b9b9b9;white-space:nowrap}
+.oc-key b{color:#eeeeee;background:#1e1e1e;padding:0 4px;font-weight:400}
+.oc-body{flex:1;display:flex;min-height:0}
+.oc-side{width:23ch;flex:none;border-right:1px solid #262626;background:#0d0d0d;padding-top:6px;overflow:hidden}
+.oc-side-title{padding:0 10px;margin-bottom:4px;color:#6f6f6f;font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.oc-steps{list-style:none;margin:0;padding:0}
+.oc-steps li{display:flex;height:20px;padding:0 8px;color:#b9b9b9;white-space:nowrap;overflow:hidden}
+.oc-steps .bar{width:1ch;flex:none;color:#fab283}
+.oc-steps .n{width:2ch;flex:none;text-align:right;color:#5f5f5f}
+.oc-steps .t{margin-left:6px;overflow:hidden;text-overflow:ellipsis}
+.oc-steps li.active{background:#1e1e1e;color:#ffffff}
+.oc-steps li.active .n{color:#fab283}
+.oc-main{flex:1;min-width:0;padding:6px 14px 0;overflow:hidden}
+.oc-meta-line{color:#7d7d7d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oc-meta-line .anchor{color:#5c9cf5}
+.oc-meta-line .dot{color:#414141}
+.oc-role{display:flex;gap:6px;align-items:baseline;margin:6px 0 0;font-weight:700;white-space:nowrap}
+.oc-role .bar{color:#fab283}
+.oc-role .who{color:#fab283}
+.oc-role .when{color:#5f5f5f;font-weight:400;font-size:11px}
+.oc-role.user .bar,.oc-role.user .who{color:#5c9cf5}
+#pane .oc-main h1{font-size:13px;font-weight:700;line-height:20px;margin:0 0 2px;color:#ffffff}
+#pane .oc-main p{margin:0 0 6px;color:#cfcfcf}
+#pane code{color:#9d7cd0;font:inherit}
+#pane b{color:#ffffff;font-weight:700}
+.oc-file{margin-top:6px;border:1px solid #2f2f2f;background:#101010;overflow:hidden}
+.oc-file-head{display:flex;justify-content:space-between;gap:8px;height:20px;padding:0 8px;background:#171717;border-bottom:1px solid #2f2f2f;color:#c9c9c9;overflow:hidden;white-space:nowrap}
+.oc-file-head .tag{color:#5f5f5f}
+.oc-diff{padding:4px 8px;overflow:hidden}
+.oc-diff div{white-space:pre;line-height:20px}
+.oc-diff .add{color:#7fd88f}
+.oc-diff .del{color:#e06c75}
+.oc-diff .hunk{color:#5c9cf5}
+.oc-diff .ctx{color:#9a9a9a}
+.oc-chat{width:35ch;min-width:0;flex:none;overflow:hidden;border-left:1px solid #262626;background:#0d0d0d;display:flex;flex-direction:column;min-height:0}
+.oc-chat-head{height:20px;flex:none;display:flex;justify-content:space-between;padding:0 10px;border-bottom:1px solid #262626;color:#8a8a8a}
+.oc-chat-head b{color:#fab283;font-weight:700}
+.oc-chat-body{flex:1;min-height:0;overflow:hidden;padding:8px 10px 0}
+#pane .oc-chat-body p{margin:0 0 6px;color:#cfcfcf}
+.oc-tool{color:#6f6f6f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oc-tool .ico{color:#9d7cd0}
+.oc-sugg{color:#8a8a8a;margin-top:6px}
+.oc-sugg .k{color:#fab283;font-weight:700}
+.oc-composer{flex:none;margin:8px;border:1px solid #3a3a3a;background:#141414;padding:3px 8px 4px;overflow:hidden;white-space:nowrap}
+.oc-composer .p{color:#fab283}
+.oc-composer .ph{color:#6f6f6f;white-space:nowrap;overflow:hidden}
+.oc-composer .hint{color:#4f4f4f;font-size:11px;white-space:nowrap}
+.oc-status{height:20px;flex:none;display:flex;align-items:center;gap:12px;padding:0 12px;background:#141414;border-top:1px solid #262626;color:#8a8a8a}
+.oc-status .mode{color:#0a0a0a;background:#fab283;padding:0 6px;font-weight:700}
+.oc-status .seg{color:#b9b9b9}
+.oc-status .right{margin-left:auto;display:flex;gap:14px;color:#8a8a8a}
+`;
+function opencodeBody() {
+  const steps = STEPS.map((title, index) => {
+    const active = index === STEP_NO - 1;
+    return '<li class="' + (active ? "active" : "") + '">' +
+      '<span class="bar">' + (active ? "▌" : " ") + "</span>" +
+      '<span class="n">' + (index + 1) + "</span>" +
+      '<span class="t">' + title + "</span></li>";
+  }).join("");
+  return `
+  <div class="oc-root">
+    <div class="oc-top">
+      <span class="oc-logo">▌</span><span class="oc-brand">codetour</span>
+      <span class="oc-slash">│</span>
+      <span class="oc-tour">${TOUR_TITLE}</span>
+      <span class="oc-meta">étape <b>${STEP_NO}</b> / ${STEP_TOTAL}</span>
+      <span class="oc-key"><b>ctrl+p</b> commandes</span>
+    </div>
+    <div class="oc-body">
+      <nav class="oc-side">
+        <div class="oc-side-title">étapes</div>
+        <ul class="oc-steps">${steps}</ul>
+      </nav>
+      <div class="oc-main">
+        <div class="oc-meta-line"><span class="anchor">${ANCHOR}</span>
+          <span class="dot">·</span> diff</div>
+        <div class="oc-role"><span class="bar">▌</span><span class="who">codetour</span>
+          <span class="when">il y a 2 min</span></div>
+        <h1>${STEP_TITLE}</h1>
+        <p>${P1}</p>
+        <p>${P2}</p>
+        <div class="oc-file">
+          <div class="oc-file-head"><span>${FILE}</span>
+            <span class="tag">diff · base HEAD~1</span></div>
+          <div class="oc-diff">${diffRows()}</div>
+        </div>
+      </div>
+      <aside class="oc-chat">
+        <div class="oc-chat-head"><b>conversation</b><span>2 échanges</span></div>
+        <div class="oc-chat-body">
+          <div class="oc-role user"><span class="bar">▌</span><span class="who">vous</span></div>
+          <p>${QUESTION}</p>
+          <div class="oc-role"><span class="bar">▌</span><span class="who">vibe · claude-sonnet</span></div>
+          <p>${ANSWER}</p>
+          <div class="oc-tool"><span class="ico">⚙</span> lecture ${FILE}</div>
+          <div class="oc-tool"><span class="ico">⚙</span> grep "generation" src/agent</div>
+          <div class="oc-sugg"><span class="k">2</span> ${SUGGESTION}</div>
+        </div>
+        <div class="oc-composer">
+          <div><span class="p">❯</span> <span class="ph">demander à l'agent…</span></div>
+          <div class="hint">↵ envoyer · esc annuler</div>
+        </div>
+      </aside>
+    </div>
+    <div class="oc-status">
+      <span class="mode">NORMAL</span>
+      <span>←/→ étape</span>
+      <span>j/k défiler</span>
+      <span>a question</span>
+      <span>q quitter</span>
+      <span class="right"><span class="seg">vibe</span><span class="seg">claude-sonnet</span>
+        <span class="seg">2 échanges</span></span>
+    </div>
+  </div>`;
+}
+
+/* ---------------------------------------------------------------- B · lecture */
+const LECTURE_CSS = `
+#pane{background:#161b22}
+.rv-root{height:100%;display:flex;flex-direction:column;background:#161b22;color:#ededed;line-height:20px}
+.rv-head{height:20px;flex:none;display:flex;align-items:center;gap:10px;padding:0 14px;background:#202b38;color:#9bd8ff;border-bottom:1px solid #2d3b4a}
+.rv-head .t{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv-head .count{margin-left:auto;color:#c6c6c6;white-space:nowrap}
+.rv-sub{height:20px;flex:none;display:flex;align-items:center;gap:12px;padding:0 14px;background:#1a2330;border-bottom:1px solid #2d3b4a;color:#8b98a5}
+.rv-progress{letter-spacing:2px;color:#3f566b}
+.rv-progress .done{color:#80cbff}
+.rv-anchor{color:#ffd980;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv-badge{margin-left:auto;color:#80cbff;border:1px solid #3f566b;padding:0 6px;font-size:11px}
+.rv-body{flex:1;display:flex;min-height:0}
+.rv-main{flex:1;min-width:0;overflow:hidden;padding:10px 16px 0}
+#pane .rv-main h1{font-size:13px;font-weight:700;line-height:20px;margin:0 0 8px;color:#ffffff}
+#pane .rv-main p{margin:0 0 8px;color:#dfe3e8}
+#pane code{color:#ffd980;font:inherit}
+#pane b{color:#ffffff}
+.rv-src{margin-top:10px;border-top:1px solid #4a5862;background:#111820}
+.rv-src-head{display:flex;align-items:center;gap:8px;height:20px;padding:0 8px;color:#ffd980;font-weight:700}
+.rv-src-head .dot{color:#80cbff;font-weight:400}
+.rv-src-head .tag{margin-left:auto;color:#8b98a5;font-weight:400}
+.rv-diff{padding:0 8px 4px;overflow:hidden}
+.rv-diff div{white-space:pre;line-height:20px}
+.rv-diff .add{color:#80e89d}
+.rv-diff .del{color:#ff9090}
+.rv-diff .hunk{color:#80cbff}
+.rv-diff .ctx{color:#a6a6a6}
+.rv-chat{width:35ch;flex:none;border-left:1px solid #4a5862;background:#111820;display:flex;flex-direction:column;min-height:0;padding:8px 12px 0}
+.rv-chat-head{display:flex;justify-content:space-between;gap:8px;color:#ffd980;font-weight:700;white-space:nowrap}
+.rv-chat-head .prov{color:#8b98a5;font-weight:400;font-size:11px}
+.rv-sugg-title{margin-top:10px;color:#8b98a5;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.rv-sugg{list-style:none;margin:2px 0 0;padding:0}
+.rv-sugg li{color:#dfe3e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv-sugg .k{color:#80cbff;font-weight:700;margin-right:6px}
+.rv-thread{flex:1;min-height:0;overflow:hidden;margin-top:10px;border-top:1px solid #2d3b4a;padding-top:8px}
+#pane .rv-thread p{margin:0 0 6px;color:#dfe3e8}
+.rv-thread .q{color:#80cbff;font-weight:700}
+.rv-thread .tool{color:#8b98a5}
+.rv-prompt{margin:8px 0;border:1px solid #3f566b;background:#0d1319;padding:0 8px;color:#80cbff}
+.rv-foot{height:20px;flex:none;display:flex;align-items:center;gap:18px;padding:0 14px;background:#202b38;border-top:1px solid #2d3b4a;color:#c6c6c6}
+.rv-foot .right{margin-left:auto;color:#8b98a5}
+`;
+function lectureBody() {
+  const done = "█".repeat(STEP_NO);
+  const rest = "░".repeat(STEP_TOTAL - STEP_NO);
+  return `
+  <div class="rv-root">
+    <div class="rv-head"><span class="t">${TOUR_TITLE}</span>
+      <span class="count">étape ${STEP_NO} / ${STEP_TOTAL}</span></div>
+    <div class="rv-sub">
+      <span class="rv-progress"><span class="done">${done}</span>${rest}</span>
+      <span class="rv-anchor">${ANCHOR}</span>
+      <span class="rv-badge">diff</span>
+    </div>
+    <div class="rv-body">
+      <div class="rv-main">
+        <h1>${STEP_TITLE}</h1>
+        <p>${P1}</p>
+        <p>${P2}</p>
+        <div class="rv-src">
+          <div class="rv-src-head"><span class="dot">●</span>${FILE}
+            <span class="tag">diff · base HEAD~1</span></div>
+          <div class="rv-diff">${diffRows()}</div>
+        </div>
+      </div>
+      <aside class="rv-chat">
+        <div class="rv-chat-head">Step chat <span class="prov">vibe · claude-sonnet</span></div>
+        <div class="rv-sugg-title">suggestions</div>
+        <ol class="rv-sugg">
+          <li><span class="k">1</span>Pourquoi une Promise&lt;void&gt; ?</li>
+          <li><span class="k">2</span>${SUGGESTION}</li>
+        </ol>
+        <div class="rv-thread">
+          <p class="q">› ${QUESTION}</p>
+          <p>${ANSWER}</p>
+          <p class="tool">⚙ lecture ${FILE}</p>
+        </div>
+        <div class="rv-prompt">› a poser une question</div>
+      </aside>
+    </div>
+    <div class="rv-foot">
+      <span>←/→ étape</span><span>j/k défiler</span><span>PgUp/PgDn page</span>
+      <span>a question</span><span class="right">q quitter</span>
+    </div>
+  </div>`;
+}
+
+/* ---------------------------------------------------------------- C · manpage */
+const MANPAGE_CSS = `
+#pane{background:#0f0f0e}
+.mp-root{height:100%;display:flex;flex-direction:column;background:#0f0f0e;color:#d9d6cd;line-height:20px;padding:8px 14px 0}
+.mp-top{flex:none;display:flex;gap:8px;color:#7d7a72;border-bottom:1px solid #302f2a;padding-bottom:4px}
+.mp-top .brand{color:#e3b341;font-weight:700}
+.mp-top .right{margin-left:auto}
+.mp-col{flex:1;width:80ch;max-width:100%;margin:0 auto;min-height:0;overflow:hidden;padding-top:10px}
+.mp-kicker{color:#e3b341;font-size:11px;letter-spacing:.18em}
+.mp-rule{color:#3a3833}
+.mp-col p{margin:0 0 8px;color:#d9d6cd}
+.mp-h{color:#7d7a72;font-size:11px;letter-spacing:.14em;margin:12px 0 4px}
+.mp-code{border-left:1px solid #3a3833;padding-left:6px;margin:6px 0 0}
+.mp-code div{white-space:pre;line-height:20px}
+.mp-code .no{color:#55524b;display:inline-block;width:4ch}
+.mp-code .add{color:#8fbf7f}
+.mp-code .del{color:#c98a86}
+.mp-code .hunk{color:#7fa8c9}
+.mp-code .ctx{color:#a8a49a}
+.mp-chat{color:#b8b4a9}
+.mp-chat .k{color:#0f0f0e;background:#e3b341;padding:0 5px;font-weight:700}
+.mp-chat .dim{color:#5d5a52}
+.mp-foot{flex:none;display:flex;gap:20px;border-top:1px solid #302f2a;padding:4px 0;color:#7d7a72}
+.mp-foot .right{margin-left:auto}
+`;
+function manpageBody() {
+  let line = 204;
+  const diff = DIFF.map(([kind, text]) => {
+    const no = kind === "hunk" ? "" : String(++line);
+    return '<div><span class="no">' + no + "</span>" +
+      '<span class="' + kind + '">' + esc(text) + "</span></div>";
+  }).join("");
+  return `
+  <div class="mp-root">
+    <div class="mp-top"><span class="brand">codetour</span><span>·</span>
+      <span>${TOUR_TITLE.toLowerCase()}</span>
+      <span class="right">étape ${STEP_NO} / ${STEP_TOTAL}</span></div>
+    <div class="mp-col">
+      <div class="mp-kicker">2 — ${STEP_TITLE.toUpperCase()}</div>
+      <div class="mp-rule">${"─".repeat(80)}</div>
+      <p>${P1}</p>
+      <p>${P2}</p>
+      <div class="mp-h">LE CHANGEMENT</div>
+      <div class="mp-code">${diff}</div>
+      <div class="mp-h">CONVERSATION</div>
+      <div class="mp-chat"><span class="k">a</span> discuter de cette étape
+        <span class="dim">· 2 échanges · vibe · claude-sonnet</span></div>
+    </div>
+    <div class="mp-foot"><span>←/→ étape</span><span>j/k défiler</span>
+      <span>a discussion</span><span class="right">q quitter</span></div>
+  </div>`;
+}
+
+/* ---------------------------------------------------------------- switcher */
+const ORDER = ["A", "B", "C"];
+const VARIANTS = {
+  A: {
+    name: "opencode",
+    note: "Rail d'étapes à gauche, conversation à rôles et appels d'outils à droite, composeur encadré, barre d'état segmentée. La palette reprend celle d'opencode (pêche, bleu, violet).",
+    css: OPENCODE_CSS,
+    body: opencodeBody
+  },
+  B: {
+    name: "lecture",
+    note: "Évolution du lecteur actuel : même structure, chrome plus calme, progression en barre, encart source titré, panneau de chat hiérarchisé (suggestions → fil → prompt).",
+    css: LECTURE_CSS,
+    body: lectureBody
+  },
+  C: {
+    name: "manpage",
+    note: "Colonne de lecture centrée, sans panneaux ni barres : sections numérotées, source en marge, conversation repliée derrière une touche. Le texte d'abord.",
+    css: MANPAGE_CSS,
+    body: manpageBody
+  }
+};
+
+function currentKey() {
+  const key = (new URLSearchParams(location.search).get("variant") || "A").toUpperCase();
+  return VARIANTS[key] ? key : "A";
+}
+
+function paint() {
+  const key = currentKey();
+  const variant = VARIANTS[key];
+  document.getElementById("variant-css").textContent = variant.css;
+  const pane = document.getElementById("pane");
+  pane.innerHTML = variant.body();
+  pane.setAttribute("data-variant", key);
+  document.getElementById("variant-name").textContent = key + " · " + variant.name + " — ";
+  document.getElementById("variant-note").textContent = variant.note;
+  document.getElementById("label").innerHTML = key + " · " + variant.name +
+    "<small>" + (ORDER.indexOf(key) + 1) + " / " + ORDER.length + "</small>";
+}
+
+function go(key) {
+  const url = new URL(location.href);
+  url.searchParams.set("variant", key);
+  history.replaceState(null, "", url);
+  paint();
+}
+
+function step(delta) {
+  const index = ORDER.indexOf(currentKey());
+  go(ORDER[(index + delta + ORDER.length) % ORDER.length]);
+}
+
+document.getElementById("prev").addEventListener("click", () => step(-1));
+document.getElementById("next").addEventListener("click", () => step(1));
+document.addEventListener("keydown", event => {
+  if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+  const tag = (event.target && event.target.tagName) || "";
+  if (tag === "INPUT" || tag === "TEXTAREA" || (event.target && event.target.isContentEditable)) return;
+  event.preventDefault();
+  step(event.key === "ArrowRight" ? 1 : -1);
+});
+paint();
+</script>
+</body>
+</html>

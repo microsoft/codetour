@@ -720,7 +720,8 @@
     "mobx": "^5.14.2",
     "sanitize-html": "^2.13.1",
     "throttle-debounce": "^3.0.1",
-    "vsls": "^1.0.2532"
+    "vsls": "^1.0.2532",
+    "@b9g/termdom": "0.2.4"
   },
   "devDependencies": {
     "@types/markdown-it": "^14.1.2",
@@ -744,10 +745,16 @@
     "watch": "webpack --mode development --watch",
     "package": "node scripts/package-extension.js",
     "vscode:prepublish": "npm run build",
-    "test": "npm run build && node scripts/sync-renderer-dep.js && tsc -p tsconfig.test.json && node scripts/run-compiled-tests.js dist/test && npm --prefix packages/description-renderer test && npm --prefix packages/mcp-server test"
+    "test": "npm run build && node scripts/sync-renderer-dep.js && tsc -p tsconfig.test.json && node scripts/run-compiled-tests.js dist/test && npm --prefix packages/description-renderer test && npm --prefix packages/mcp-server test && node --test test/copilot-adapter.test.mjs",
+    "cli": "node dist/cli.js",
+    "package:standalone": "node scripts/package-standalone.js",
+    "test:standalone": "node --test test/standalone-package.test.js"
   },
   "prettier": {
     "arrowParens": "avoid",
     "trailingComma": "none"
+  },
+  "bin": {
+    "codetour": "./dist/cli.js"
   }
 }

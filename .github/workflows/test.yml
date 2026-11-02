@@ -36,3 +36,6 @@ jobs:
       - run: npm ci --prefix packages/mcp-server
       - run: npm run test
       - run: npm run package
+      - name: Test standalone distribution
+        if: runner.os == 'macOS' || runner.os == 'Windows'
+        run: npm run test:standalone

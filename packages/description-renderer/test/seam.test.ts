@@ -10,6 +10,7 @@ import {
   UNSUPPORTED_KIND_SOURCES,
   captionedDiagram,
   extractPngDataUri,
+  extractSvgDataUri,
   flowchartOfExactByteLength,
   assertValidPng
 } from "./helpers/fixtures";
@@ -124,6 +125,29 @@ test("renderDescription fails an unsupported kind locally, keeping the caption a
     assert.ok(!content.includes("```mermaid"), label);
     assert.ok(!content.includes(source), label);
   }
+});
+
+test("renderDescription can hand the sanitized SVG to a real HTML surface", async () => {
+  const content = await renderDescription(
+    CAPTIONED_FLOWCHART_DESCRIPTION,
+    "dark",
+    { diagramFormat: "svg" }
+  );
+
+  assert.ok(!content.includes("data:image/png"), "no raster is produced");
+  const svg = extractSvgDataUri(content, "Diagram — Request lifecycle");
+  assert.match(svg, /<svg/);
+  assert.match(svg, /viewBox="/);
+  assert.doesNotMatch(svg, /<script|<foreignObject/i);
+  assert.ok(content.includes("**Diagram — Request lifecycle**"));
+  assert.ok(!content.includes("```mermaid"));
+});
+
+test("renderDescription keeps PNG as the default image format", async () => {
+  const content = await renderDescription(CAPTIONED_FLOWCHART_DESCRIPTION, "light");
+
+  assert.ok(content.includes("data:image/png;base64,"));
+  assert.ok(!content.includes("data:image/svg+xml"));
 });
 
 test("renderDescription fails a Mermaid fence without a caption, without exposing its source", async () => {

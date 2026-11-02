@@ -15,7 +15,7 @@ export interface RenderedDiagram {
  * the in-memory cache key so a long-lived extension host never reuses output
  * produced by an older renderer implementation.
  */
-export const DESCRIPTION_RENDERER_VERSION = "0.1.3";
+export const DESCRIPTION_RENDERER_VERSION = "0.1.5";
 
 interface MermaidRenderResult {
   svg: string;

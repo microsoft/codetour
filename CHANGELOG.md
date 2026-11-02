@@ -7,6 +7,15 @@ v0.1.0 document the original microsoft/codetour releases the fork builds on.
 
 ### Added
 
+- The standalone terminal reader answers Step questions over ACP in its own
+  right-hand panel: the suggested questions of the Step are listed there,
+  `a` opens a free-form prompt, `1`-`4` ask a suggestion, and the answer
+  streams into the panel while the Step keeps its own scroll position.
+  Only an installed agent is used (Vibe, Copilot CLI, Codex or Claude Code),
+  the conversation stays in memory per Step, and the ACP client is read-only
+  exactly as in the extension. The HTML reader remains a static document with
+  no agent. See ADR 0026.
+
 - Optional `fileName` argument on both MCP tools (`create_project_tour` and
   `create_changes_tour`): a bare file name under which the tour is written
   inside `.tours/`, with the `.tour` suffix appended when absent. This lets an
@@ -16,6 +25,47 @@ v0.1.0 document the original microsoft/codetour releases the fork builds on.
   `.tours/project.tour`) apply as before.
 
 ### Changed
+
+- Standalone readers show Mermaid diagrams only where a reader can actually
+  read them: the terminal reader draws diagrams with `termaid` when that
+  command is installed and otherwise displays the validated Mermaid source in a
+  `mermaid-source` code block, instead of a half-block raster whose labels
+  collapse into colored blocks; the HTML reader renders each diagram (and
+  inlines local tour images) through the shared renderer, embedding the
+  sanitized SVG so the generated document stays self-contained and sharp at
+  any zoom level. See ADR 0024.
+
+- Both standalone readers use the OpenCode TUI dark palette: a near-black
+  canvas, neutral raised panels and a single warm accent, replacing the blue
+  GitHub-flavoured chrome whose filled header, panel and source blocks made
+  the page read as a blue veil in a terminal. Changes Tour rows now carry
+  tinted backgrounds for additions and deletions (`#20303b` / `#37222c`) with
+  brighter text, so a diff stays legible even when the terminal downsamples
+  colour or renders foreground colours dimly. The HTML reader is styled from
+  the same palette constants. See ADR 0027.
+
+- The terminal reader adopts the OpenCode TUI layout: a wordmark bar with the
+  Tour title and Step count, a Steps rail with the active Step marked (it
+  follows the active Step when the Tour outgrows the viewport), a conversation
+  thread with `▌ you` / `▌ <agent>` roles and tool calls, a bordered composer,
+  a titled source panel and a bottom status line whose mode chip reads `READ`,
+  `ASK` or `WAIT` and whose hints only list the keys that currently work. The
+  rail disappears below 100 columns so the Step and its conversation keep
+  readable widths. See ADR 0028.
+
+- The terminal reader paints on the alternate screen and restores the previous
+  screen on exit. Inline painting assumed an untouched viewport, so any output
+  printed before the takeover (a runtime deprecation warning, a shell line)
+  shifted every frame and left stale Step content mixed with the new one. The
+  failure diagnostic is now printed after the restore instead of being erased
+  with the reader, and the source/diff panel wraps long lines under their
+  indentation instead of clipping them at the terminal width. See ADR 0025.
+
+- The terminal reader scrolls the Step itself: `j`/`k`/`PgUp`/`PgDn` moved the
+  document scroller, which the fullscreen surface never repaints, so a Step
+  longer than one screenful could not be read past the fold. The Step now
+  scrolls inside its own box, page jumps equal exactly one screenful, and each
+  Step starts at the top again. See ADR 0025.
 
 - Uncommitted-change detection now ignores every `.tour` file under `.tours/`,
   not just the two reserved paths, so a previously generated tour never

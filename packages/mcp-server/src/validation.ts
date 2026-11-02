@@ -172,6 +172,7 @@ const CHANGES_PARAM_FIELDS = [
   "baseRef",
   "headRef",
   "includeUncommittedChanges",
+  "reviewMode",
 ] as const;
 
 export function validateProjectParams(
@@ -221,6 +222,18 @@ export function validateChangesParams(
       issues.push({ path: "includeUncommittedChanges", message: "must be a boolean" });
     } else {
       params.includeUncommittedChanges = raw.includeUncommittedChanges;
+    }
+  }
+  // Only two review modes exist for a Changes Tour. Omitting the field keeps
+  // the existing neutral behavior for direct callers.
+  if (raw.reviewMode !== undefined) {
+    if (raw.reviewMode !== "neutral" && raw.reviewMode !== "critical") {
+      issues.push({
+        path: "reviewMode",
+        message: 'must be "neutral" or "critical"',
+      });
+    } else {
+      params.reviewMode = raw.reviewMode;
     }
   }
   return { params, issues };

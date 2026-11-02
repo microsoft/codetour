@@ -30,10 +30,13 @@ export interface ProjectParams {
   steps?: unknown[];
 }
 
+export type ReviewMode = "neutral" | "critical";
+
 export interface ChangesParams extends ProjectParams {
   baseRef?: string;
   headRef?: string;
   includeUncommittedChanges?: boolean;
+  reviewMode?: ReviewMode;
 }
 
 export interface TourFile {

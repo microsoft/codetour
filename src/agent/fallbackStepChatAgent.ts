@@ -1,7 +1,7 @@
 import type { AcpProvider } from "./acpProviders";
 import { acpProviders } from "./acpProviders";
 import { createAcpStepChatResponder, type AcpStepChatResponderHooks } from "./stepChatAgent";
-import { StepChatAgentUnavailableError, type StepChatResponder } from "../player/stepChat";
+import { StepChatAgentUnavailableError, type StepChatResponder } from "./stepChatContract";
 
 /** Keeps the first working provider for the reading session, with ordered failover. */
 export function createFallbackStepChatResponder(

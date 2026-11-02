@@ -98,7 +98,7 @@ When you describe a step, you're able to use the full-breadth of markdown capabi
 
 If you want a step to reference a file in the workspace, you can add a markdown link to it, using a workspace-relative path. For example, adding `[Open file](./file.html)` to your step content, would add a hyperlink called `Open file`, that when clicked, would open the `./file.html` file.
 
-Additionally, you can reference local images in a step as well, using a markdown reference. For example, adding `![Image](./icon.png)` would render the `icon.png` in the step.
+Additionally, you can reference local images in a step as well, using a markdown image whose path is relative to the workspace root. For example, adding `![Image](docs/architecture.png)` to your step content, would render the `architecture.png` in the step. Images created for a tour belong under `.tours/images/<tour-name>/`, where `<tour-name>` is the tour's file name without the `.tour` suffix (`project` and `changes` for the reserved tours). Local images must be PNG or JPEG files of at most 2 MB, while ordinary links remain HTTPS-only. When the step is displayed, the player inlines the referenced image as a data URI; if the image cannot be loaded, the step shows a compact warning instead.
 
 #### Step References
 

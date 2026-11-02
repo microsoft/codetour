@@ -3,6 +3,7 @@
 
 import { ColorThemeKind, Uri, window, workspace } from "vscode";
 import {
+  DescriptionRenderOptions,
   DescriptionTheme,
   renderDescription
 } from "codetour-description-renderer";
@@ -24,6 +25,45 @@ export interface PreviewDescriptionContext {
   tour?: CodeTour;
   tours?: CodeTour[];
   workspaceRoot?: Uri;
+}
+
+function resolvePreviewWorkspaceUri(
+  context: PreviewDescriptionContext
+): Uri | undefined {
+  const activeTour = context.tour || store.activeTour?.tour;
+  return (
+    context.workspaceRoot ||
+    (activeTour
+      ? workspace.getWorkspaceFolder(Uri.parse(activeTour.id))?.uri
+      : undefined)
+  );
+}
+
+/**
+ * Supplies local image bytes to the renderer through its render seam so
+ * images inline as data URIs; references that leave the workspace, or files
+ * the host cannot read, render as a compact warning instead.
+ */
+function createDescriptionRenderOptions(
+  context: PreviewDescriptionContext
+): DescriptionRenderOptions {
+  const workspaceUri = resolvePreviewWorkspaceUri(context);
+  if (!workspaceUri) {
+    return {};
+  }
+
+  return {
+    resolveImageBytes: async path => {
+      if (path.startsWith("/") || path.split(/[\\/]/).includes("..")) {
+        return undefined;
+      }
+      try {
+        return await workspace.fs.readFile(Uri.joinPath(workspaceUri, path));
+      } catch {
+        return undefined;
+      }
+    }
+  };
 }
 
 export function getDescriptionTheme(): DescriptionTheme {
@@ -51,12 +91,7 @@ export function generatePreviewContent(
       return `${commandPrefix}${args}`;
     })
     .replace(FILE_REFERENCE_PATTERN, (_, isImage, prefix, filePath) => {
-      const activeTour = context.tour || store.activeTour?.tour;
-      const workspaceUri =
-        context.workspaceRoot ||
-        (activeTour
-          ? workspace.getWorkspaceFolder(Uri.parse(activeTour.id))?.uri
-          : undefined);
+      const workspaceUri = resolvePreviewWorkspaceUri(context);
 
       if (!workspaceUri) {
         return _;
@@ -98,8 +133,8 @@ export function generatePreviewContent(
 
 /**
  * Produces the Markdown consumed by every playback surface. Mermaid rendering
- * must happen before preview transformations so the source fence cannot be
- * mistaken for insertable code.
+ * and local image inlining must happen before preview transformations so the
+ * source content cannot be mistaken for insertable code.
  */
 export async function renderPreviewDescription(
   content: string,
@@ -108,7 +143,14 @@ export async function renderPreviewDescription(
 ): Promise<string> {
   return spaceDescriptionLists(
     spaceDescriptionImages(
-      generatePreviewContent(await renderDescription(content, theme), context)
+      generatePreviewContent(
+        await renderDescription(
+          content,
+          theme,
+          createDescriptionRenderOptions(context)
+        ),
+        context
+      )
     )
   );
 }

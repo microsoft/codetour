@@ -20,6 +20,7 @@ const config = {
     child_process: "commonjs child_process",
     util: "commonjs util",
     "@resvg/resvg-js": RESVG_EXTERNAL,
+    "@b9g/termdom": "commonjs @b9g/termdom",
     ...OPTIONAL_NATIVE_EXTERNALS
   },
   resolve: {
@@ -28,6 +29,12 @@ const config = {
       "codetour-description-renderer": path.resolve(
         __dirname,
         "packages/description-renderer/dist/src/index.js"
+      ),
+      // The CLI bundle embeds the shared MCP server entry exactly once, from
+      // the same source as the npm binary and the VSIX server bundle.
+      "codetour-mcp": path.resolve(
+        __dirname,
+        "packages/mcp-server/dist/src/cli.js"
       )
     }
   },
@@ -76,7 +83,7 @@ const nodeConfig = {
 const mcpConfig = {
   mode: "production",
   target: "node18",
-  entry: "./packages/mcp-server/dist/src/cli.js",
+  entry: "./packages/mcp-server/dist/src/main.js",
   externals: {
     "@resvg/resvg-js": RESVG_EXTERNAL,
     ...OPTIONAL_NATIVE_EXTERNALS
@@ -88,4 +95,23 @@ const mcpConfig = {
   }
 };
 
-module.exports = [nodeConfig, mcpConfig];
+const cliConfig = {
+  ...nodeConfig,
+  entry: "./src/cli/index.ts",
+  output: { ...nodeConfig.output, filename: "cli.js" },
+  externals: {
+    ...nodeConfig.externals,
+    // markdown-it (through the shared renderer) requires the deprecated
+    // `punycode` core module, which prints a DeprecationWarning on every
+    // start. Point the external at the userland package (tracked as a
+    // standalone dependency closure, like @b9g/termdom) so `codetour mcp`
+    // writes nothing to stderr, like the codetour-mcp binary.
+    punycode: "commonjs punycode/"
+  },
+  plugins: [
+    ...nodeConfig.plugins,
+    new webpack.BannerPlugin({ banner: "#!/usr/bin/env node", raw: true, entryOnly: true })
+  ]
+};
+
+module.exports = [nodeConfig, mcpConfig, cliConfig];

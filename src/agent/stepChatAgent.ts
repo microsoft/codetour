@@ -7,7 +7,7 @@ import {
   type StepChatContext,
   type StepChatRequest,
   type StepChatResponder
-} from "../player/stepChat";
+} from "./stepChatContract";
 
 /**
  * The Tour Step Conversation agent: the webview chat's responder built on

@@ -12,7 +12,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "sourceMap": true,
-    "declaration": false,
+    "declaration": true,
     "types": ["node"]
   },
   "include": ["src", "test"]

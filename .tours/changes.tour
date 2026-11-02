@@ -1,127 +1,153 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "Sérialisation du fallback ACP pour les questions d'étapes concurrentes",
-  "description": "Ce commit corrige une course dans la conversation des étapes de tour : deux questions simultanées partageaient l'index de fallback et la session active, pouvant sauter un fournisseur fonctionnel ou disposer sa session en plein usage.\n\nLa correction sérialise l'opération complète — sélection, démarrage, fallback et prompt — dans une file `pending`. L'annulation invalide les questions en file et détruit le transport de l'agent actif avant d'admettre de nouvelles questions, y compris pour les agents qui ignorent l'annulation.\n\nGenerated from the merge-base of `HEAD~1` (`9710f3214e12b9ff8e120093826f1fb667944c2d`) to `29c0a87a50fd86415e47340da49b7f6db28e451e`.",
-  "ref": "29c0a87a50fd86415e47340da49b7f6db28e451e",
-  "baseRef": "9710f3214e12b9ff8e120093826f1fb667944c2d",
+  "title": "Changes on feature/specs-77-79-80-integration",
+  "description": "This Changes Tour follows the committed branch from the merge-base of upstream/main to HEAD; uncommitted changes are excluded. It moves from standalone playback through the shared MCP generation boundary and its thin launch adapters.\n\n**Diagram — Reader and generation boundaries**\n\n```mermaid\nflowchart LR\n  User[Reader or author] --> CLI[Standalone CLI]\n  CLI --> HTML[HTML reader]\n  CLI --> TUI[TermDOM reader]\n  Adapter[Copilot adapter] --> CLI\n  Adapter --> Agent[Host agent]\n  Agent --> MCP[Shared MCP server]\n  MCP --> Tours[Tour files and Git snapshots]\n  CLI --> Tours\n```\n\nCritical review found one heuristic Standards risk in terminal layout and one Spec acceptance gap: issue #79's required real Windows speech smoke evidence remains pending. No other review findings were established.\n\nGenerated from the merge-base of `upstream/main` (`29955a004445d3fd2ad5df35dd00f9cc0400ba7d`) to `eff16229ea810df554c72e469d01ca666cbc79ae`.",
+  "ref": "eff16229ea810df554c72e469d01ca666cbc79ae",
+  "baseRef": "29955a004445d3fd2ad5df35dd00f9cc0400ba7d",
   "steps": [
     {
-      "title": "Où se passe le changement",
-      "description": "Ce commit corrige la gestion des **questions concurrentes** dans la conversation des étapes de tour, qui repose sur le fallback entre agents ACP (Vibe → Copilot → Codex → Claude Code).\n\nLe cœur du changement est dans `src/agent/fallbackStepChatAgent.ts` : l'opération entière — sélection du fournisseur, démarrage, fallback et prompt — est désormais sérialisée sur la session partagée.\n\nLes fichiers touchés :\n\n- `src/agent/fallbackStepChatAgent.ts` — sérialisation, invalidation à l'annulation, destruction du transport.\n- `src/agent/fakeAcpAgent.ts` — nouveau comportement de test `ignore-cancel-once`.\n- `src/player/stepChatAcp.test.ts` — trois tests de régression par sous-processus réels.\n- `docs/adr/0014-fallback-between-acp-agents-with-provider-modes.md` — la décision est documentée.",
-      "questions": [
-        "Pourquoi la sérialisation se fait-elle au niveau du fallback et non du fournisseur individuel ?",
-        "Quels états partagés rendaient la version précédente fragile ?"
-      ],
-      "directory": "src/agent"
+      "title": "Orienting in the standalone reader",
+      "description": "The branch adds an autonomous command-line reader with HTML and TermDOM Playback Surfaces, while preserving the existing Tour files and shared generation engine. The following steps trace how the CLI discovers Tours, resolves their source context, and reaches the generation adapters.",
+      "directory": "src/cli"
     },
     {
-      "title": "La file d'attente partagée",
-      "description": "Avant ce commit, chaque appel à `answer` lisait et incrémentait directement `selected` et `active`. Deux questions lancées en même temps avançaient le même index de fallback : un fournisseur fonctionnel pouvait être sauté, ou sa session disposée sous les pieds de l'autre.\n\nLa nouvelle variable `pending` transforme la sélection, le démarrage, le fallback et le prompt en **une seule opération** sur la session partagée. Chaque question s'enchaîne sur la promesse précédente au lieu de s'exécuter en parallèle.\n\n`generation` conserve son rôle : c'est le compteur qui invalide les tentatives obsolètes après un `cancel` ou un `dispose`.",
-      "questions": [
-        "Pourquoi `pending` est-il une `Promise<void>` et non la promesse de réponse ?",
-        "Que se passerait-il si deux questions avançaient `selected` simultanément ?"
-      ],
-      "file": "src/agent/fallbackStepChatAgent.ts",
-      "pattern": "let pending: Promise<void> = Promise\\.resolve\\(\\);",
+      "title": "Dispatching reader and MCP commands",
+      "description": "The standalone entry recognizes the reserved `mcp` command before reader setup, so MCP startup does not depend on Git-based Tour discovery. Without that token, the CLI selects the existing Tour-reading path and renderer; the dispatch regression coverage is in `src/cli/cli.test.ts`.",
+      "file": "src/cli/index.ts",
+      "pattern": "if \\(process\\.argv\\[2\\] === \"mcp\"\\)",
       "display": "diff"
     },
     {
-      "title": "Sérialisation dans answer",
-      "description": "Tout le corps de `answer` (réinitialisation du workspace, boucle de fallback, prompt) est déplacé dans le callback de `pending.then`. La logique elle-même est inchangée — c'est l'ordonnancement qui change.\n\nEn tête de callback, un `attempt !== generation` rejette immédiatement toute requête obsolète encore en file : une question annulée pendant qu'elle attendait ne démarre jamais d'agent.\n\nLe garde-fou existant « une réponse visible appartient à un seul agent » (`streamed`) est préservé : un agent ayant déjà streamé du texte ne reçoit jamais un autre fournisseur greffé dans la même réponse.",
-      "questions": [
-        "Pourquoi vérifier `attempt !== generation` avant la boucle de fallback et à chaque itération ?",
-        "La vérification du workspace reste-t-elle correcte quand les questions sont en file ?"
-      ],
-      "file": "src/agent/fallbackStepChatAgent.ts",
-      "pattern": "const answer = pending\\.then",
+      "title": "Opening Tours in standalone HTML",
+      "description": "The HTML renderer builds a self-contained playback document that presents the selected step and supports previous/next/finish navigation without requiring VS Code. Its browser-side step state remains in memory; coverage is in `src/cli/html.test.ts`.",
+      "file": "src/cli/html.ts",
+      "pattern": "function show\\(\\)\\{",
       "display": "diff"
     },
     {
-      "title": "La file survit aux rejets",
-      "description": "Subtilité clé : `pending` est réassignée à `answer.then(() => undefined, () => undefined)`, pas à `answer` lui-même.\n\nSi `answer` rejette (question annulée, tous les fournisseurs indisponibles), le rejet est absorbé avant d'atteindre la promesse suivante. Sans cela, une seule question rejetée bloquerait la file pour toutes les suivantes.\n\nLa promesse d'origine est retournée à l'appelant, qui voit donc bien l'erreur ; seule la chaîne interne est « apaisée ».",
-      "questions": [
-        "Pourquoi absorber le rejet au lieu de le propager dans la file ?",
-        "Que verrait l'appelant si `pending` était réassignée à `answer` directement ?"
-      ],
-      "file": "src/agent/fallbackStepChatAgent.ts",
-      "pattern": "pending = answer\\.then",
+      "title": "Resolving code and persisted diffs",
+      "description": "The reader resolves a step’s code context from the workspace or the Tour’s referenced commit, and reads Changes Tour diffs from the persisted base/head snapshots. This keeps the displayed comparison tied to the saved Tour rather than substituting the current working tree; coverage is in `src/cli/stepContext.test.ts`.",
+      "file": "src/cli/stepContext.ts",
+      "pattern": "function resolveDiff\\(",
       "display": "diff"
     },
     {
-      "title": "cancel invalide la file et détruit le transport",
-      "description": "`cancel()` fait trois choses désormais :\n\n1. `generation++` invalide la requête active **et** les requêtes déjà en file, qui rejettent avec « Réponse interrompue. » dès leur tour sans jamais atteindre un agent.\n\n2. `active` est détaché, puis `cancel()` lui est délégué — comme avant.\n\n3. `pending` est remplacée par la promesse de `previous.dispose()`. Un agent réel peut ignorer l'annulation ; la destruction de son transport garantit que la file ne se rouvre qu'une fois l'agent réellement arrêté.\n\nConséquence observable : une question fraîche après un « Stop » attend la fin du transport, mais démarre — elle ne reste jamais bloquée, même face à un agent qui ne répond pas à l'annulation.",
-      "questions": [
-        "Pourquoi détruire le transport au lieu de faire confiance à cancel ?",
-        "Le fournisseur sélectionné est-il conservé pour le redémarrage ?"
-      ],
-      "file": "src/agent/fallbackStepChatAgent.ts",
-      "pattern": "A live agent may ignore cancel\\.",
+      "title": "Navigating the TermDOM reader",
+      "description": "The terminal surface renders Tour steps and handles keyboard navigation, scrolling, progress, and completion. The current step is reader state rather than a write to the `.tour` file; coverage is in `src/cli/terminal.test.ts`.",
+      "file": "src/cli/terminal.ts",
+      "pattern": "export async function runTerminalTour\\(",
       "display": "diff"
     },
     {
-      "title": "dispose attend la file",
-      "description": "`dispose()` réinitialise `selected` et `workspace` (fermeture de la vue de lecture) et remplace `pending` par la promesse de destruction de l'agent actif — mais cette fois il l'attend.\n\nLa boucle de fallback conservant le premier fournisseur qui fonctionne pour toute la session de lecture, cette remise à zéro complète est ce qui permet un nouveau cycle de sélection propre à la réouverture.\n\n**Diagram — cycle de vie des questions dans la file**\n\n```mermaid\nsequenceDiagram\n    participant U as Vue de lecture\n    participant F as Fallback\n    participant A as Agent ACP\n    U->>F: answer(question)\n    F->>F: enfile sur pending\n    F->>A: sélection + startup + prompt\n    A-->>F: réponse ou erreur (fallback)\n    F-->>U: réponse\n    U->>F: cancel()\n    F->>A: dispose du transport\n    F->>F: file rouverte aux nouvelles questions\n```",
-      "questions": [
-        "Quand la fermeture de la vue réinitialise-t-elle la sélection ?",
-        "Que garantit l'attente explicite de `pending` dans dispose ?"
-      ],
-      "file": "src/agent/fallbackStepChatAgent.ts",
-      "pattern": "await pending;",
+      "title": "Failing explicitly on unsupported content",
+      "description": "The TermDOM path converts supported descriptions for terminal display and raises a typed rendering error when a reached step contains unsupported content. It does not silently skip that step or switch to another renderer; related coverage is in `src/cli/terminalContent.test.ts` and `src/cli/terminal.test.ts`.",
+      "file": "src/cli/terminalContent.ts",
+      "pattern": "renderTerminalDescription",
       "display": "diff"
     },
     {
-      "title": "fakeAcpAgent : un agent qui ignore l'annulation",
-      "description": "Le faux agent ACP utilisé par les tests de régression gagne un comportement `ignore-cancel-once`.\n\nAu premier prompt, il compte les requêtes `session/prompt` dans son journal et, s'il s'agit du premier, ne répond jamais (`new Promise<never>` sans résolution) : il simule un agent qui ignore l'annulation. Au prompt suivant, il répond « Tour answer after restart. ».\n\nCe double de test rend observable le scénario du bug : annuler une question bloquée sur un agent muet, puis poser une question fraîche qui doit quand même aboutir sur une **nouvelle instance** du même agent.",
-      "questions": [
-        "Pourquoi compter les prompts dans le journal plutôt que garder un état en mémoire ?",
-        "Quel comportement réel ce double de test simule-t-il ?"
-      ],
-      "file": "src/agent/fakeAcpAgent.ts",
-      "pattern": "case \"ignore-cancel-once\": \\{",
+      "title": "Rendering Mermaid for terminals",
+      "description": "The terminal reader sends Mermaid source through its optional terminal rendering path instead of assuming the VS Code SVG/PNG surface is available. If rendering is unavailable, the terminal path returns no drawing; tests are in `src/cli/termaid.test.ts`.",
+      "file": "src/cli/termaid.ts",
+      "pattern": "export async function renderMermaidText\\(",
       "display": "diff"
     },
     {
-      "title": "Test : questions concurrentes sans sauter de fournisseur",
-      "description": "Premier test de régression : deux questions sont envoyées **en parallèle** alors que Vibe n'expose pas le mode requis (`no-ask-mode`) et que Copilot fonctionne.\n\nSans la correction, la concurrence faisait avancer `selected` deux fois et le fournisseur Copilot pouvait être sauté. Avec la file, on observe :\n\n- les deux questions aboutissent (`fulfilled`) ;\n- `session/prompt` apparaît deux fois dans le journal de Copilot ;\n- un seul `initialize` — la session du fournisseur retenu est bien réutilisée, pas relancée.\n\nCe test s'exécute contre de vrais sous-processus du faux agent, pas des mocks en mémoire.",
-      "questions": [
-        "Que révèle le décompte des initialize dans le journal ?",
-        "Ce test échouerait-il sans la sérialisation, et pourquoi ?"
-      ],
-      "file": "src/player/stepChatAcp.test.ts",
-      "pattern": "concurrent step questions share ordered fallback",
+      "title": "Validating Tour image assets",
+      "description": "The MCP boundary constrains local Tour image references to the reserved image area and validates the referenced content before persistence. The shared renderer then makes accepted image data available to playback; validation coverage is in `packages/mcp-server/test/integration/image-validation.test.ts`.",
+      "file": "packages/mcp-server/src/image-validation.ts",
+      "pattern": "tourImageDirectoryName",
       "display": "diff"
     },
     {
-      "title": "Test : l'annulation rejette la file et admet une question fraîche",
-      "description": "Deuxième test : une question en vol sur un agent lent, une deuxième mise en file, puis `cancel()` pendant que la deuxième attend. L'agent passe ensuite en comportement `default`.\n\nObservations attendues :\n\n- la question en attente est rejetée — elle n'atteint jamais l'agent (le journal ne compte que 2 prompts) ;\n- la question fraîche « Fresh » est bien le premier bloc de prompt du deuxième cycle.\n\nAutrement dit, l'annulation vide la file au lieu de laisser des requêtes mortes s'exécuter plus tard sur un agent redémarré.",
-      "questions": [
-        "Pourquoi la question fraîche est-elle admissible avant la fin de la première ?",
-        "Que garantit la vérification du premier bloc de prompt du deuxième cycle ?"
-      ],
-      "file": "src/player/stepChatAcp.test.ts",
-      "pattern": "cancelling the ACP queue rejects waiting questions",
+      "title": "Launching an independent terminal window",
+      "description": "The terminal launcher opens a separate OS terminal for the TermDOM reader, leaving it independent of the process that requested playback. When a supported graphical terminal host is unavailable, it reports that condition rather than relying on a multiplexer; coverage includes `src/cli/terminal.test.ts` and `test/standalone-terminal-smoke.py`.",
+      "file": "src/cli/terminalLauncher.ts",
+      "pattern": "export async function launchTerminalReader\\(",
       "display": "diff"
     },
     {
-      "title": "Test : redémarrage après annulation d'un agent muet",
-      "description": "Troisième test, contre le comportement `ignore-cancel-once` : la première question reste suspendue à jamais sur un agent qui ne répond pas, puis `cancel()` est appelé et une question « After stop » est posée immédiatement.\n\nLa question fraîche doit répondre « Tour answer after restart » avant un délai de 2 secondes — sans la destruction du transport dans `cancel()`, elle resterait bloquée derrière la promesse jamais résolue de la première.\n\nLe journal confirme deux `initialize` : la session de l'agent muet a été détruite et remplacée par une nouvelle instance du même fournisseur.",
-      "questions": [
-        "Qui débloque la question fraîche : le cancel de l'agent ou le dispose du transport ?",
-        "Pourquoi un second initialize plutôt qu'une réutilisation de session ?"
-      ],
-      "file": "src/player/stepChatAcp.test.ts",
-      "pattern": "a fresh question starts after cancelling",
+      "title": "Grounding Step conversations",
+      "description": "Standalone Step conversations keep their exchanges in memory per Tour Step and build question context from the displayed code or paired diff snapshots. The same context boundary serves the reader without changing persisted Tour descriptions; tests are in `src/cli/stepChatSupport.test.ts`.",
+      "file": "src/cli/stepChatSupport.ts",
+      "pattern": "buildStepChatContext\\(",
       "display": "diff"
     },
     {
-      "title": "La décision consignée dans l'ADR 0014",
-      "description": "L'ADR 0014 (fallback entre agents ACP avec modes par fournisseur) gagne un paragraphe qui consigne les trois règles posées par ce commit :\n\n- les questions sérialisent l'opération complète — sélection, démarrage, fallback, prompt — sur la session partagée ;\n- l'arrêt invalide les questions en file et détruit le transport actif avant d'admettre de nouvelles questions, le fournisseur sélectionné étant conservé pour le redémarrage ;\n- la fermeture de la vue de lecture réinitialise en plus la sélection de fournisseur.\n\nLe message de commit décrit une validation par tests de régression en sous-processus réels, typecheck et suites d'extension, de renderer et de serveur MCP ; ces exécutions ne sont pas vérifiées dans ce tour.",
-      "questions": [
-        "Pourquoi conserver le fournisseur sélectionné après un arrêt ?",
-        "Quelle partie de ces règles relève de la spécification plutôt que de l'implémentation ?"
-      ],
-      "file": "docs/adr/0014-fallback-between-acp-agents-with-provider-modes.md",
-      "pattern": "Questions serialize the whole selection",
+      "title": "Preparing descriptions for narration",
+      "description": "The narration preparer converts a Step’s Markdown description to spoken text in source order, replacing Mermaid, image, and other code fences with short spoken cues. It does not narrate the code pane or invent text for an empty description; coverage is in `src/cli/narration/prepareText.test.ts`.",
+      "file": "src/cli/narration/prepareText.ts",
+      "pattern": "export function prepareNarrationText\\(",
+      "display": "diff"
+    },
+    {
+      "title": "Controlling narration across navigation",
+      "description": "The narration controller owns the enabled state and cancels/replaces speech as the active Step changes. The reader commits narration only for a successfully displayed Step, preventing a delayed callback from speaking stale navigation state; coverage is in `src/cli/narration/NarrationController.test.ts` and `src/cli/narration/readerNarration.test.ts`.",
+      "file": "src/cli/narration/NarrationController.ts",
+      "pattern": "onStepChanged\\(description: string\\): void",
+      "display": "diff"
+    },
+    {
+      "title": "Using local operating-system speech",
+      "description": "The optional speech adapter uses the installed macOS `say` command or Windows System.Speech through PowerShell, while keeping synthesis outside TermDOM and the agent. Missing or failed speech is reported without disabling reading; deterministic adapter coverage is in `src/cli/narration/SystemSpeech.test.ts`.",
+      "file": "src/cli/narration/SystemSpeech.ts",
+      "pattern": "export function createSystemSpeech\\(",
+      "display": "diff"
+    },
+    {
+      "title": "Checking real speech acceptance evidence",
+      "description": "The opt-in real-voice smoke test is macOS-specific; the validation ledger records real Windows voice behavior as pending. **Spec:** Issue [maurice30120/codetour#79](https://github.com/maurice30120/codetour/issues/79) requires: “Feasibility and interruption behavior must be smoke-tested on real Windows and macOS terminals before claiming cross-platform support.” The current evidence does not establish that Windows acceptance criterion.",
+      "file": "src/cli/narration/saySmoke.test.ts",
+      "pattern": "real macOS voice speaks an utterance to completion",
+      "display": "diff"
+    },
+    {
+      "title": "Formatting the terminal status row",
+      "description": "The terminal layout helpers fit status text to the available width from either end, so the voice indicator can coexist with navigation and help hints. **Standards:** Risk / code smell (possible Duplicated Code, heuristic): `fit` and `tail` both use `const chars = Array.from(text); if (chars.length <= width) return text;` before applying an ellipsis, although they truncate in opposite directions; this is a possible maintenance risk, not a demonstrated standards violation.",
+      "file": "src/cli/terminalLayout.ts",
+      "pattern": "function fit\\(",
+      "display": "diff"
+    },
+    {
+      "title": "Sharing the MCP command entry",
+      "description": "The MCP package exposes one programmatic command entry for argument parsing and stdio startup, including workspace selection and startup diagnostics. The npm binary and standalone `codetour mcp` command use this shared entry; process-boundary tests are in `packages/mcp-server/test/integration/cli.test.ts`.",
+      "file": "packages/mcp-server/src/cli.ts",
+      "pattern": "export async function runMcpCli\\(",
+      "display": "diff"
+    },
+    {
+      "title": "Preserving Tour generation and Git comparison",
+      "description": "Project and Changes Tour proposals pass through MCP validation and the shared persistence path. For committed Changes Tours, the server verifies the supplied full head SHA, resolves `baseRef`, computes the merge-base, checks anchors against the analyzed commit, and writes the default `.tours/changes.tour` only after validation; these contracts are exercised in `packages/mcp-server/test/integration/changes-tour.test.ts`.",
+      "file": "packages/mcp-server/src/server.ts",
+      "pattern": "resolveCommit\\(ctx, baseRef\\)",
+      "display": "diff"
+    },
+    {
+      "title": "Selecting neutral or critical review",
+      "description": "The Changes Tour input accepts the optional `neutral` or `critical` review mode while retaining the existing tool and `.tour` format. Critical mode is generation guidance only; it is not persisted in the Tour, and the MCP server still validates anchors and writes the proposal; coverage is in `packages/mcp-server/test/integration/critical-review.test.ts`.",
+      "file": "packages/mcp-server/src/server.ts",
+      "pattern": "reviewMode: z",
+      "display": "diff"
+    },
+    {
+      "title": "Serving the offline review skill pack",
+      "description": "The MCP resource assembles the separate CodeTour adaptation, upstream review skill, source revision, attribution, and MIT license for offline clients. The generated module is tested against its source documents in `packages/mcp-server/test/unit/review-skill.test.ts`.",
+      "file": "packages/mcp-server/src/review-skill.ts",
+      "pattern": "export function criticalReviewSkillPack\\(",
+      "display": "diff"
+    },
+    {
+      "title": "Keeping the Copilot adapter thin",
+      "description": "The adapter gathers Read/Generate and Project/Changes choices, reads the critical instructions before forwarding a critical request, and asks the host agent to call the shared MCP tool. It leaves Tour analysis, validation, and persistence in the shared CLI/MCP implementation; the fake-host contract is covered by `test/copilot-adapter.test.mjs`.",
+      "file": ".github/extensions/codetour/adapter.mjs",
+      "pattern": "session.send\\(\\{prompt, mode: \"immediate\"\\}\\)",
+      "display": "diff"
+    },
+    {
+      "title": "Packaging one standalone MCP implementation",
+      "description": "The standalone package includes the MCP implementation within the CLI bundle and checks that it is not duplicated as a second server entry. The packager also enforces its measured bundle budget; artifact-level coverage is in `test/standalone-package.test.js`.",
+      "file": "scripts/package-standalone.js",
+      "pattern": "function assertSingleMcpServer\\(",
       "display": "diff"
     }
   ]

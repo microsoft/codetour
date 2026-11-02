@@ -50,3 +50,7 @@ An unsaved change to a Tour Step's explanation.
 **Tour Step Conversation**:
 A discussion with an agent about one Tour Step, grounded in its displayed code and explanation. Each step has its own conversation.
 _Avoid_: Tour chat, workspace chat
+
+**Step Narration**:
+The optional local text-to-speech rendering of the active Tour Step's description while reading, off by default and never advancing the Tour.
+_Avoid_: Voiceover, audio tour, TTS playback

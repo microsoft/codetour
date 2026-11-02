@@ -13,18 +13,79 @@ export function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function extractPngDataUri(markdown: string, altText: string): Buffer {
+export function extractImageDataUri(
+  markdown: string,
+  altText: string,
+  mime: string
+): Buffer {
   const pattern = new RegExp(
-    `!\\[${escapeRegExp(altText)}\\]\\(data:image\\/png;base64,([A-Za-z0-9+/=]+)\\)`
+    `!\\[${escapeRegExp(altText)}\\]\\(data:image\\/${mime};base64,([A-Za-z0-9+/=]+)\\)`
   );
   const match = markdown.match(pattern);
   if (!match) {
     throw new Error(
-      `Expected a PNG data URI image with alt text "${altText}" in:\n${markdown.slice(0, 400)}`
+      `Expected a ${mime} data URI image with alt text "${altText}" in:\n${markdown.slice(0, 400)}`
     );
   }
   return Buffer.from(match[1], "base64");
 }
+
+export function extractPngDataUri(markdown: string, altText: string): Buffer {
+  return extractImageDataUri(markdown, altText, "png");
+}
+
+export const SAMPLE_PNG_BYTES = Buffer.concat([
+  PNG_SIGNATURE,
+  Buffer.from([
+    0x00,
+    0x00,
+    0x00,
+    0x0d,
+    0x49,
+    0x48,
+    0x44,
+    0x52,
+    0x00,
+    0x00,
+    0x00,
+    0x20,
+    0x00,
+    0x00,
+    0x00,
+    0x20,
+    0x08,
+    0x06,
+    0x00,
+    0x00,
+    0x00
+  ])
+]);
+
+export const SAMPLE_JPEG_BYTES = Buffer.from([
+  0xff,
+  0xd8,
+  0xff,
+  0xe0,
+  0x00,
+  0x10,
+  0x4a,
+  0x46,
+  0x49,
+  0x46,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x20,
+  0x00,
+  0x20
+]);
+
+export const NON_IMAGE_BYTES = Buffer.from(
+  "<html><body>definitely not an image</body></html>",
+  "utf8"
+);
 
 export function assertValidPng(png: Buffer): void {
   if (png.length < 200) {
@@ -58,6 +119,16 @@ export function findImageLine(markdown: string, altText: string): string {
     );
   }
   return line;
+}
+
+/** Decode the SVG data URI a real HTML surface receives into its markup. */
+export function extractSvgDataUri(markdown: string, altText: string): string {
+  const line = findImageLine(markdown, altText);
+  const dataUri = line.match(/\(data:image\/svg\+xml;base64,([A-Za-z0-9+/=]+)\)/);
+  if (!dataUri) {
+    throw new Error(`Expected an SVG data URI in:\n${line.slice(0, 200)}`);
+  }
+  return Buffer.from(dataUri[1], "base64").toString("utf8");
 }
 
 export const FLOWCHART_SOURCE = [

@@ -2,6 +2,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const { verifyCriticalResource } = require("./verify-critical-resource");
 
 function fail(message) {
   throw new Error(message);
@@ -44,7 +45,7 @@ function listFiles(directory, prefix = "") {
   return files;
 }
 
-function verify(artifact, target) {
+async function verify(artifact, target) {
   const extractionRoot = fs.mkdtempSync(path.join(os.tmpdir(), "codetour-vsix-"));
   try {
     extract(artifact, extractionRoot);
@@ -104,6 +105,9 @@ function verify(artifact, target) {
       fail(`The unpacked MCP server did not start: ${mcp.stderr || mcp.stdout}`);
     }
 
+    await verifyCriticalResource(process.execPath,
+      [path.join(extensionRoot, "dist", "mcp-server.js")], extensionRoot);
+
     const size = fs.statSync(artifact).size;
     console.log(`Verified unpacked ${path.basename(artifact)}: ${files.length} files, ${size} bytes, PNG OK.`);
   } finally {
@@ -116,4 +120,7 @@ const target = process.argv[3];
 if (!artifact || !target) {
   fail("Usage: node scripts/verify-vsix.js <artifact.vsix> <target>");
 }
-verify(path.resolve(artifact), target);
+verify(path.resolve(artifact), target).catch(error => {
+  console.error(error.message);
+  process.exitCode = 1;
+});

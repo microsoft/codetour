@@ -13,6 +13,9 @@
     "paths": {
       "codetour-description-renderer": [
         "packages/description-renderer/dist/src/index"
+      ],
+      "codetour-mcp": [
+        "packages/mcp-server/dist/src/cli"
       ]
     }
   },

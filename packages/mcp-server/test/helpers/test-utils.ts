@@ -8,7 +8,8 @@ import { git } from "../../src/git";
 
 export { git };
 
-export const CLI_PATH = path.join(__dirname, "..", "..", "src", "cli.js");
+// The executable wrapper (dist/src/main.js), not the programmatic entry.
+export const CLI_PATH = path.join(__dirname, "..", "..", "src", "main.js");
 
 export interface ToolResponse {
   isError: boolean;
@@ -19,7 +20,8 @@ export interface ToolResponse {
 export async function startServer(
   workspaceRoot: string,
   envOverrides: Record<string, string> = {},
-  serverArgs: string[] = []
+  serverArgs: string[] = [],
+  entry: string = CLI_PATH
 ): Promise<Client> {
   const client = new Client(
     { name: "codetour-mcp-test-client", version: "0.0.0" },
@@ -27,7 +29,7 @@ export async function startServer(
   );
   const transport = new StdioClientTransport({
     command: process.execPath,
-    args: [CLI_PATH, ...serverArgs],
+    args: [entry, ...serverArgs],
     cwd: workspaceRoot,
     env: {
       ...Object.fromEntries(
@@ -95,6 +97,27 @@ export function writeFile(workspaceRoot: string, relativePath: string, content: 
   const target = path.join(workspaceRoot, relativePath);
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.writeFileSync(target, content);
+}
+
+// `path.relative` joins entries with the platform separator ("\" on Windows),
+// while the reserved Tour paths listings are compared against are
+// forward-slash strings (".tours/project.tour", see src/server.ts).
+// Normalizing to "/" keeps those comparisons platform-independent (#84).
+export function toForwardSlashes(relativePath: string, separator: string = path.sep): string {
+  return relativePath.split(separator).join("/");
+}
+
+export function listFilesRecursively(root: string): string[] {
+  const entries: string[] = [];
+  const walk = (directory: string) => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const entryPath = path.join(directory, entry.name);
+      entries.push(toForwardSlashes(path.relative(root, entryPath)));
+      if (entry.isDirectory()) walk(entryPath);
+    }
+  };
+  walk(root);
+  return entries.sort();
 }
 
 export async function initGitRepo(dir: string, branch = "main"): Promise<void> {

@@ -1,8 +1,17 @@
 import { findDiagramFences } from "./parse";
 import {
   DescriptionTheme,
+  RenderedDiagram,
   renderMermaidDiagram
 } from "./render";
+import {
+  DescriptionRenderOptions,
+  DiagramImageFormat,
+  ImageBytesResolver,
+  escapeAltText,
+  findLocalImageReferences,
+  inlineLocalImages
+} from "./images";
 import {
   DiagramRuleReason,
   MAX_DIAGRAMS_PER_DESCRIPTION,
@@ -20,16 +29,36 @@ const RENDER_FAILURE_NOTICES: Record<DiagramRuleReason | "render" | "count", str
   render: "> ⚠️ The Mermaid diagram could not be rendered."
 };
 
-function escapeAltText(caption: string): string {
-  return caption.replace(/([[\]])/g, "\\$1");
+/** Encode a rendered diagram as the data URI the target surface can display. */
+function diagramImageDataUri(
+  rendered: RenderedDiagram,
+  format: DiagramImageFormat
+): string {
+  if (format === "svg") {
+    // The SVG is already sanitized and carries its own theme styles: base64
+    // keeps every quote and '#' intact inside a Markdown image destination.
+    return "data:image/svg+xml;base64," +
+      Buffer.from(rendered.svg, "utf8").toString("base64");
+  }
+  return "data:image/png;base64," + rendered.png.toString("base64");
 }
 
 export async function renderDescription(
   description: string,
-  theme: DescriptionTheme
+  theme: DescriptionTheme,
+  options: DescriptionRenderOptions = {}
 ): Promise<string> {
+  // Without a resolver no local image can be inlined: every local reference
+  // must still resolve to a data URI or the compact warning, because a local
+  // path left in the output would be stripped by the reading surfaces.
+  const resolveImageBytes: ImageBytesResolver =
+    options.resolveImageBytes ?? (async () => undefined);
+  const format: DiagramImageFormat = options.diagramFormat ?? "png";
   const fences = findDiagramFences(description);
-  if (fences.length === 0) {
+  if (
+    fences.length === 0 &&
+    findLocalImageReferences(description).length === 0
+  ) {
     return description;
   }
 
@@ -48,10 +77,10 @@ export async function renderDescription(
         replacement = RENDER_FAILURE_NOTICES[evaluation.reason];
       } else {
         try {
-          const { png } = await renderMermaidDiagram(fence.source, theme);
+          const rendered = await renderMermaidDiagram(fence.source, theme);
           replacement = `![${escapeAltText(
             fence.caption!
-          )}](data:image/png;base64,${png.toString("base64")})`;
+          )}](${diagramImageDataUri(rendered, format)})`;
         } catch {
           replacement = RENDER_FAILURE_NOTICES.render;
         }
@@ -62,5 +91,5 @@ export async function renderDescription(
       content.slice(0, fence.start) + replacement + content.slice(fence.end);
   }
 
-  return content;
+  return inlineLocalImages(content, resolveImageBytes);
 }

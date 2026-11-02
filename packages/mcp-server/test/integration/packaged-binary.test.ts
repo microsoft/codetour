@@ -149,6 +149,13 @@ test("the installed codetour-mcp binary serves both public MCP tools", async () 
     });
     await client.connect(transport);
     try {
+      const resource = await client.readResource({ uri: "codetour://review/critical-instructions" });
+      const skillText = resource.contents.map(content => "text" in content ? content.text : "").join("\n");
+      const installedSkill = path.join(installationRoot, "node_modules", "codetour-mcp", "review-skill");
+      for (const file of ["upstream-code-review.md", "codetour-adaptation.md", "upstream-LICENSE.txt"]) {
+        assert.ok(skillText.includes(fs.readFileSync(path.join(installedSkill, file), "utf8")), file);
+      }
+      assert.match(skillText, /7739eaed7f8f3915437a8def198a6d0d7206dbc7/);
       const tools = await client.listTools();
       const changesTool = tools.tools.find((tool) => tool.name === "create_changes_tour");
       assert.ok(changesTool);

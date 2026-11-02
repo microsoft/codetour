@@ -168,6 +168,70 @@ test("validateChangesParams rejects a short head SHA", () => {
   assert.ok(issues.some((issue) => issue.path === "headRef"));
 });
 
+test("validateChangesParams accepts both review modes", () => {
+  const headRef = "a".repeat(40);
+  for (const reviewMode of ["neutral", "critical"] as const) {
+    const { params, issues } = validateChangesParams({
+      baseRef: "main",
+      headRef,
+      reviewMode,
+      steps: [{ description: "Explain the change." }],
+    });
+    assert.deepEqual(issues, []);
+    assert.equal(params?.reviewMode, reviewMode);
+  }
+});
+
+test("validateChangesParams leaves reviewMode unset for existing neutral calls", () => {
+  const { params, issues } = validateChangesParams({
+    baseRef: "main",
+    headRef: "a".repeat(40),
+    steps: [{ description: "Explain the change." }],
+  });
+  assert.deepEqual(issues, []);
+  assert.equal(params?.reviewMode, undefined);
+});
+
+test("validateChangesParams rejects a reviewMode that is not neutral or critical", () => {
+  const headRef = "a".repeat(40);
+  for (const reviewMode of ["angry", "CRITICAL", 1, null, {}, []]) {
+    const { issues } = validateChangesParams({
+      baseRef: "main",
+      headRef,
+      reviewMode,
+      steps: [],
+    });
+    assert.ok(
+      issues.some(
+        (issue) =>
+          issue.path === "reviewMode" &&
+          issue.message.includes('must be "neutral" or "critical"')
+      ),
+      `reviewMode ${JSON.stringify(reviewMode)} must be rejected`
+    );
+  }
+});
+
+test("validateChangesParams aggregates a reviewMode error with other field errors", () => {
+  const { issues } = validateChangesParams({
+    baseRef: "main",
+    headRef: "deadbeef",
+    reviewMode: "angry",
+    steps: [],
+  });
+  const paths = issues.map((issue) => issue.path);
+  assert.ok(paths.includes("reviewMode"));
+  assert.ok(paths.includes("headRef"));
+});
+
+test("validateProjectParams rejects reviewMode as an unknown field", () => {
+  const { issues } = validateProjectParams({
+    reviewMode: "critical",
+    steps: [{ description: "Explain." }],
+  });
+  assert.ok(issues.some((issue) => issue.path === "reviewMode"));
+});
+
 test("validateChangesParams rejects a non-boolean includeUncommittedChanges", () => {
   const { issues } = validateChangesParams({
     baseRef: "main",

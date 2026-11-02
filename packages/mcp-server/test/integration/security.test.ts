@@ -102,6 +102,9 @@ test("exposes exactly two tools", async () => {
       assert.ok(project!.description!.includes("flowchart, sequenceDiagram"));
       assert.ok(project!.description!.includes("at most 3 Mermaid fences"));
       assert.ok(project!.description!.includes("20 KB"));
+      assert.ok(project!.description!.includes(".tours/images/<tour-name>/"));
+      assert.ok(project!.description!.includes("PNG or JPEG"));
+      assert.ok(project!.description!.includes("at most 2 MB"));
       assert.ok(
         project!.description!.includes(
           "**Diagram — <descriptive text>**, with a literal em dash (U+2014)"
@@ -114,6 +117,9 @@ test("exposes exactly two tools", async () => {
           "**Diagram — <descriptive text>**, with a literal em dash (U+2014)"
         )
       );
+      assert.ok(changes!.description!.includes(".tours/images/<tour-name>/"));
+      assert.ok(changes!.description!.includes("PNG or JPEG"));
+      assert.ok(changes!.description!.includes("at most 2 MB"));
 
       for (const tool of [project, changes]) {
         const properties = (tool!.inputSchema.properties ?? {}) as Record<

@@ -49,7 +49,7 @@ start the server from a workspace:
 
 ```bash
 cd /path/to/workspace
-node /path/to/codetour/packages/mcp-server/dist/src/cli.js
+node /path/to/codetour/packages/mcp-server/dist/src/main.js
 ```
 
 The process speaks MCP over `stdio` and silently waits for requests from an
@@ -78,6 +78,16 @@ pass the workspace explicitly instead:
 codetour-mcp --workspace-root /path/to/workspace
 ```
 
+The standalone CodeTour distribution exposes the same server through its
+packaged launcher, without a global Node.js installation:
+
+```bash
+/path/to/codetour-distribution/codetour mcp [--workspace-root /path/to/workspace]
+```
+
+See the [standalone distribution guide](../../docs/standalone-distribution.md)
+for the packaged-launcher client configuration shape.
+
 Finally, configure your MCP client with the command and its working directory,
 as in the example below. Once connected, the client automatically discovers
 `create_project_tour` and `create_changes_tour`.
@@ -89,7 +99,7 @@ as in the example below. Once connected, the client automatically discovers
   "mcpServers": {
     "codetour": {
       "command": "node",
-      "args": ["/path/to/codetour/packages/mcp-server/dist/src/cli.js"],
+      "args": ["/path/to/codetour/packages/mcp-server/dist/src/main.js"],
       "cwd": "/path/to/workspace"
     }
   }
@@ -198,6 +208,7 @@ relevant directories and files.
 | `baseRef`             | string   | yes      | Git ref the branch diverged from.                             |
 | `headRef`             | string   | yes      | Full 40-character SHA of the analyzed commit; must equal the current `HEAD`. |
 | `includeUncommittedChanges` | boolean  | no       | Include uncommitted changes explicitly (default `false`).     |
+| `reviewMode`         | string   | no       | `"neutral"` (default) or `"critical"`; for `"critical"` read the `codetour://review/critical-instructions` resource before writing the steps. Not persisted in the tour file. |
 | `title`              | string   | no       | Defaults to `Changes on <branch>`.                            |
 | `description`        | string   | no       | Optional description; provenance is always appended.          |
 | `steps`              | object[] | yes      | Non-empty list of steps (see below).                          |
@@ -205,6 +216,16 @@ relevant directories and files.
 
 A good Changes Tour covers the intent of the changes, the major
 modifications, their impact, and the relevant tests.
+
+The server also exposes one resource, `codetour://review/critical-instructions`,
+which serves the critical review skill pack (the CodeTour adaptation of Matt
+Pocock's `code-review` skill, the upstream text verbatim, its source revision,
+and the MIT license). An agent generating a critical Changes Tour must read it
+before writing any step; see [the critical review skill
+documentation](../../docs/critical-review-skill.md) for provenance, licensing,
+contents, and limits. Omitting `reviewMode` keeps the neutral, factual
+behavior; the server never asks a conversational question, so direct callers
+always get the neutral default.
 
 A committed-only Changes Tour is reproducible: the resolved merge-base SHA is
 persisted in `baseRef` and the analyzed head SHA in `ref`. File steps are

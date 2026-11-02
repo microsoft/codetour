@@ -33,6 +33,9 @@ const BOLD_PATTERN = /(\*\*|__)(\S(?:[^*_]*\S)?)\1/g;
 const ITALIC_PATTERN = /\*(\S(?:[^*]*\S)?)\*/g;
 const STRIKETHROUGH_PATTERN = /~~(\S(?:[^~]*\S)?)~~/g;
 
+/** An inline code span: its backticked identifier, spoken as ordinary words. */
+const INLINE_CODE_PATTERN = /`([^`]*)`/g;
+
 /** The one fixed sentence each rich Markdown construct is spoken as. */
 export const DIAGRAM_SPOKEN_TEXT = "Voir diagramme";
 export const IMAGE_SPOKEN_TEXT = "Voir image";
@@ -45,6 +48,34 @@ function opensDiagram(line: string): boolean {
   // The shared renderer only treats ```mermaid fences as diagrams; a ~~~mermaid
   // fence is displayed as a plain code block, so the voice says the same.
   return isMermaidFenceInfo(match[2].trim());
+}
+
+/**
+ * The spoken form of one inline code identifier (spec #90): tokenized on its
+ * source casing, then spoken as ordinary lowercase words.
+ */
+function speakIdentifier(identifier: string): string {
+  const words = identifier
+    // A lowercase (or digit) followed by an uppercase starts a new word.
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    // The last capital of an acronym run belongs to the word that follows it.
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    // The underscore, hyphen and slash separators are word boundaries.
+    .replace(/[_\-/]+/g, " ")
+    // Letters and digits transition into separate words, both ways.
+    .replace(/([A-Za-z])([0-9])/g, "$1 $2")
+    .replace(/([0-9])([A-Za-z])/g, "$1 $2")
+    .split(/\s+/)
+    .filter(word => word.length > 0);
+  // A word kept in capitals is an acronym for #91 to pronounce — but only in a
+  // mixed-case identifier: an identifier with no lowercase at all (STALE_HEAD)
+  // is capitalised shouting, so every word is spoken in lowercase.
+  const keepsAcronymCasing = /[a-z]/.test(identifier);
+  return words
+    .map(word => keepsAcronymCasing && /[A-Z]/.test(word) && !/[a-z]/.test(word)
+      ? word
+      : word.toLowerCase())
+    .join(" ");
 }
 
 /** One prose line with every formatting marker removed, in speaking order. */
@@ -60,6 +91,7 @@ function speakProseLine(line: string, imageReferences: Set<string>): string {
     .replace(INLINE_LINK_PATTERN, "$1")
     .replace(REFERENCE_LINK_PATTERN, "$1")
     // Inline code identifiers become ordinary words.
+    .replace(INLINE_CODE_PATTERN, (_span, identifier: string) => speakIdentifier(identifier))
     .replace(/`+/g, "")
     .replace(HTML_TAG_PATTERN, "");
   for (;;) {

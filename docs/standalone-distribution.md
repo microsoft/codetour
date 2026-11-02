@@ -71,6 +71,30 @@ or globally installed Node.js is required:
 }
 ```
 
+### Install agent integrations with `codetour --install`
+
+The same launcher registers CodeTour with AI agents through a registry of
+integrations. `codetour --agents` lists every registered agent with its
+detection and installation state, and `codetour --doctor` reports the CLI's
+own dependencies next to every integration. Unknown agent ids are explicit
+rejections, never silent installs.
+
+`codetour --install copilot` writes the experimental Copilot CLI adapter
+(see [the adapter documentation](copilot-cli-adapter.md)) into the user's
+Copilot extension directory (`~/.copilot/extensions/codetour/`), after
+detection, existing-installation checks and per-file verification. The
+adapter files travel embedded inside the CLI bundle, so the install works
+from any directory with no dependency on this repository. A pre-existing
+installation whose content differs is never overwritten without explicit
+consent: re-run with `--force` to replace it. `codetour --uninstall copilot`
+removes only the files this CLI owns, leaving any other file untouched.
+
+`codetour --install vscode` installs the CodeTour VS Code extension through
+the `code` CLI when a `.vsix` is found next to the launcher or in the current
+directory (or through `CODETOUR_VSIX`), and verifies the installed extension
+afterwards. `codetour --uninstall vscode` removes the extension. An absent
+VS Code CLI is a clear message, not a failed command.
+
 For a client that cannot set the working directory, omit `cwd` and pass
 `"--workspace-root", "/path/to/workspace"` in `args` instead. `codetour mcp`
 is the stable launch contract for future agent adapters, alongside the

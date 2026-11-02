@@ -712,6 +712,7 @@
   },
   "dependencies": {
     "@agentclientprotocol/sdk": "^1.8.0",
+    "@b9g/termdom": "0.2.4",
     "@resvg/resvg-js": "2.6.2",
     "@types/jexl": "^2.2.0",
     "axios": "^0.21.4",
@@ -719,18 +720,21 @@
     "markdown-it": "^12.3.2",
     "mobx": "^5.14.2",
     "sanitize-html": "^2.13.1",
+    "string-width": "^4.2.3",
     "throttle-debounce": "^3.0.1",
     "vsls": "^1.0.2532",
-    "@b9g/termdom": "0.2.4"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^18.14.0",
     "@types/sanitize-html": "^2.11.0",
+    "@types/string-width": "^2.0.0",
     "@types/throttle-debounce": "^5.0.0",
     "@types/vscode": "1.101.0",
     "@vscode/vsce": "^2.17.0",
     "codetour-description-renderer": "file:packages/description-renderer",
+    "commander": "^12.1.0",
     "debug": "^4.3.4",
     "eslint": "^8.34.0",
     "ts-loader": "^9.4.2",

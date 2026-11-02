@@ -5,11 +5,14 @@ import { promises as fs } from "fs";
 import * as os from "os";
 import * as path from "path";
 import { pathToFileURL } from "url";
+import { Command, CommanderError } from "commander";
 import type { CodeTour } from "../store";
+import { loadTour } from "../store/tourSchema";
 import { discoverToursFromRoot, visibleTours } from "../core/tourDiscovery";
 import { renderDescription } from "codetour-description-renderer";
 import { runMcpCli } from "codetour-mcp";
 import { createStandaloneTourHtml } from "./html";
+import { doctor, findAgentIntegration, listAgents, agentIds } from "./agentIntegrations";
 import { resolveReadonlyStepContext } from "./stepContext";
 import { readTourImages } from "./stepImages";
 import { launchTerminalReader } from "./terminalLauncher";
@@ -17,36 +20,83 @@ import { runTerminalTour } from "./terminal";
 import { resolveTourSelection } from "./tourResolution";
 import { fileURLToPath } from "node:url";
 
-interface Arguments { tourName?: string; renderer: "html" | "terminal"; }
+const USAGE = "Usage: codetour [tour] [--renderer html|terminal]";
 
-function parseArguments(args: string[]): Arguments {
-  let tourName: string | undefined;
-  let renderer: string = "html";
-  for (let index = 0; index < args.length; index++) {
-    const arg = args[index];
-    if (arg === "--renderer") {
-      if (!args[index + 1]) throw new Error("Missing value for --renderer (html or terminal).");
-      renderer = args[++index];
-    } else if (arg.startsWith("--renderer=")) {
-      renderer = arg.slice("--renderer=".length);
-    } else if (arg.startsWith("-")) {
-      throw new Error("Unknown option: " + arg + ". Usage: codetour [tour] [--renderer html|terminal]");
-    } else if (tourName) {
-      throw new Error("Only one Tour name is allowed. Usage: codetour [tour] [--renderer html|terminal]");
-    } else {
-      tourName = arg;
-    }
+interface Options {
+  renderer?: string;
+  install?: string;
+  uninstall?: string;
+  force: boolean;
+  agents: boolean;
+  doctor: boolean;
+  internalListTours: boolean;
+  internalResolveTour?: string | boolean;
+  internalTourId?: string;
+  internalTour?: string[]; }
+
+function buildProgram(): Command {
+  const command = new Command()
+    .name("codetour")
+    .enablePositionalOptions()
+    .allowExcessArguments(false)
+    .description("Read guided Tours of a codebase, and generate them with AI agents.")
+    .argument("[title]", "Tour title or Tour file name")
+    .option("--renderer <type>", "open the Tour as html (default) or terminal")
+    .option("--install <agent>", "install an agent integration: " + agentIds())
+    .option("--uninstall <agent>", "remove an agent integration installed by this CLI")
+    .option("--force", "replace a pre-existing installation whose content differs")
+    .option("--agents", "list every agent integration and its state")
+    .option("--doctor", "diagnose this CLI and every agent integration")
+    .option("--internal-list-tours", "print the discoverable Tours as JSON")
+    .option("--internal-resolve-tour [title]", "resolve a Tour by title or file name and print its identity as JSON")
+    .option("--internal-tour-id <id>", "open the Tour with this discovered identity")
+    .option("--internal-tour <args...>", "internal: run the terminal reader on a Tour file")
+    .action(async (title: string | undefined, options: Options) => runWithOptions(options, title))
+    .exitOverride()
+    // The mapped messages in toCliError are the CLI's error contract; the
+    // framework's own line would duplicate them.
+    .configureOutput({ outputError: () => {} });
+  command
+    .command("mcp [args...]")
+    .description("start the CodeTour MCP server over stdio; run 'codetour mcp --help' for its options")
+    .allowUnknownOption()
+    .passThroughOptions()
+    .helpOption(false)
+    .action(async (args: string[]) => {
+      // Raw forwarding: the shared MCP entry owns its own argument parsing,
+      // validation and help, in every directory, Git or not.
+      const exitCode = await runMcpCli(args);
+      if (exitCode !== 0) process.exit(exitCode);
+    });
+  return command;
+}
+
+// Commander errors keep the established CLI message contract: the tests and
+// the Copilot adapter rely on these exact wordings.
+function toCliError(error: CommanderError): Error {
+  if (error.code === "commander.helpDisplayed") return error as unknown as Error;
+  const message = error.message.replace(/^error: /, "");
+  const unknownOption = message.match(/unknown option '([^']+)'/);
+  if (unknownOption) return new Error(`Unknown option: ${unknownOption[1]}. ${USAGE}`);
+  const missingValue = message.match(/option '([^']+)'.*argument missing/);
+  if (missingValue) {
+    const option = missingValue[1].split(" ")[0];
+    return new Error(
+      option === "--renderer"
+        ? "Missing value for --renderer (html or terminal)."
+        : `Missing value for ${option}.`
+    );
   }
-  if (renderer !== "html" && renderer !== "terminal") {
-    throw new Error("Unknown renderer '" + renderer + "'. Use html or terminal.");
+  if (message.includes("too many arguments")) {
+    return new Error(`Only one Tour name is allowed. ${USAGE}`);
   }
-  return { tourName, renderer };
+  return new Error(message);
 }
 
 function repositoryRoot(cwd: string): string {
   try {
     return execFileSync("git", ["rev-parse", "--show-toplevel"], {
-      cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"]
+      cwd, encoding: "utf8", stdio: [ "ignore", "pipe", "ignore" ]
     }).trim();
   } catch {
     throw new Error("Not inside a Git worktree. Run codetour from a Git repository.");
@@ -128,53 +178,68 @@ async function openFileInBrowser(file: string): Promise<void> {
   });
 }
 
-async function main(): Promise<void> {
-  // `mcp` is a reserved command token, dispatched before Tour discovery,
-  // renderer parsing and Git worktree detection: the MCP server starts in
-  // any directory, Git or not, and every remaining argument is forwarded.
-  if (process.argv[2] === "mcp") {
-    const exitCode = await runMcpCli(process.argv.slice(3));
-    if (exitCode !== 0) process.exit(exitCode);
+async function runWithOptions(options: Options, title: string | undefined): Promise<void> {
+  // Agent integrations run before Tour discovery: an installation is a
+  // machine-level action, valid outside any Git worktree.
+  if (options.agents) {
+    await listAgents();
     return;
   }
-  if (process.argv[2] === "--internal-tour") {
-    if (process.argv.length !== 4 && process.argv.length !== 5) throw new Error("Internal terminal runner requires a Tour path and optional workspace root.");
-    const source = JSON.parse(await fs.readFile(process.argv[3], "utf8")) as CodeTour;
-    source.id = pathToFileURL(process.argv[3]).toString();
-    await runTerminalTour(source, repositoryRoot(process.argv[4] || path.dirname(process.argv[3])));
+  if (options.doctor) {
+    await doctor();
     return;
   }
-  const args = process.argv.slice(2);
+  if (options.install) {
+    await findAgentIntegration(options.install).install({ force: options.force });
+    return;
+  }
+  if (options.uninstall) {
+    await findAgentIntegration(options.uninstall).uninstall();
+    return;
+  }
+
+  if (options.internalTour) {
+    if (options.internalTour.length < 1 || options.internalTour.length > 2) {
+      throw new Error("Internal terminal runner requires a Tour path and optional workspace root.");
+    }
+    const source = loadTour(
+      await fs.readFile(options.internalTour[0], "utf8"),
+      pathToFileURL(options.internalTour[0]).toString()
+    );
+    await runTerminalTour(source, repositoryRoot(options.internalTour[1] || path.dirname(options.internalTour[0])));
+    return;
+  }
+
+  // The renderer is validated before Git worktree detection, exactly as the
+  // previous hand-rolled parser did: a bad renderer fails anywhere.
+  if (options.renderer !== undefined && options.renderer !== "html" && options.renderer !== "terminal") {
+    throw new Error("Unknown renderer '" + options.renderer + "'. Use html or terminal.");
+  }
+
   const root = repositoryRoot(process.cwd());
   const tours = await discover(root);
-  if (args.length === 1 && args[0] === "--internal-list-tours") {
+  if (options.internalListTours) {
     console.log(JSON.stringify(tours.map(tour => ({id: tour.id, title: tour.title}))));
     return;
   }
   // Non-interactive resolution surface for the Copilot adapter: resolve the
   // shared selection contract for an optional requested title and print the
   // resolved identity, or fail with the exact resolution error. No prompt.
-  if (args[0] === "--internal-resolve-tour") {
-    if (args.length > 2) {
-      throw new Error("Only one Tour name is allowed. Usage: codetour --internal-resolve-tour [tour]");
-    }
-    const resolved = resolveTourSelection(tours, args[1]);
+  if (options.internalResolveTour !== undefined) {
+    if (title) throw new Error("Only one Tour name is allowed. " + USAGE);
+    const requested = typeof options.internalResolveTour === "string" ? options.internalResolveTour : undefined;
+    const resolved = resolveTourSelection(tours, requested);
     console.log(JSON.stringify({id: resolved.id, title: resolved.title}));
     return;
   }
   // Only select identities from this workspace's discovered list. Copilot
-  // passes the chosen identity so duplicate titles remain unambiguous.
   let selected: CodeTour | undefined;
-  if (args[0] === "--internal-tour-id") {
-    const id = args[1];
-    if (!id) throw new Error("Missing internal Tour identity.");
-    selected = tours.find(tour => tour.id === id);
+  if (options.internalTourId) {
+    selected = tours.find(tour => tour.id === options.internalTourId);
     if (!selected) throw new Error("Selected Tour is no longer available.");
-    args.splice(0, 2);
+    if (title) throw new Error("Only one Tour can be selected.");
   }
-  const options = parseArguments(args);
-  if (selected && options.tourName) throw new Error("Only one Tour can be selected.");
-  const tour = selected ?? await pickTour(tours, options.tourName);
+  const tour = selected ?? await pickTour(tours, title);
 
   if (options.renderer === "terminal") {
     await launchTerminalReader(fileURLToPath(tour.id), root);
@@ -201,6 +266,16 @@ async function main(): Promise<void> {
     await openFileInBrowser(output);
   }
   console.log("CodeTour: opened " + tour.title + " (" + output + ")");
+}
+
+async function main(): Promise<void> {
+  const command = buildProgram();
+  try {
+    await command.parseAsync(process.argv, { from: "node" });
+  } catch (error) {
+    if ((error as CommanderError).code === "commander.helpDisplayed") return;
+    throw toCliError(error as CommanderError);
+  }
 }
 
 void main().catch(error => {

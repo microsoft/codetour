@@ -5,6 +5,18 @@ v0.1.0 document the original microsoft/codetour releases the fork builds on.
 
 ## Unreleased
 
+### Added
+
+- `codetour --install copilot` and `codetour --install vscode` install CodeTour
+  into AI agents from any standalone CLI, through an agent-integration registry
+  (`--agents`, `--doctor`, `--uninstall`, `--force`). The Copilot adapter files
+  are embedded in the CLI bundle, a pre-existing different installation is
+  never replaced without explicit consent, and an uninstall removes only the
+  files this CLI owns. The Copilot CLI parsing itself moved to Commander while
+  keeping the established message contract: `mcp` stays a reserved pass-through
+  token, the `--internal-*` surfaces used by the adapter are unchanged, and
+  `--help` now documents every option.
+
 ### Changed
 
 - One Tour Step Conversation store above the responder seam, shared by the

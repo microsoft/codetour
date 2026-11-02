@@ -274,6 +274,76 @@ test("rejects an unterminated Mermaid fence", async () => {
   }
 });
 
+test(
+  "probe: a conforming em-dash caption survives a full Tour submission (with and without backticks)",
+  {
+    skip:
+      "manual alteration probe (#60): the test harness passes arguments verbatim over stdio " +
+      "JSON-RPC, so the suspected sandbox-to-server string alteration cannot reproduce here; " +
+      "de-skip to replay a real-session submission",
+  },
+  async () => {
+    // Hypothesis under test (#60): in a past real session, a conforming caption
+    // (**Diagram — <text>** with the literal em dash U+2014) was rejected with no
+    // diagnostic that could explain why. The best surviving explanation is that
+    // the caption string was altered somewhere between the authoring agent
+    // (sandbox) and the MCP server — for example the em dash U+2014 rewritten as
+    // a simple hyphen, which the caption grammar then legitimately rejects.
+    //
+    // The test stays in expected-failure/skip state because the incident is not
+    // provable after the fact: this harness delivers the exact bytes it was
+    // given, so running it here can only confirm the harness path is clean, not
+    // reproduce the suspected alteration (see spec #57, "Out of Scope"). If the
+    // incident recurs, de-skip the probe (or replay the exact failing submission
+    // through it): the caption diagnostic from #58 serializes the found line with
+    // JSON.stringify, so the assertion below fails with the sent line and the
+    // found line side by side, making an invisible alteration (em dash turned
+    // into a hyphen, non-breaking space, truncation) immediately isolable.
+    const root = tempDir();
+    try {
+      await withServer(root, async (client) => {
+        // A conforming caption, twice: once with the caption text containing
+        // backticks, once without. Backticks make any mangling of the caption
+        // line unambiguous once serialized by JSON.stringify.
+        for (const captionText of [
+          "Request lifecycle",
+          "Request `lifecycle` quoting a `file`",
+        ]) {
+          const captionLine = `**Diagram \u2014 ${captionText}**`;
+          const response = await callTool(client, "create_project_tour", {
+            description: "An overview of the request path.",
+            steps: [
+              {
+                description: [
+                  captionLine,
+                  "",
+                  "```mermaid",
+                  ALLOWED_DIAGRAM_SOURCES.flowchart,
+                  "```",
+                ].join("\n"),
+              },
+              { description: "A plain step." },
+            ],
+          });
+          const captionIssues = structuredIssues(response).filter((issue) =>
+            issue.path.endsWith(".caption")
+          );
+          assert.equal(
+            response.isError,
+            false,
+            captionIssues.length > 0
+              ? `conforming caption rejected; sent ${JSON.stringify(captionLine)}; ` +
+                `the caption diagnostic exposes the found line: ${captionIssues[0].message}`
+              : response.text
+          );
+        }
+      });
+    } finally {
+      rmrf(root);
+    }
+  }
+);
+
 test("aggregates all step validation errors in one response", async () => {
   const root = tempDir();
   try {

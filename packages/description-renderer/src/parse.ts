@@ -23,15 +23,28 @@ export interface DiagramFence {
   end: number;
 }
 
-function findCaption(lines: string[], fenceIndex: number): string | undefined {
-  for (let index = fenceIndex - 1; index >= 0; index--) {
-    const line = lines[index];
-    if (line.trim() === "") {
+export function findCaptionCandidateLine(
+  text: string,
+  fenceStart: number
+): string | undefined {
+  const lines = text.slice(0, fenceStart).split("\n");
+  for (let index = lines.length - 1; index >= 0; index--) {
+    if (lines[index].trim() === "") {
       continue;
     }
-    return matchDiagramCaption(line);
+    return lines[index];
   }
   return undefined;
+}
+
+function findCaption(
+  description: string,
+  fenceStart: number
+): string | undefined {
+  const candidateLine = findCaptionCandidateLine(description, fenceStart);
+  return candidateLine === undefined
+    ? undefined
+    : matchDiagramCaption(candidateLine);
 }
 
 export function findDiagramFences(description: string): DiagramFence[] {
@@ -63,7 +76,7 @@ export function findDiagramFences(description: string): DiagramFence[] {
     if (closeIndex === -1) {
       if (isMermaidFenceLine(lines[index])) {
         fences.push({
-          caption: findCaption(lines, index),
+          caption: findCaption(description, lineOffsets[index]),
           source: lines.slice(index + 1).join("\n"),
           closed: false,
           start: lineOffsets[index],
@@ -75,7 +88,7 @@ export function findDiagramFences(description: string): DiagramFence[] {
 
     if (isMermaidFenceLine(lines[index])) {
       fences.push({
-        caption: findCaption(lines, index),
+        caption: findCaption(description, lineOffsets[index]),
         source: lines.slice(index + 1, closeIndex).join("\n"),
         closed: true,
         start: lineOffsets[index],

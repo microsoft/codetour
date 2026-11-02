@@ -9,6 +9,7 @@ export type { DescriptionTheme, RenderedDiagram } from "./render";
 export { sanitizeSvg } from "./sanitize";
 export {
   containsMermaidFenceMarker,
+  findCaptionCandidateLine,
   findDiagramFences,
   isMermaidFenceLine
 } from "./parse";

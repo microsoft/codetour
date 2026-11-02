@@ -179,11 +179,6 @@ export async function workspacePrefix(ctx: WorkspaceContext): Promise<string> {
   return result.code === 0 ? result.stdout.trim() : "";
 }
 
-export const RESERVED_TOUR_FILES = [
-  ".tours/project.tour",
-  ".tours/changes.tour",
-];
-
 export interface UncommittedEntry {
   path: string;
   status: string;
@@ -193,8 +188,14 @@ export function normalizeSlashes(value: string): string {
   return value.replace(/\\/g, "/");
 }
 
-// Staged, unstaged, and untracked workspace changes, except for the two
-// reserved Tour files: a previous generation must not trigger its own dirty
+// Any `.tour` file under `.tours/` is a Tour artifact: a previous generation
+// must not trigger its own dirty workspace warning.
+function isTourFile(workspacePath: string): boolean {
+  return workspacePath.startsWith(".tours/") && workspacePath.endsWith(".tour");
+}
+
+// Staged, unstaged, and untracked workspace changes, except for Tour files
+// under `.tours/`: a previous generation must not trigger its own dirty
 // workspace warning.
 export async function uncommittedChanges(
   ctx: WorkspaceContext
@@ -223,11 +224,11 @@ export async function uncommittedChanges(
     let workspacePath = normalizeSlashes(repoPath).slice(prefix.length);
     if (status === "??" && workspacePath.endsWith("/")) {
       const directory = workspacePath.slice(0, -1);
-      if (directory === ".tours" && toursDirectoryOnlyContainsReserved(ctx, directory)) {
+      if (directory === ".tours" && toursDirectoryOnlyContainsTours(ctx, directory)) {
         continue;
       }
     }
-    if (RESERVED_TOUR_FILES.includes(workspacePath)) {
+    if (isTourFile(workspacePath)) {
       continue;
     }
     entries.push({ path: workspacePath, status });
@@ -236,9 +237,8 @@ export async function uncommittedChanges(
 }
 
 // An untracked `.tours` directory appears as one `?? .tours/` entry in normal
-// mode. Ignore it only when its contents are limited to the reserved Tour
-// files.
-function toursDirectoryOnlyContainsReserved(
+// mode. Ignore it only when its contents are limited to Tour files.
+function toursDirectoryOnlyContainsTours(
   ctx: WorkspaceContext,
   directory: string
 ): boolean {
@@ -251,10 +251,6 @@ function toursDirectoryOnlyContainsReserved(
   }
   return (
     files.length > 0 &&
-    files.every((file) =>
-      RESERVED_TOUR_FILES.includes(
-        normalizeSlashes(path.posix.join(directory, file))
-      )
-    )
+    files.every((file) => normalizeSlashes(file).endsWith(".tour"))
   );
 }

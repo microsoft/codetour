@@ -1,6 +1,6 @@
 {
   "name": "codetour-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local MCP server that deterministically validates and persists AI-generated CodeTour Project Tours and Changes Tours",
   "license": "MIT",
   "author": {

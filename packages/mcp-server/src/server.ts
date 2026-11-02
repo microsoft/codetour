@@ -63,6 +63,12 @@ const SERVER_VERSION = packageJson.version;
 const PROJECT_TOUR_PATH = ".tours/project.tour";
 const CHANGES_TOUR_PATH = ".tours/changes.tour";
 
+// A custom `fileName` is always confined to the `.tours` directory next to the
+// reserved destinations; without one the reserved default applies.
+function tourTargetPath(defaultPath: string, fileName?: string): string {
+  return fileName === undefined ? defaultPath : `.tours/${fileName}`;
+}
+
 const MARKDOWN_WRITING_GUIDANCE =
   "Each step may include an optional questions array of at most four non-empty strings. " +
   "When useful, propose three or four concise questions specific to that step, in the same language as the user's request. " +
@@ -139,8 +145,10 @@ const PROJECT_TOUR_DESCRIPTION =
   "requested audience and scope. " +
   PROJECT_TOUR_WORKFLOW_GUIDANCE +
   PROJECT_TOUR_ORIENTATION_GUIDANCE +
-  "Input: a required non-empty steps array, an optional title (default: \"Project Overview\"), and " +
-  "an optional description summarizing the tour. Each step requires a Markdown description and may " +
+  "Input: a required non-empty steps array, an optional title (default: \"Project Overview\"), an " +
+  "optional description summarizing the tour, and an optional fileName: a bare file name (no path " +
+  "separators) under which the tour is written inside .tours/, with the .tour suffix appended when " +
+  "absent. Omit fileName to write the reserved .tours/project.tour. Each step requires a Markdown description and may " +
   "have a title. Use at most one locator per step: file or directory, relative to the workspace root. " +
   "Anchor code explanations to the relevant file and location; use a directory for structural " +
   "orientation, or no locator for general context. File steps may use line (1-based), pattern " +
@@ -148,8 +156,8 @@ const PROJECT_TOUR_DESCRIPTION =
   "with 1-based line and character). line and pattern are mutually exclusive. Prefer a short, " +
   "stable pattern when it identifies the intended code reliably; otherwise use a verified line. " +
   "Project Tours use ordinary file navigation and anchors are checked against the current workspace. " +
-  "You author the complete content; the server validates it and atomically writes .tours/project.tour, " +
-  "replacing the previous Project Tour only on success. Validation issues are returned together; " +
+  "You author the complete content; the server validates it and atomically writes the tour file, " +
+  "replacing the previous file at that destination only on success. Validation issues are returned together; " +
   "correct the reported issues before retrying. Failure preserves the previous tour. " +
   "Pass dryRun true to rehearse a complete proposal: the same validation runs (anchors, Mermaid, rules), " +
   "the response reports status \"validated\" with the same warnings, and no file is written even when " +
@@ -180,7 +188,9 @@ const CHANGES_TOUR_DESCRIPTION =
   CHANGES_TOUR_WORKFLOW_GUIDANCE +
   "Input: baseRef (required Git reference), headRef (required full 40-character commit SHA equal to " +
   "the current HEAD), a required non-empty steps array, optional title (default: \"Changes on <branch>\"), " +
-  "optional description, and includeUncommittedChanges (optional boolean, default false). " +
+  "optional description, optional fileName, and includeUncommittedChanges (optional boolean, default false). " +
+  "fileName is a bare file name (no path separators) under which the tour is written inside .tours/, " +
+  "with the .tour suffix appended when absent; omit it to write the reserved .tours/changes.tour. " +
   "Each step requires a Markdown description and may have a title. Use at most one workspace-relative " +
   "locator: file or directory. File steps may use line (1-based), pattern (a regular expression " +
   "matching exactly once), or selection (start/end positions with 1-based line and character). " +
@@ -199,8 +209,8 @@ const CHANGES_TOUR_DESCRIPTION =
   "clean, the tour remains a committed comparison. If a saved diff's revisions or file become " +
   "unavailable, the reader falls back to the current file. " +
   "You author the complete content; the server validates it, adds comparison provenance to the " +
-  "description, and atomically writes .tours/changes.tour, replacing the previous Changes Tour only " +
-  "on success. Failure preserves it. Correct reported validation issues before retrying; if HEAD " +
+  "description, and atomically writes the tour file, replacing the previous file at that destination " +
+  "only on success. Failure preserves it. Correct reported validation issues before retrying; if HEAD " +
   "changed, re-analyze the comparison and submit the new SHA with matching content. " +
   "Pass dryRun true to rehearse the proposal: the Git checks (HEAD match, base resolution, merge-base, " +
   "anchors against headRef) and the same validation still run, the response reports status \"validated\" " +
@@ -238,6 +248,12 @@ const projectToolInputSchema = z
       .describe(
         "Optional readable Markdown overview; separate distinct ideas with blank lines between paragraphs."
       ),
+    fileName: z
+      .unknown()
+      .optional()
+      .describe(
+        "Optional bare file name (no path separators) under which the tour is written inside .tours/; the .tour suffix is appended when absent."
+      ),
     dryRun: z
       .unknown()
       .optional()
@@ -262,6 +278,12 @@ const changesToolInputSchema = z
       .optional()
       .describe(
         "Optional readable Markdown overview; separate distinct ideas with blank lines between paragraphs."
+      ),
+    fileName: z
+      .unknown()
+      .optional()
+      .describe(
+        "Optional bare file name (no path separators) under which the tour is written inside .tours/; the .tour suffix is appended when absent."
       ),
     dryRun: z
       .unknown()
@@ -395,16 +417,17 @@ async function handleCreateProjectTour(
     steps: finalSteps,
   };
 
-  const writeFailure = await persistTour(ctx, PROJECT_TOUR_PATH, tour);
+  const targetPath = tourTargetPath(PROJECT_TOUR_PATH, params.fileName);
+  const writeFailure = await persistTour(ctx, targetPath, tour);
   if (writeFailure) {
     return writeFailure;
   }
 
   return successResponse(
-    normalizeSlashes(path.relative(defaultContext.root, path.join(ctx.root, PROJECT_TOUR_PATH))),
+    normalizeSlashes(path.relative(defaultContext.root, path.join(ctx.root, targetPath))),
     finalSteps.length,
     warnings,
-    `Created Project Tour at ${PROJECT_TOUR_PATH} with ${finalSteps.length} step(s).`
+    `Created Project Tour at ${targetPath} with ${finalSteps.length} step(s).`
   );
 }
 
@@ -630,16 +653,17 @@ async function handleCreateChangesTour(
     );
   }
 
-  const writeFailure = await persistTour(ctx, CHANGES_TOUR_PATH, tour);
+  const targetPath = tourTargetPath(CHANGES_TOUR_PATH, params.fileName);
+  const writeFailure = await persistTour(ctx, targetPath, tour);
   if (writeFailure) {
     return writeFailure;
   }
 
   return successResponse(
-    normalizeSlashes(path.relative(defaultContext.root, path.join(ctx.root, CHANGES_TOUR_PATH))),
+    normalizeSlashes(path.relative(defaultContext.root, path.join(ctx.root, targetPath))),
     finalSteps.length,
     warnings,
-    `Created Changes Tour at ${CHANGES_TOUR_PATH} with ${finalSteps.length} step(s) for head ${headRef} (base ${baseRef}).`
+    `Created Changes Tour at ${targetPath} with ${finalSteps.length} step(s) for head ${headRef} (base ${baseRef}).`
   );
 }
 

@@ -161,11 +161,12 @@ function reportUnknownFields(
   }
 }
 
-const PROJECT_PARAM_FIELDS = ["workspacePath", "title", "description", "dryRun", "steps"] as const;
+const PROJECT_PARAM_FIELDS = ["workspacePath", "title", "description", "fileName", "dryRun", "steps"] as const;
 const CHANGES_PARAM_FIELDS = [
   "workspacePath",
   "title",
   "description",
+  "fileName",
   "dryRun",
   "steps",
   "baseRef",
@@ -247,6 +248,25 @@ function validateCommonParams(raw: RawObject, issues: Issue[]): ProjectParams {
       });
     }
     params.description = description;
+  }
+  if (raw.fileName !== undefined) {
+    if (typeof raw.fileName !== "string") {
+      issues.push({ path: "fileName", message: "must be a string" });
+    } else {
+      const trimmed = raw.fileName.trim();
+      const stem = trimmed.endsWith(".tour") ? trimmed.slice(0, -".tour".length) : trimmed;
+      if (trimmed === "" || stem === "") {
+        issues.push({ path: "fileName", message: "must be a non-empty file name" });
+      } else if (/[/\\]/.test(trimmed) || stem === "." || stem === "..") {
+        issues.push({
+          path: "fileName",
+          message:
+            "must be a bare file name without path separators; the tour is always written under .tours/",
+        });
+      } else {
+        params.fileName = `${stem}.tour`;
+      }
+    }
   }
   if (raw.dryRun !== undefined) {
     if (typeof raw.dryRun !== "boolean") {

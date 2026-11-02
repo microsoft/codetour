@@ -25,6 +25,7 @@ export interface ProjectParams {
   workspacePath?: string;
   title?: string;
   description?: string;
+  fileName?: string;
   dryRun?: boolean;
   steps?: unknown[];
 }

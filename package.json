@@ -3,7 +3,7 @@
   "displayName": "CodeTour IA",
   "description": "Record and playback guided tours of codebases, with AI-generated project and changes tours, directly within the editor",
   "publisher": "maurice30120",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "packageManager": "npm@12.0.1",
   "volta": {
     "node": "24.18.0",

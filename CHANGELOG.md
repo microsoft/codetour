@@ -3,6 +3,24 @@
 All notable changes to CodeTour IA are documented in this file. Entries below
 v0.1.0 document the original microsoft/codetour releases the fork builds on.
 
+## v0.1.2
+
+### Added
+
+- Optional `fileName` argument on both MCP tools (`create_project_tour` and
+  `create_changes_tour`): a bare file name under which the tour is written
+  inside `.tours/`, with the `.tour` suffix appended when absent. This lets an
+  agent keep several generated tours side by side (for example one Changes
+  Tour per functional slice) without renaming `changes.tour` between calls.
+  Omitted, the reserved destinations (`.tours/changes.tour`,
+  `.tours/project.tour`) apply as before.
+
+### Changed
+
+- Uncommitted-change detection now ignores every `.tour` file under `.tours/`,
+  not just the two reserved paths, so a previously generated tour never
+  triggers its own dirty-workspace warning.
+
 ## v0.1.0 (10/12/2026)
 
 First CodeTour IA release. CodeTour IA is the maintained fork of

@@ -671,3 +671,42 @@ test("persists suggested questions and preserves the tour when there are more th
     rmrf(root);
   }
 });
+
+test("writes the tour under the provided fileName with the suffix appended", async () => {
+  const root = tempDir();
+  try {
+    await withServer(root, async (client) => {
+      const response = await callTool(client, "create_project_tour", {
+        fileName: "onboarding-backend",
+        steps: [{ description: "Entry point." }],
+      });
+      assert.equal(response.isError, false, response.text);
+      assert.equal(response.structured.path, ".tours/onboarding-backend.tour");
+    });
+    const tour = readTourFile(root, ".tours/onboarding-backend.tour");
+    assert.equal(tour.title, "Project Overview");
+    assert.ok(tourFileValidAgainstSchema(root, ".tours/onboarding-backend.tour"));
+    assert.equal(fs.existsSync(path.join(root, ".tours/project.tour")), false);
+  } finally {
+    rmrf(root);
+  }
+});
+
+test("rejects a fileName with a path separator", async () => {
+  const root = tempDir();
+  try {
+    await withServer(root, async (client) => {
+      const response = await callTool(client, "create_project_tour", {
+        fileName: "/absolute/project.tour",
+        steps: [{ description: "Entry point." }],
+      });
+      assert.equal(response.isError, true);
+      assert.equal(structuredCode(response), "INVALID_PROPOSAL");
+      assert.ok(issuePaths(response).includes("fileName"));
+    });
+    assert.equal(fs.existsSync(path.join(root, ".tours/project.tour")), false);
+    assert.equal(fs.existsSync(path.join(root, "absolute")), false);
+  } finally {
+    rmrf(root);
+  }
+});

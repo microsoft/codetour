@@ -27,7 +27,7 @@ test("a description speaks prose in order with the fixed rich-content substituti
   ].join("\n");
   const spoken = [
     "Terminal reader",
-    "The reader renders steps with render markdown to html; see the docs for details.",
+    "The reader renders steps with render markdown to ache te èm elle; see the docs for details.",
     "first item",
     "second item",
     "Voir diagramme",
@@ -83,9 +83,48 @@ test("a camelCase inline identifier splits at the hump and speaks lowercase word
     "Use select context then workspace path here.");
 });
 
-test("an all-caps acronym stays in capitals and the word after it is its own word", () => {
+test("a dictionary identifier is spoken as its recorded letter-by-letter spelling", () => {
+  assert.equal(prepareNarrationText("Configure the `MCP` server."), "Configure the èm ci pi server.");
+});
+
+test("each dictionary entry is spoken as its recorded spelling", () => {
+  assert.equal(prepareNarrationText("The `ACP` protocol bridges both."),
+    "The éï ci pi protocol bridges both.");
+  assert.equal(prepareNarrationText("The `HTML` page renders."),
+    "The ache te èm elle page renders.");
+  assert.equal(prepareNarrationText("The `CSS` styles it."), "The ci è ès styles it.");
+  assert.equal(prepareNarrationText("Read the `JSON` payload."), "Read the ji è ès onne payload.");
+  assert.equal(prepareNarrationText("Call the `API` endpoint."), "Call the é pi i endpoint.");
+  assert.equal(prepareNarrationText("Run the `CLI` command."), "Run the ci èl i command.");
+  assert.equal(prepareNarrationText("Write it in `TS`."), "Write it in te ès.");
+  assert.equal(prepareNarrationText("Decode `UTF8` strings."), "Decode iou ti èf 8 strings.");
+});
+
+test("no token leaves the preparation in capitals when it is absent from the dictionary", () => {
+  assert.equal(prepareNarrationText("The `parseSTDERRFile` helper logs to stderr."),
+    "The parse stderr file helper logs to stderr.");
+});
+
+test("the dictionary lookup is case-insensitive on the split token", () => {
+  assert.equal(prepareNarrationText("Start the `mcp` server."),
+    "Start the èm ci pi server.");
+  assert.equal(prepareNarrationText("The `mcpServer` wraps tools."),
+    "The èm ci pi server wraps tools.");
+});
+
+test("an identifier absent from the dictionary is an ordinary lowercase word", () => {
+  assert.equal(prepareNarrationText("Write to `STDERR` now."), "Write to stderr now.");
+  assert.equal(prepareNarrationText("Hash with `sha256` again."), "Hash with sha 256 again.");
+});
+
+test("prose outside an inline code span is never looked up in the dictionary", () => {
+  assert.equal(prepareNarrationText("The MCP server is configured via the CLI."),
+    "The MCP server is configured via the CLI.");
+});
+
+test("an acronym run splits into its own word, spelled by the dictionary", () => {
   assert.equal(prepareNarrationText("The reader parses `parseHTMLFile` first."),
-    "The reader parses parse HTML file first.");
+    "The reader parses parse ache te èm elle file first.");
 });
 
 test("underscores split an inline identifier into spoken words", () => {
@@ -103,7 +142,7 @@ test("hyphens split an inline identifier into spoken words", () => {
 });
 
 test("slashes split an inline path into spoken words", () => {
-  assert.equal(prepareNarrationText("Open `src/cli/narration` first."), "Open src cli narration first.");
+  assert.equal(prepareNarrationText("Open `src/cli/narration` first."), "Open src ci èl i narration first.");
 });
 
 test("a letter-digit transition splits an inline identifier into spoken words", () => {

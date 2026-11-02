@@ -1,4 +1,5 @@
 import { isMermaidFenceInfo } from "codetour-description-renderer";
+import { SPELL_WORDS } from "./spellWords";
 
 /**
  * The spoken text of a Tour Step description (spec #79): the same Markdown the
@@ -51,8 +52,10 @@ function opensDiagram(line: string): boolean {
 }
 
 /**
- * The spoken form of one inline code identifier (spec #90): tokenized on its
- * source casing, then spoken as ordinary lowercase words.
+ * The spoken form of one inline code identifier (specs #90 and #91):
+ * tokenized on its source casing, then spoken as ordinary lowercase words —
+ * except a Narration Spell Dictionary token, replaced by its recorded
+ * letter-by-letter spelling. No token leaves the preparation in capitals.
  */
 function speakIdentifier(identifier: string): string {
   const words = identifier
@@ -67,14 +70,10 @@ function speakIdentifier(identifier: string): string {
     .replace(/([0-9])([A-Za-z])/g, "$1 $2")
     .split(/\s+/)
     .filter(word => word.length > 0);
-  // A word kept in capitals is an acronym for #91 to pronounce — but only in a
-  // mixed-case identifier: an identifier with no lowercase at all (STALE_HEAD)
-  // is capitalised shouting, so every word is spoken in lowercase.
-  const keepsAcronymCasing = /[a-z]/.test(identifier);
+  // A dictionary token is spoken by its recorded spelling, every other token
+  // as the ordinary lowercase word: no token leaves in capitals.
   return words
-    .map(word => keepsAcronymCasing && /[A-Z]/.test(word) && !/[a-z]/.test(word)
-      ? word
-      : word.toLowerCase())
+    .map(word => SPELL_WORDS[word.toLowerCase()] ?? word.toLowerCase())
     .join(" ");
 }
 

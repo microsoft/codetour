@@ -48,3 +48,6 @@ The macOS engine is smoke-tested against the real `say` (opt-in,
 implemented and unit-tested against a fake `powershell` — the fixed argv, the
 utterance on stdin, the kill on cancel — but it has not been exercised on a
 real Windows terminal yet; that validation remains open and is not simulated.
+
+Superseded in part by ADR 0032: dictionary identifiers are spoken spelled, not
+as ordinary words.

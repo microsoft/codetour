@@ -5,7 +5,7 @@ import {
 import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import * as path from "path";
-import { createContext, selectContext } from "./context";
+import { createContext } from "./context";
 import {
   changedFiles,
   committedDiffIsEmpty,
@@ -14,13 +14,12 @@ import {
   isGitRepository,
   mergeBase,
   normalizeSlashes,
-  readCommitAnchors,
-  renamedFiles,
   resolveCommit,
   uncommittedChanges,
   workspacePrefix,
 } from "./git";
 import { OutputPathError, writeTourAtomic } from "./persistence";
+import { stageCommitAnchors, validateTourProposal } from "./proposal-validation";
 import { validateCodetourTour } from "./codetour-schema";
 import {
   ErrorResult,
@@ -36,19 +35,9 @@ import {
   MAX_RECOMMENDED_DIAGRAM_NODES,
   MAX_RECOMMENDED_STEPS,
   orientationStepWarnings,
-  validateChangesParams,
-  validateProjectParams,
-  validateSteps,
 } from "./validation";
-import {
-  MERMAID_TOOL_GUIDANCE,
-  validateMermaidDescriptions,
-} from "./mermaid-validation";
-import {
-  IMAGE_TOOL_GUIDANCE,
-  tourImageDirectoryName,
-  validateImageDescriptions,
-} from "./image-validation";
+import { MERMAID_TOOL_GUIDANCE } from "./mermaid-validation";
+import { IMAGE_TOOL_GUIDANCE } from "./image-validation";
 import {
   CRITICAL_REVIEW_RESOURCE_URI,
   criticalReviewSkillPack,
@@ -598,51 +587,11 @@ async function handleCreateProjectTour(
   defaultContext: WorkspaceContext,
   args: unknown
 ): Promise<ToolResponse> {
-  const rawSteps = extractSteps(args);
-  // Aggregate all validation errors (parameters and then steps) before
-  // responding so the agent can correct the proposal in one cycle.
-  const { params, issues: paramIssues } = validateProjectParams(args);
-  const mermaidIssues = await validateMermaidDescriptions(args);
-  const selected = selectContext(defaultContext, params?.workspacePath);
-  const ctx = selected.context ?? defaultContext;
-  // Image references are workspace-root relative, the same base the player
-  // inlines them from, so an accepted reference always renders; step anchors
-  // keep the selected context root.
-  const imageIssues = validateImageDescriptions(
-    args,
-    defaultContext,
-    tourImageDirectoryName("project", params?.fileName)
-  );
-  if (rawSteps === undefined || (Array.isArray(rawSteps) && rawSteps.length === 0)) {
-    if (mermaidIssues.length === 0 && imageIssues.length === 0) {
-      return errorResponse("TOUR_STEPS_REQUIRED", "A tour requires at least one step.");
-    }
-    return errorResponse(
-      "INVALID_PROPOSAL",
-      "The create_project_tour arguments are invalid.",
-      [
-        ...mermaidIssues,
-        ...imageIssues,
-        { path: "steps", message: "is required and must contain at least one step" }
-      ]
-    );
+  const result = await validateTourProposal("project", args, defaultContext);
+  if (!result.ok) {
+    return errorResponse(result.rejection);
   }
-  const allIssues = [...paramIssues, ...mermaidIssues, ...selected.issues, ...imageIssues];
-  let steps: TourStep[] | undefined;
-  if (Array.isArray(rawSteps)) {
-    const validated = validateSteps(rawSteps, ctx,
-      selected.context ? { kind: "workspace" } : { kind: "structure" });
-    steps = validated.steps;
-    allIssues.push(...validated.issues);
-  }
-  if (!params || allIssues.length > 0) {
-    return errorResponse(
-      "INVALID_PROPOSAL",
-      "The create_project_tour arguments are invalid.",
-      allIssues
-    );
-  }
-  const finalSteps = steps as TourStep[];
+  const { ctx, params, steps: finalSteps } = result.proposal;
 
   const warnings = [
     ...stepLimitWarnings(finalSteps),
@@ -689,49 +638,11 @@ async function handleCreateChangesTour(
   defaultContext: WorkspaceContext,
   args: unknown
 ): Promise<ToolResponse> {
-  const rawSteps = extractSteps(args);
-  // Use the same aggregation strategy as the Project Tour: collect all
-  // validation errors before responding.
-  const { params, issues: paramIssues } = validateChangesParams(args);
-  const mermaidIssues = await validateMermaidDescriptions(args);
-  const selected = selectContext(defaultContext, params?.workspacePath);
-  const ctx = selected.context ?? defaultContext;
-  // Image references are workspace-root relative, the same base the player
-  // inlines them from, so an accepted reference always renders; step anchors
-  // keep the selected context root.
-  const imageIssues = validateImageDescriptions(
-    args,
-    defaultContext,
-    tourImageDirectoryName("changes", params?.fileName)
-  );
-  if (rawSteps === undefined || (Array.isArray(rawSteps) && rawSteps.length === 0)) {
-    if (mermaidIssues.length === 0 && imageIssues.length === 0) {
-      return errorResponse("TOUR_STEPS_REQUIRED", "A tour requires at least one step.");
-    }
-    return errorResponse(
-      "INVALID_PROPOSAL",
-      "The create_changes_tour arguments are invalid.",
-      [
-        ...mermaidIssues,
-        ...imageIssues,
-        { path: "steps", message: "is required and must contain at least one step" }
-      ]
-    );
+  const result = await validateTourProposal("changes", args, defaultContext);
+  if (!result.ok) {
+    return errorResponse(result.rejection);
   }
-  const allIssues = [...paramIssues, ...mermaidIssues, ...selected.issues, ...imageIssues];
-  let steps: TourStep[] | undefined;
-  if (Array.isArray(rawSteps)) {
-    const validated = validateSteps(rawSteps, ctx, { kind: "structure" });
-    steps = validated.steps;
-    allIssues.push(...validated.issues);
-  }
-  if (!params || allIssues.length > 0) {
-    return errorResponse(
-      "INVALID_PROPOSAL",
-      "The create_changes_tour arguments are invalid.",
-      allIssues
-    );
-  }
+  const { ctx, params } = result.proposal;
 
   const baseRef = params.baseRef as string;
   const headRef = params.headRef as string;
@@ -788,26 +699,16 @@ async function handleCreateChangesTour(
   // replaces a useful one.
   const uncommitted = await uncommittedChanges(ctx);
   const includesLocalChanges = includeUncommittedChanges && uncommitted.length > 0;
-  const proposedSteps = steps as TourStep[];
-  const anchors = includesLocalChanges ? undefined : await readCommitAnchors(
-    ctx, headRef, proposedSteps.flatMap((step) => step.file === undefined ? [] : [step.file])
-  );
-  const validated = validateSteps(rawSteps as unknown[], ctx,
-    anchors ? { kind: "commit", anchors } : { kind: "workspace" });
-  const renames = includesLocalChanges ? new Map<string, string>()
-    : await renamedFiles(ctx, mergeBaseSha, headRef);
-  for (const [index, step] of proposedSteps.entries()) {
-    if (!includesLocalChanges && step.baseFile !== undefined &&
-        path.posix.normalize(normalizeSlashes(step.baseFile)) !==
-          renames.get(path.posix.normalize(normalizeSlashes(step.file!)))) {
-      validated.issues.push({
-        path: `steps[${index}].baseFile`,
-        message: "must match the old path of the detected Git rename",
-      });
-    }
-  }
-  if (validated.issues.length > 0) {
-    return errorResponse("INVALID_PROPOSAL", "The create_changes_tour arguments are invalid.", validated.issues);
+  const staged = await stageCommitAnchors(result.proposal, {
+    mergeBaseSha,
+    includesLocalChanges,
+  });
+  if (staged.issues.length > 0) {
+    return errorResponse(
+      "INVALID_PROPOSAL",
+      "The create_changes_tour arguments are invalid.",
+      staged.issues
+    );
   }
   if (
     (await committedDiffIsEmpty(ctx, mergeBaseSha, headRef)) &&
@@ -836,11 +737,11 @@ async function handleCreateChangesTour(
     });
   }
 
-  const finalSteps = (validated.steps as TourStep[]).map((step) => {
+  const finalSteps = staged.steps.map((step) => {
     const { display, baseFile, ...ordinaryStep } = step;
     if (includesLocalChanges || step.file === undefined) return ordinaryStep;
     const file = path.posix.normalize(normalizeSlashes(step.file));
-    return { ...ordinaryStep, file, display: "diff" as const, baseFile: renames.get(file) };
+    return { ...ordinaryStep, file, display: "diff" as const, baseFile: staged.renames.get(file) };
   });
   const warningsFromStepLimit = stepLimitWarnings(finalSteps);
   warnings.push(...warningsFromStepLimit);
@@ -964,13 +865,6 @@ async function persistTour(
   return null;
 }
 
-function extractSteps(args: unknown): unknown {
-  if (typeof args !== "object" || args === null || Array.isArray(args)) {
-    return undefined;
-  }
-  return (args as Record<string, unknown>).steps;
-}
-
 // Files modified by the committed diff, converted to paths relative to the
 // workspace (the workspace may be a repository subdirectory).
 async function changedFilesInWorkspace(
@@ -1052,22 +946,33 @@ function validatedResponse(
   };
 }
 
+function errorResponse(result: ErrorResult): ToolResponse;
 function errorResponse(
   code: string,
   message: string,
   issues?: Issue[]
+): ToolResponse;
+function errorResponse(
+  codeOrResult: string | ErrorResult,
+  message?: string,
+  issues?: Issue[]
 ): ToolResponse {
-  const result: ErrorResult = {
-    status: "error",
-    code,
-    message,
-    ...(issues && issues.length > 0 ? { issues } : {}),
-  };
+  const result: ErrorResult =
+    typeof codeOrResult === "string"
+      ? {
+          status: "error",
+          code: codeOrResult,
+          message: message as string,
+          ...(issues && issues.length > 0 ? { issues } : {}),
+        }
+      : codeOrResult;
+  const { code, message: errorMessage } = result;
+  const resultIssues = result.issues ?? [];
   const text =
-    issues && issues.length > 0
-      ? `Error (${code}): ${message}\n` +
-        issues.map((issue) => `- ${issue.path}: ${issue.message}`).join("\n")
-      : `Error (${code}): ${message}`;
+    resultIssues.length > 0
+      ? `Error (${code}): ${errorMessage}\n` +
+        resultIssues.map((issue) => `- ${issue.path}: ${issue.message}`).join("\n")
+      : `Error (${code}): ${errorMessage}`;
   return {
     content: [{ type: "text", text }],
     structuredContent: result as unknown as Record<string, unknown>,
